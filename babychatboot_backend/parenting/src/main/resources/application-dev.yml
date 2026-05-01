@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/parenting_db
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+
+  # SMTP 이메일 설정
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: "ant7773@gmail.com"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  ai:
+    google:
+      genai:
+        api-key: ${gemini.api.key}
+        chat:
+          options:
+            model: gemini-2.5-flash-lite
+        embedding:
+          options:
+            model: text-embedding-004
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        dimensions: 768
+        distance-type: COSINE_DISTANCE
+        index-type: HNSW

@@ -1,0 +1,66 @@
+# ===============================================
+# BACKEND (Spring Boot / Maven)
+# ===============================================
+babychatboot_backend/parenting/target/
+babychatboot_backend/parenting/build/
+babychatboot_backend/parenting/.mvn/wrapper/maven-wrapper.jar
+babychatboot_backend/parenting/mvnw
+babychatboot_backend/parenting/mvnw.cmd
+
+# IDE
+babychatboot_backend/parenting/.idea/
+babychatboot_backend/parenting/.vscode/
+babychatboot_backend/parenting/*.iws
+babychatboot_backend/parenting/*.iml
+babychatboot_backend/parenting/*.ipr
+babychatboot_backend/parenting/.project
+babychatboot_backend/parenting/.classpath
+babychatboot_backend/parenting/.factorypath
+babychatboot_backend/parenting/.settings/
+babychatboot_backend/parenting/.sts4-cache/
+
+# 보안 파일 (절대 커밋 금지)
+babychatboot_backend/parenting/src/main/resources/application-secret.yml
+babychatboot_backend/parenting/src/main/resources/application-secret.properties
+
+# 로컬 환경변수 파일
+babychatboot_backend/parenting/.env
+babychatboot_backend/parenting/.env.local
+
+# ===============================================
+# FRONTEND (Next.js / Node.js)
+# ===============================================
+babychatboot_frontend/chat-frontend/node_modules/
+babychatboot_frontend/chat-frontend/.next/
+babychatboot_frontend/chat-frontend/out/
+babychatboot_frontend/chat-frontend/build/
+babychatboot_frontend/chat-frontend/dist/
+
+# IDE
+babychatboot_frontend/chat-frontend/.idea/
+babychatboot_frontend/chat-frontend/.vscode/
+
+# 환경변수 파일 (절대 커밋 금지)
+babychatboot_frontend/chat-frontend/.env
+babychatboot_frontend/chat-frontend/.env.local
+babychatboot_frontend/chat-frontend/.env*.local
+
+# ===============================================
+# 데이터베이스 데이터 파일
+# ===============================================
+mysql_data/
+postgres_data/
+data/
+
+# ===============================================
+# Claude Code 설정 (로컬 전용)
+# ===============================================
+.claude/settings.local.json
+
+# ===============================================
+# OS 시스템 파일
+# ===============================================
+.DS_Store
+Thumbs.db
+*.swp
+*~

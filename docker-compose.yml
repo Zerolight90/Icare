@@ -1,0 +1,37 @@
+services:
+  # 1. 데이터베이스 (PostgreSQL + pgvector 확장)
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: parenting-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: root1234
+      POSTGRES_USER: root
+      POSTGRES_DB: parenting_db
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d parenting_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # 2. 백엔드
+  backend:
+    build: ./babychatboot_backend/parenting
+    container_name: icare-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. 프론트엔드
+  frontend:
+    build: ./babychatboot_frontend/chat-frontend
+    container_name: icare-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
