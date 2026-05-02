@@ -33,11 +33,10 @@ spring:
           options:
             model: gemini-2.5-flash-lite
         embedding:
-          options:
-            model: text-embedding-004
+          api-key: ${gemini.api.key}
     vectorstore:
       pgvector:
         initialize-schema: true
-        dimensions: 768
+        dimensions: 3072
         distance-type: COSINE_DISTANCE
-        index-type: HNSW
+        index-type: NONE

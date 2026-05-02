@@ -1,0 +1,17 @@
+# 1. 백엔드 보안 및 빌드 파일
+babychatboot_backend/parenting/target/
+babychatboot_backend/parenting/.mvn/
+babychatboot_backend/parenting/mvnw
+babychatboot_backend/parenting/mvnw.cmd
+# ★ 매우 중요: API 키가 들어있는 설정 파일 제외!
+babychatboot_backend/parenting/src/main/resources/application-secret.properties
+
+# 2. 프론트엔드 보안 및 빌드 파일
+babychatboot_frontend/chat-frontend/node_modules/
+babychatboot_frontend/chat-frontend/.next/
+babychatboot_frontend/chat-frontend/out/
+babychatboot_frontend/chat-frontend/.env.local
+
+# 3. 기타 시스템 파일
+.DS_Store
+Thumbs.db

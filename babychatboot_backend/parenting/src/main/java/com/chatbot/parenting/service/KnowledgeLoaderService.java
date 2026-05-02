@@ -32,7 +32,8 @@ public class KnowledgeLoaderService implements ApplicationRunner {
         64,    // 최소 청크 길이(char)
         5,     // 합칠 문장 수
         10000, // 최대 청크 수
-        true
+        true,
+        List.of('.', ',', '!', '?', ';', ':')
     );
 
     @Override
