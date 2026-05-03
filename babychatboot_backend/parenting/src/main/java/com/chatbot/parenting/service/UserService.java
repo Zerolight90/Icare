@@ -49,9 +49,17 @@ public class UserService {
             family = new Family(newCode);
             familyRepository.save(family);
             
-            // 새 가족을 만들었으니 아기 정보도 여기서 저장
-            Baby baby = new Baby(requestDto.getBabyName(), requestDto.getBabyGender(), requestDto.getBabyBirthDate(), family);
-            babyRepository.save(baby);
+            // 새 가족을 만들었으니 아기 정보도 여기서 저장 (단태아/쌍둥이/세쌍둥이)
+            int count = Math.min(requestDto.getBabyCount(), requestDto.getBabyNames().size());
+            for (int i = 0; i < count; i++) {
+                Baby baby = new Baby(
+                    requestDto.getBabyNames().get(i),
+                    requestDto.getBabyGenders().get(i),
+                    requestDto.getBabyBirthDate(),
+                    family
+                );
+                babyRepository.save(baby);
+            }
         }
 
         // 4. 암호화된 비밀번호와 함께 유저 저장 및 가족 연결

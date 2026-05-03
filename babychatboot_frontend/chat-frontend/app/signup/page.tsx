@@ -7,6 +7,7 @@ import api from '../lib/axios';
 type Step = 'info' | 'baby' | 'verify';
 type Role = 'DAD' | 'MOM';
 type BabyGender = 'M' | 'F' | 'U';
+type BabyCount = 1 | 2 | 3;
 
 interface FormData {
   name: string;
@@ -17,8 +18,9 @@ interface FormData {
   birthDate: string;
   phoneNumber: string;
   address: string;
-  babyName: string;
-  babyGender: BabyGender;
+  babyCount: BabyCount;
+  babyNames: string[];
+  babyGenders: BabyGender[];
   babyBirthDate: string;
   inviteCode: string;
 }
@@ -28,12 +30,28 @@ const inputClass =
 
 const STEPS: Step[] = ['info', 'baby', 'verify'];
 
+const BIRTH_TYPES: { value: BabyCount; label: string; icon: string }[] = [
+  { value: 1, label: '단태아', icon: '👶' },
+  { value: 2, label: '쌍둥이', icon: '👶👶' },
+  { value: 3, label: '세쌍둥이', icon: '👶👶👶' },
+];
+
+const GENDER_OPTIONS: { value: BabyGender; label: string }[] = [
+  { value: 'M', label: '남아 👦' },
+  { value: 'F', label: '여아 👧' },
+  { value: 'U', label: '미정 🍬' },
+];
+
 export default function SignupPage() {
   const [step, setStep] = useState<Step>('info');
   const [form, setForm] = useState<FormData>({
     name: '', nickname: '', email: '', password: '',
     role: 'DAD', birthDate: '', phoneNumber: '', address: '',
-    babyName: '', babyGender: 'U', babyBirthDate: '', inviteCode: '',
+    babyCount: 1,
+    babyNames: ['', '', ''],
+    babyGenders: ['U', 'U', 'U'],
+    babyBirthDate: '',
+    inviteCode: '',
   });
   const [verifyCode, setVerifyCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,13 +62,34 @@ export default function SignupPage() {
     setError('');
   };
 
-  // Step 1 완료 → Step 2
+  const setBabyCount = (count: BabyCount) => {
+    setForm(prev => ({ ...prev, babyCount: count }));
+    setError('');
+  };
+
+  const setBabyName = (index: number, value: string) => {
+    setForm(prev => {
+      const names = [...prev.babyNames];
+      names[index] = value;
+      return { ...prev, babyNames: names };
+    });
+    setError('');
+  };
+
+  const setBabyGender = (index: number, value: BabyGender) => {
+    setForm(prev => {
+      const genders = [...prev.babyGenders];
+      genders[index] = value;
+      return { ...prev, babyGenders: genders };
+    });
+    setError('');
+  };
+
   const handleInfoNext = (e: React.FormEvent) => {
     e.preventDefault();
     setStep('baby');
   };
 
-  // Step 2 완료 → 회원가입 API + 인증메일 발송 → Step 3
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -58,6 +97,8 @@ export default function SignupPage() {
     try {
       const payload = {
         ...form,
+        babyNames: form.babyNames.slice(0, form.babyCount),
+        babyGenders: form.babyGenders.slice(0, form.babyCount),
         inviteCode: form.inviteCode.trim() || undefined,
       };
       await api.post('/api/users/signup', payload);
@@ -71,7 +112,6 @@ export default function SignupPage() {
     }
   };
 
-  // Step 3: 인증번호 확인
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -180,28 +220,68 @@ export default function SignupPage() {
           <form onSubmit={handleSignup} className="space-y-4">
             <p className="text-sm font-semibold text-gray-500 mb-1">🍼 아기 정보</p>
 
-            <input type="text" placeholder="아기 이름" required className={inputClass}
-              value={form.babyName} onChange={e => set('babyName', e.target.value)} />
+            {/* 출생 유형 선택 */}
+            <div>
+              <label className="text-sm text-gray-500 mb-2 block">출생 유형</label>
+              <div className="flex gap-2">
+                {BIRTH_TYPES.map(({ value, label, icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setBabyCount(value)}
+                    className={`flex-1 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                      form.babyCount === value
+                        ? 'border-pink-500 bg-pink-50 text-pink-600 shadow-sm'
+                        : 'border-gray-200 text-gray-400 hover:border-pink-300'
+                    }`}
+                  >
+                    <span className="block text-lg mb-0.5">{icon}</span>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
+            {/* 아기 생년월일 (공통) */}
             <div>
               <label className="text-sm text-gray-500 mb-1 block">아기 생년월일</label>
               <input type="date" required className={inputClass}
                 value={form.babyBirthDate} onChange={e => set('babyBirthDate', e.target.value)} />
             </div>
 
-            {/* 아기 성별 */}
-            <div className="flex gap-3 p-2 bg-gray-50 rounded-xl">
-              {([['M', '남아 👦'], ['F', '여아 👧'], ['U', '미정 🍬']] as [BabyGender, string][]).map(([val, label]) => (
-                <label key={val}
-                  className={`flex-1 text-center py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-colors ${
-                    form.babyGender === val ? 'bg-pink-500 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
-                  }`}>
-                  <input type="radio" name="babyGender" value={val} className="hidden"
-                    checked={form.babyGender === val} onChange={e => set('babyGender', e.target.value)} />
-                  {label}
-                </label>
-              ))}
-            </div>
+            {/* 아기별 이름 + 성별 */}
+            {Array.from({ length: form.babyCount }).map((_, i) => (
+              <div key={i} className="p-4 bg-pink-50 rounded-2xl space-y-3">
+                <p className="text-sm font-semibold text-pink-500">
+                  {form.babyCount === 1 ? '👶 아기' : `👶 ${i + 1}번째 아기`}
+                </p>
+
+                <input
+                  type="text"
+                  placeholder={`아기 이름${form.babyCount > 1 ? ` (${i + 1}번째)` : ''}`}
+                  required
+                  className={inputClass}
+                  value={form.babyNames[i]}
+                  onChange={e => setBabyName(i, e.target.value)}
+                />
+
+                <div className="flex gap-2 p-2 bg-white rounded-xl">
+                  {GENDER_OPTIONS.map(({ value, label }) => (
+                    <label key={value}
+                      className={`flex-1 text-center py-2 rounded-lg cursor-pointer text-sm font-semibold transition-colors ${
+                        form.babyGenders[i] === value
+                          ? 'bg-pink-500 text-white shadow-sm'
+                          : 'text-gray-400 hover:text-gray-600'
+                      }`}>
+                      <input type="radio" name={`babyGender_${i}`} value={value} className="hidden"
+                        checked={form.babyGenders[i] === value}
+                        onChange={() => setBabyGender(i, value)} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
 
             {/* 배우자 초대코드 (선택) */}
             <div className="pt-3 border-t border-gray-100">
