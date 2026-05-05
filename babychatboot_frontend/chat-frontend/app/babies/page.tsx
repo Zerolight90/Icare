@@ -31,15 +31,8 @@ const GENDER_ICON: Record<string, string> = { M: '👦', F: '👧', U: '👶' };
 function calcAge(birthDate: string) {
   const birth = new Date(birthDate);
   const now = new Date();
-  const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
-  if (months < 1) {
-    const days = Math.floor((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
-    return `${days}일`;
-  }
-  if (months < 24) return `${months}개월`;
-  const years = Math.floor(months / 12);
-  const rem = months % 12;
-  return rem > 0 ? `${years}세 ${rem}개월` : `${years}세`;
+  const days = Math.floor((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
+  return `${days}일`;
 }
 
 export default function BabiesPage() {

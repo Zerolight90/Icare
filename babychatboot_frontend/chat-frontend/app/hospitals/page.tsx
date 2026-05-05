@@ -167,7 +167,7 @@ export default function HospitalsPage() {
         setIsLoading(false);
         setError('위치 권한이 거부됐습니다. 주소를 직접 검색해주세요.');
       },
-      { timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -415,26 +415,6 @@ export default function HospitalsPage() {
           </div>
         </div>
 
-        {/* API 키 설정 안내 */}
-        <div className="mt-6 bg-blue-50 rounded-2xl p-5 border border-blue-100">
-          <h3 className="font-semibold text-blue-800 text-sm mb-3">🔑 Kakao API 키 설정 안내</h3>
-          <div className="grid md:grid-cols-2 gap-4 text-xs text-blue-700">
-            <div>
-              <p className="font-semibold mb-1">프론트엔드 (.env.local)</p>
-              <code className="block bg-white px-3 py-2 rounded-lg border border-blue-200 font-mono text-blue-900">
-                NEXT_PUBLIC_KAKAO_MAP_KEY=자바스크립트앱키
-              </code>
-              <p className="mt-1 text-blue-500">Kakao Developers → 내 애플리케이션 → 앱 키 → JavaScript 키</p>
-            </div>
-            <div>
-              <p className="font-semibold mb-1">백엔드 (application-secret.yml)</p>
-              <code className="block bg-white px-3 py-2 rounded-lg border border-blue-200 font-mono text-blue-900">
-                kakao:{'\n'}{'  '}rest-api-key: REST_API키
-              </code>
-              <p className="mt-1 text-blue-500">Kakao Developers → 내 애플리케이션 → 앱 키 → REST API 키</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

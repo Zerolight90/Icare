@@ -81,7 +81,8 @@ public class UserController {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-        return ResponseEntity.ok(Map.of("nickname", user.getNickname()));
+        String nickname = user.getNickname() != null ? user.getNickname() : "";
+        return ResponseEntity.ok(Map.of("nickname", nickname));
     }
 
     // ==========================================

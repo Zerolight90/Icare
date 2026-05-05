@@ -1,7 +1,16 @@
+'use client';
+
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import Header from './components/Header';
 
 export default function LandingPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem('accessToken'));
+  }, []);
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <Header />
@@ -18,31 +27,33 @@ export default function LandingPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-12 w-full max-w-md">
-          <div className="p-4 bg-pink-50 rounded-2xl flex items-center gap-3">
+          <Link href="/chat" className="p-4 bg-pink-50 rounded-2xl flex items-center gap-3 hover:bg-pink-100 transition cursor-pointer">
             <span className="text-2xl">💬</span>
             <p className="text-sm font-medium text-gray-700 text-left">AI 육아 상담</p>
-          </div>
-          <div className="p-4 bg-blue-50 rounded-2xl flex items-center gap-3">
+          </Link>
+          <Link href="/dailylog" className="p-4 bg-blue-50 rounded-2xl flex items-center gap-3 hover:bg-blue-100 transition cursor-pointer">
             <span className="text-2xl">📋</span>
             <p className="text-sm font-medium text-gray-700 text-left">하루 일과표</p>
-          </div>
-          <div className="p-4 bg-green-50 rounded-2xl flex items-center gap-3">
+          </Link>
+          <Link href="/hospitals" className="p-4 bg-green-50 rounded-2xl flex items-center gap-3 hover:bg-green-100 transition cursor-pointer">
             <span className="text-2xl">🏥</span>
             <p className="text-sm font-medium text-gray-700 text-left">병원 찾기</p>
-          </div>
-          <div className="p-4 bg-yellow-50 rounded-2xl flex items-center gap-3">
+          </Link>
+          <Link href="/community" className="p-4 bg-yellow-50 rounded-2xl flex items-center gap-3 hover:bg-yellow-100 transition cursor-pointer">
             <span className="text-2xl">👥</span>
             <p className="text-sm font-medium text-gray-700 text-left">육아 커뮤니티</p>
-          </div>
+          </Link>
         </div>
 
         <div className="flex flex-col gap-3 w-full max-w-sm">
-          <Link href="/chat" className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-2xl text-lg shadow-lg transition active:scale-95">
+          <Link href="/chat" className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-2xl text-lg shadow-lg transition active:scale-95 text-center">
             AI 상담 시작하기
           </Link>
-          <Link href="/login" className="bg-white border-2 border-pink-200 hover:border-pink-400 text-pink-500 font-bold py-3.5 rounded-2xl text-base transition">
-            로그인하기
-          </Link>
+          {!isLoggedIn && (
+            <Link href="/login" className="bg-white border-2 border-pink-200 hover:border-pink-400 text-pink-500 font-bold py-3.5 rounded-2xl text-base transition text-center">
+              로그인하기
+            </Link>
+          )}
         </div>
 
         <footer className="mt-12 text-gray-400 text-xs">

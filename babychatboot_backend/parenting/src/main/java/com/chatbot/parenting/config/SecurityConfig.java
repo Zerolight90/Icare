@@ -17,6 +17,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.config.Customizer;
 
 @Configuration
 @EnableWebSecurity
@@ -34,7 +35,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable()) 
-            .cors(cors -> cors.configure(http))
+            .cors(Customizer.withDefaults())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/users/login", "/api/users/signup", "/api/users/verify", "/api/users/send-email").permitAll()
@@ -42,7 +43,7 @@ public class SecurityConfig {
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/community/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/hospitals/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/upload/**").permitAll()
-            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/logs/**/export").authenticated()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/logs/*/export").authenticated()
             .requestMatchers("/api/users/me").authenticated()
             .requestMatchers("/api/chat/**").authenticated()
             .requestMatchers("/api/babies/**").authenticated()

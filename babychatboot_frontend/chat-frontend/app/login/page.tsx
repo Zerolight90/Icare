@@ -36,8 +36,8 @@ export default function LoginPage() {
       }
     } catch (error: unknown) { // 🟢 any 대신 unknown 사용
       // 🟢 axios 에러인지 확인하고, 401(인증 실패) 에러 처리
-      if (isAxiosError(error) && error.response?.status === 401) {
-        setErrorMessage('이메일 또는 비밀번호가 일치하지 않습니다.');
+      if (isAxiosError(error) && (error.response?.status === 400 || error.response?.status === 401)) {
+        setErrorMessage(error.response?.data || '이메일 또는 비밀번호가 일치하지 않습니다.');
       } else {
         setErrorMessage('서버와 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.');
       }
