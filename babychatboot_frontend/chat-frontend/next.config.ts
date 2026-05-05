@@ -7,8 +7,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*", // 프론트에서 /api/... 로 시작하는 모든 요청을
-        //destination: "http://backend:8080/api/:path*", // 도커 내부의 진짜 백엔드로 몰래 전달해라!
-        destination: "http://localhost:8080/api/:path*", // 도커 내부의 진짜 백엔드로 몰래 전달해라!
+        destination: `${process.env.BACKEND_URL ?? 'http://localhost:8080'}/api/:path*`,
       },
     ];
   },

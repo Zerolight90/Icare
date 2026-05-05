@@ -178,7 +178,7 @@ export default function DailyLogPage() {
     try {
       const token = localStorage.getItem('accessToken');
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'}/api/logs/${selectedBaby.id}/export?from=${dlFrom}&to=${dlTo}`,
+        `/api/logs/${selectedBaby.id}/export?from=${dlFrom}&to=${dlTo}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) throw new Error('다운로드 실패');
