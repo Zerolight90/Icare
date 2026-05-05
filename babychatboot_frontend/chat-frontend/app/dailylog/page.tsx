@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import api from '../lib/axios';
 import Header from '../components/Header';
 
+const localDateStr = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 interface Baby {
   id: number;
   name: string;
@@ -32,7 +35,7 @@ interface LogForm {
 }
 
 const defaultForm: LogForm = {
-  date: new Date().toISOString().slice(0, 10),
+  date: localDateStr(),
   time: new Date().toTimeString().slice(0, 5),
   formulaAmount: '',
   breastfed: false,
@@ -53,7 +56,7 @@ export default function DailyLogPage() {
   const router = useRouter();
   const [babies, setBabies] = useState<Baby[]>([]);
   const [selectedBaby, setSelectedBaby] = useState<Baby | null>(null);
-  const [viewDate, setViewDate] = useState(new Date().toISOString().slice(0, 10));
+  const [viewDate, setViewDate] = useState(localDateStr());
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -68,8 +71,8 @@ export default function DailyLogPage() {
   const [showHealthPanel, setShowHealthPanel] = useState(false);
 
   // 다운로드 날짜 범위
-  const [dlFrom, setDlFrom] = useState(new Date().toISOString().slice(0, 10));
-  const [dlTo, setDlTo] = useState(new Date().toISOString().slice(0, 10));
+  const [dlFrom, setDlFrom] = useState(localDateStr());
+  const [dlTo, setDlTo] = useState(localDateStr());
   const [showDlPanel, setShowDlPanel] = useState(false);
 
   useEffect(() => {
@@ -117,7 +120,7 @@ export default function DailyLogPage() {
     const dt = new Date(log.recordTime);
     setEditId(log.id);
     setForm({
-      date: dt.toISOString().slice(0, 10),
+      date: localDateStr(dt),
       time: dt.toTimeString().slice(0, 5),
       formulaAmount: log.formulaAmount != null ? String(log.formulaAmount) : '',
       breastfed: log.breastfed ?? false,
@@ -169,7 +172,7 @@ export default function DailyLogPage() {
   const shiftDate = (delta: number) => {
     const d = new Date(viewDate);
     d.setDate(d.getDate() + delta);
-    setViewDate(d.toISOString().slice(0, 10));
+    setViewDate(localDateStr(d));
   };
 
   // CSV 다운로드 - 백엔드에서 직접 생성
@@ -220,7 +223,7 @@ export default function DailyLogPage() {
   const diaperWet = logs.filter(l => l.diaperType === 'WET' || l.diaperType === 'BOTH').length;
   const diaperDirty = logs.filter(l => l.diaperType === 'DIRTY' || l.diaperType === 'BOTH').length;
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = localDateStr();
   const isToday = viewDate === todayStr;
 
   const fmtTime = (iso: string) =>

@@ -10,6 +10,8 @@ RUN npm install
 
 # 4. 소스 코드 복사 및 빌드
 COPY . .
+ARG BACKEND_URL=http://localhost:8080
+ENV BACKEND_URL=$BACKEND_URL
 RUN npm run build
 
 # 5. 3000 포트 열기

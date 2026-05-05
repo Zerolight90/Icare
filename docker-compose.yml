@@ -31,7 +31,10 @@ services:
 
   # 3. 프론트엔드
   frontend:
-    build: ./babychatboot_frontend/chat-frontend
+    build:
+      context: ./babychatboot_frontend/chat-frontend
+      args:
+        BACKEND_URL: http://backend:8080
     container_name: icare-frontend
     ports:
       - "3000:3000"
