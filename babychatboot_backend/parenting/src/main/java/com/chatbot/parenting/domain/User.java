@@ -79,7 +79,19 @@ public class User {
     // 인증번호 설정 메서드
     public void setVerificationCode(String code) {
         this.verificationCode = code;
-        this.codeCreatedAt = LocalDateTime.now(); // 번호 세팅할 때 현재 시간도 저장
+        this.codeCreatedAt = LocalDateTime.now();
     }
-    
+
+    // 회원정보 수정
+    public void updateProfile(String name, String nickname, String phoneNumber, String address) {
+        this.name = name;
+        this.nickname = nickname;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+    }
+
+    // 비밀번호 변경
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 }

@@ -87,6 +87,19 @@ public class GeminiService {
         chatMessageRepository.deleteByChatRoom_Id(roomId);
     }
 
+    public String healthCheck(String prompt) {
+        try {
+            return chatClient.prompt()
+                .system("당신은 소아과 전문의입니다. 아이의 하루 수유·배변 기록을 보고 친절하고 전문적으로 건강 상태를 평가해 주세요. 마크다운 형식으로 가독성 있게 작성하세요.")
+                .user(prompt)
+                .call()
+                .content();
+        } catch (Exception e) {
+            log.error("[HealthCheck] 오류", e);
+            return "AI 건강 문진 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+        }
+    }
+
     @Transactional
     public String askToGemini(String roomId, String prompt) {
         ChatRoom room = chatRoomRepository.findById(roomId)

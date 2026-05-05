@@ -29,8 +29,8 @@ export default function LoginPage() {
         // 3. 브라우저 로컬 스토리지에 토큰 저장 (신분증 발급 완료!)
         localStorage.setItem('accessToken', token);
         
-        // 4. 로그인 성공 후 챗봇 메인 페이지로 이동
-        window.location.href = '/chat';
+        // 4. 로그인 성공 후 메인 페이지로 이동
+        window.location.href = '/';
       } else {
         setErrorMessage('토큰 발급에 실패했습니다. 관리자에게 문의하세요.');
       }

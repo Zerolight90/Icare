@@ -3,10 +3,9 @@ package com.chatbot.parenting.service;
 import com.chatbot.parenting.domain.Baby;
 import com.chatbot.parenting.domain.Family;
 import com.chatbot.parenting.domain.User;
-import com.chatbot.parenting.dto.LoginRequestDto;
-import com.chatbot.parenting.dto.SignupRequestDto;
-import com.chatbot.parenting.repository.BabyRepository; // 리포지토리 필요
-import com.chatbot.parenting.repository.FamilyRepository; // 리포지토리 필요
+import com.chatbot.parenting.dto.*;
+import com.chatbot.parenting.repository.BabyRepository;
+import com.chatbot.parenting.repository.FamilyRepository;
 import com.chatbot.parenting.repository.UserRepository;
 import com.chatbot.parenting.util.JwtUtil;
 
@@ -14,42 +13,40 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 import java.util.UUID;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
-    private final FamilyRepository familyRepository; // FamilyRepository 인터페이스 미리 만들어두세요!
-    private final BabyRepository babyRepository;     // BabyRepository 인터페이스 미리 만들어두세요!
-    private final PasswordEncoder passwordEncoder; // 우리가 SecurityConfig에 만든 그 암호화 기계!
-    private final JwtUtil jwtUtil; // JWT 토큰 생성과 검증을 담당하는 유틸 클래스
+    private final FamilyRepository familyRepository;
+    private final BabyRepository babyRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Transactional
     public String signup(SignupRequestDto requestDto) {
-        // 1. 이메일 중복 확인
         if (userRepository.existsByEmail(requestDto.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        // 2. 비밀번호 단방향 암호화 (핵심!)
         String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
 
         Family family;
-        // 3. 초대 코드가 있으면 기존 가족에 합류, 없으면 새 가족 생성
         if (requestDto.getInviteCode() != null && !requestDto.getInviteCode().isEmpty()) {
             family = familyRepository.findByInviteCode(requestDto.getInviteCode())
                     .orElseThrow(() -> new IllegalArgumentException("잘못된 초대 코드입니다."));
         } else {
-            // 난수로 6자리 초대코드 생성
             String newCode = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
             family = new Family(newCode);
             familyRepository.save(family);
-            
-            // 새 가족을 만들었으니 아기 정보도 여기서 저장 (단태아/쌍둥이/세쌍둥이)
+
             int count = Math.min(requestDto.getBabyCount(), requestDto.getBabyNames().size());
             for (int i = 0; i < count; i++) {
                 Baby baby = new Baby(
@@ -62,13 +59,12 @@ public class UserService {
             }
         }
 
-        // 4. 암호화된 비밀번호와 함께 유저 저장 및 가족 연결
         User user = new User(
                 requestDto.getEmail(),
-                encodedPassword, // 원본 비번 대신 암호화된 비번 넣기
+                encodedPassword,
                 "LOCAL",
                 requestDto.getName(),
-                requestDto.getNickname(), // DB 에러 방지 위해 추가
+                requestDto.getNickname(),
                 requestDto.getRole(),
                 requestDto.getBirthDate(),
                 requestDto.getPhoneNumber(),
@@ -85,13 +81,11 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 사용자가 없습니다."));
 
-        // 1. 시간이 만료되었는지 먼저 체크 (3분 = 180초)
-        if (user.getCodeCreatedAt() == null || 
+        if (user.getCodeCreatedAt() == null ||
             Duration.between(user.getCodeCreatedAt(), LocalDateTime.now()).getSeconds() > 180) {
             throw new IllegalArgumentException("인증 시간이 만료되었습니다. 다시 발송해 주세요.");
         }
 
-        // 2. 번호 일치 여부 체크
         if (user.getVerificationCode() != null && user.getVerificationCode().equals(code)) {
             user.verifyEmail();
             user.setVerificationCode(null);
@@ -102,21 +96,92 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public String login(LoginRequestDto loginRequestDto) {
-        // 1. 이메일 확인
         User user = userRepository.findByEmail(loginRequestDto.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
-        // 2. 비밀번호 확인 (암호화된 비번과 직접 비교)
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        // 3. 이메일 인증 여부 확인 (인증 안 된 유저는 로그인 불가하게 설정)
         if (!user.isEmailVerified()) {
             throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
         }
 
-        // 4. 로그인 성공! 토큰 생성 후 반환
         return jwtUtil.createToken(user.getEmail(), user.getRole());
+    }
+
+    // ==========================================
+    // 마이페이지: 내 프로필 조회
+    // ==========================================
+    @Transactional(readOnly = true)
+    public UserProfileResponseDto getProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        String inviteCode = null;
+        List<UserProfileResponseDto.BabyDto> babyDtos = List.of();
+
+        if (user.getFamily() != null) {
+            inviteCode = user.getFamily().getInviteCode();
+            babyDtos = babyRepository.findByFamily(user.getFamily()).stream()
+                    .map(b -> new UserProfileResponseDto.BabyDto(b.getId(), b.getName(), b.getGender(), b.getBirthDate()))
+                    .collect(Collectors.toList());
+        }
+
+        return new UserProfileResponseDto(
+                user.getEmail(),
+                user.getName(),
+                user.getNickname(),
+                user.getRole(),
+                user.getPhoneNumber(),
+                user.getAddress(),
+                user.getProvider(),
+                inviteCode,
+                babyDtos
+        );
+    }
+
+    // ==========================================
+    // 마이페이지: 회원정보 수정
+    // ==========================================
+    @Transactional
+    public void updateProfile(String email, UpdateProfileRequestDto dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        user.updateProfile(dto.getName(), dto.getNickname(), dto.getPhoneNumber(), dto.getAddress());
+    }
+
+    // ==========================================
+    // 마이페이지: 비밀번호 변경
+    // ==========================================
+    @Transactional
+    public void changePassword(String email, ChangePasswordRequestDto dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (!"LOCAL".equals(user.getProvider())) {
+            throw new IllegalArgumentException("소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.");
+        }
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        user.changePassword(passwordEncoder.encode(dto.getNewPassword()));
+    }
+
+    // ==========================================
+    // 마이페이지: 가족 초대코드로 연결
+    // ==========================================
+    @Transactional
+    public String joinFamily(String email, String inviteCode) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Family family = familyRepository.findByInviteCode(inviteCode.toUpperCase())
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
+
+        user.joinFamily(family);
+        return family.getInviteCode();
     }
 }

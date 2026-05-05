@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(name = "babies") // 테이블 이름도 babies로 깔끔하게!
+@Table(name = "babies")
 public class Baby {
 
     @Id
@@ -17,26 +17,41 @@ public class Baby {
     private Long id;
 
     @Column(nullable = false)
-    private String name; // 아기 이름
+    private String name;
 
     @Column(nullable = false, length = 1)
-    private String gender; // 'M', 'F', 'U'
+    private String gender;
 
     @Column(nullable = false)
-    private LocalDate birthDate; // 생년월일
+    private LocalDate birthDate;
 
-    private LocalDateTime createdAt = LocalDateTime.now(); // 프로필 생성일
+    private Double weight;
 
-    // ★ 핵심: User가 아니라 Family와 연결됩니다!
+    private Double height;
+
+    @Column(length = 500)
+    private String specialNotes;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_id", nullable = false)
-    private Family family; 
+    private Family family;
 
-    // 생성자
     public Baby(String name, String gender, LocalDate birthDate, Family family) {
         this.name = name;
         this.gender = gender;
         this.birthDate = birthDate;
         this.family = family;
+    }
+
+    public void update(String name, String gender, LocalDate birthDate,
+                       Double weight, Double height, String specialNotes) {
+        this.name = name;
+        this.gender = gender;
+        this.birthDate = birthDate;
+        this.weight = weight;
+        this.height = height;
+        this.specialNotes = specialNotes;
     }
 }

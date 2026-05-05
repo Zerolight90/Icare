@@ -39,9 +39,14 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/users/login", "/api/users/signup", "/api/users/verify", "/api/users/send-email").permitAll()
             .requestMatchers("/api/categories/**").permitAll()
-            // 🟢 /api/users/me 는 토큰이 필요한 주소이므로 authenticated() 영역에 있어야 합니다.
-            .requestMatchers("/api/users/me").authenticated() 
-            .requestMatchers("/api/chat/**").authenticated() 
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/community/**").permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/hospitals/**").permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/upload/**").permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/logs/**/export").authenticated()
+            .requestMatchers("/api/users/me").authenticated()
+            .requestMatchers("/api/chat/**").authenticated()
+            .requestMatchers("/api/babies/**").authenticated()
+            .requestMatchers("/api/upload").authenticated()
             .anyRequest().authenticated()
              )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
