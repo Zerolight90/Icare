@@ -40,6 +40,13 @@ public class Board {
         this.description = description;
     }
 
+    public void updateAll(String name, String description, Integer displayOrder, String boardType) {
+        this.name = name;
+        this.description = description;
+        this.displayOrder = displayOrder;
+        this.boardType = boardType;
+    }
+
     public void setActive(boolean active) {
         this.active = active;
     }

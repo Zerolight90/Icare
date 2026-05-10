@@ -34,6 +34,11 @@ public class CommunityPost {
 
     private int viewCount = 0;
     private int commentCount = 0;
+
+    // 1 = 활성(노출), 0 = 삭제(숨김)
+    @Column(nullable = false, columnDefinition = "integer default 1")
+    private int status = 1;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -52,6 +57,18 @@ public class CommunityPost {
         this.content = content;
         this.imageUrls = imageUrls;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void softDelete() {
+        this.status = 0;
+    }
+
+    public void restore() {
+        this.status = 1;
+    }
+
+    public boolean isDeleted() {
+        return this.status == 0;
     }
 
     public void incrementViewCount() { this.viewCount++; }

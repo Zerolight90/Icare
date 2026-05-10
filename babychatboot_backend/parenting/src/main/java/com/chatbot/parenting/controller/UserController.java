@@ -79,10 +79,12 @@ public class UserController {
         String email = extractEmail(principal);
         if (email == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 정보가 없습니다.");
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-        String nickname = user.getNickname() != null ? user.getNickname() : "";
-        return ResponseEntity.ok(Map.of("nickname", nickname));
+        return userRepository.findByEmail(email)
+                .map(user -> {
+                    String nickname = user.getNickname() != null ? user.getNickname() : "";
+                    return ResponseEntity.ok(Map.of("nickname", nickname));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     // ==========================================

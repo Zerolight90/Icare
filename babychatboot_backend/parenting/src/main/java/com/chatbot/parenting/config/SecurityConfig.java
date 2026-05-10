@@ -39,18 +39,25 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/users/login", "/api/users/signup", "/api/users/verify", "/api/users/send-email").permitAll()
+            .requestMatchers("/api/admin/auth/**").permitAll()
             .requestMatchers("/api/categories/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/community/**").permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/notices/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/hospitals/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/upload/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/logs/*/export").authenticated()
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers("/api/users/me").authenticated()
             .requestMatchers("/api/chat/**").authenticated()
             .requestMatchers("/api/babies/**").authenticated()
             .requestMatchers("/api/upload").authenticated()
             .anyRequest().authenticated()
              )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) ->
+                    res.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+            );
 
         return http.build();
     }
@@ -61,7 +68,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         
         configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://192.168.0.4:3000"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 

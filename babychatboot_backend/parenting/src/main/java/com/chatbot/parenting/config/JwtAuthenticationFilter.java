@@ -27,13 +27,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         System.out.println("🚩 [Filter Check] Path: " + path);
 
-        if (path.equals("/api/users/login") || 
-        path.equals("/api/users/signup") || 
-        path.equals("/api/users/verify") || 
-        path.equals("/api/users/send-email")) {
-        filterChain.doFilter(request, response);
-        return;
-         }
+        if (path.equals("/api/users/login") ||
+        path.equals("/api/users/signup") ||
+        path.equals("/api/users/verify") ||
+        path.equals("/api/users/send-email") ||
+        path.startsWith("/api/admin/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -45,8 +46,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7);
             if (jwtUtil.validateToken(token)) {
                 String email = jwtUtil.getEmailFromToken(token);
-                UsernamePasswordAuthenticationToken auth = 
-                    new UsernamePasswordAuthenticationToken(email, null, new java.util.ArrayList<>());
+                String role = jwtUtil.getRoleFromToken(token);
+                java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> authorities =
+                    java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role));
+                UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(email, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         } catch (Exception e) {

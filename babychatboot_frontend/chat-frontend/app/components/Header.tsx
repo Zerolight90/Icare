@@ -4,9 +4,17 @@ import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/axios';
 
+function parseToken(token: string): { role: string | null; subject: string | null } {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return { role: payload.role ?? null, subject: payload.sub ?? null };
+  } catch { return { role: null, subject: null }; }
+}
+
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('accessToken');
@@ -20,12 +28,16 @@ export default function Header() {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (!token) return;
-    // 토큰이 있으면 즉시 로그인 상태로 표시 (API 응답 기다리지 않음)
+    const { role, subject } = parseToken(token);
     setIsLoggedIn(true);
+    if (role === 'ADMIN') {
+      setIsAdmin(true);
+      setUserName(subject ?? '관리자');
+      return;
+    }
     api.get('/api/users/me')
       .then(res => setUserName(res.data.nickname ?? ''))
       .catch(err => {
-        // 토큰 만료 or 유효하지 않은 경우만 로그아웃
         if (err?.response?.status === 401) handleLogout();
       });
   }, [handleLogout]);
@@ -62,6 +74,14 @@ export default function Header() {
               <span className="text-sm font-medium text-gray-700 hidden sm:block">
                 <span className="text-pink-500 font-bold">{userName}</span>님
               </span>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="text-xs font-medium text-purple-600 hover:text-purple-700 transition px-2 py-1 rounded-lg hover:bg-purple-50 border border-purple-200"
+                >
+                  관리자
+                </Link>
+              )}
               <Link
                 href="/mypage"
                 className="text-xs font-medium text-gray-500 hover:text-pink-500 transition px-2 py-1 rounded-lg hover:bg-pink-50"

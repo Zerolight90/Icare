@@ -37,13 +37,19 @@ public class JwtUtil {
 
     // 4. 토큰에서 이메일 꺼내기
     public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser() // .parserBuilder() -> .parser() 로 변경됨
-                .verifyWith(key)      // .setSigningKey -> .verifyWith 로 변경됨
-                .build()
-                .parseSignedClaims(token) // .parseClaimsJws -> .parseSignedClaims 로 변경됨
-                .getPayload();        // .getBody -> .getPayload 로 변경됨
+        return getClaims(token).getSubject();
+    }
 
-        return claims.getSubject();
+    public String getRoleFromToken(String token) {
+        return getClaims(token).get("role", String.class);
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     // 5. 토큰 유효성 검사

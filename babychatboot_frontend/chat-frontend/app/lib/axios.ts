@@ -20,9 +20,10 @@ api.interceptors.response.use(
   err => {
     if (err?.response?.status === 401 && typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
-      if (currentPath !== '/login' && currentPath !== '/signup') {
+      const skip = ['/login', '/signup', '/admin/login'];
+      if (!skip.includes(currentPath)) {
         localStorage.removeItem('accessToken');
-        window.location.href = '/login';
+        window.location.href = currentPath.startsWith('/admin') ? '/admin/login' : '/login';
       }
     }
     return Promise.reject(err);

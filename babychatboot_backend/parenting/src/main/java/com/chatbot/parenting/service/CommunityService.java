@@ -31,7 +31,7 @@ public class CommunityService {
     public Page<PostListResponseDto> getPosts(Long boardId, int page, int size) {
         Board board = findBoard(boardId);
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return postRepository.findByBoardOrderByCreatedAtDesc(board, pageable)
+        return postRepository.findByBoardAndStatusOrderByCreatedAtDesc(board, 1, pageable)
                 .map(p -> new PostListResponseDto(
                         p.getId(), p.getTitle(), p.getAuthor().getNickname(),
                         p.getCommentCount(), p.getViewCount(),
@@ -74,8 +74,7 @@ public class CommunityService {
     public void deletePost(String email, Long postId) {
         CommunityPost post = findPost(postId);
         checkAuthor(post.getAuthor().getEmail(), email, "삭제");
-        commentRepository.findByPostOrderByCreatedAtAsc(post).forEach(commentRepository::delete);
-        postRepository.delete(post);
+        post.softDelete();
     }
 
     @Transactional
@@ -118,8 +117,10 @@ public class CommunityService {
     }
 
     private CommunityPost findPost(Long id) {
-        return postRepository.findById(id)
+        CommunityPost post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+        if (post.isDeleted()) throw new IllegalArgumentException("삭제된 게시글입니다.");
+        return post;
     }
 
     private User findUser(String email) {
