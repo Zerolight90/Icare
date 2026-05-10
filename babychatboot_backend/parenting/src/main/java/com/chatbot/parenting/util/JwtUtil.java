@@ -3,22 +3,20 @@ package com.chatbot.parenting.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
-import java.nio.charset.StandardCharsets;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
     private final SecretKey key;
-    private final long accessTokenExpiration = 24 * 60 * 60 * 1000L;
+    private final long accessTokenExpiration = 2 * 60 * 60 * 1000L; // 2시간
 
-    // 생성자에서 secret 값을 읽어와 Key로 변환합니다.
     public JwtUtil(@Value("${jwt.secret}") String secretString) {
-        // 읽어온 문자열을 HMAC-SHA 알고리즘용 키로 변환
         this.key = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
     }
 

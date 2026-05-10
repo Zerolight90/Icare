@@ -29,14 +29,21 @@ export default function Header() {
     const token = localStorage.getItem('accessToken');
     if (!token) return;
     const { role, subject } = parseToken(token);
-    setIsLoggedIn(true);
     if (role === 'ADMIN') {
-      setIsAdmin(true);
-      setUserName(subject ?? '관리자');
+      api.get('/api/admin/stats')
+        .then(() => {
+          setIsLoggedIn(true);
+          setIsAdmin(true);
+          setUserName(subject ?? '관리자');
+        })
+        .catch(() => handleLogout());
       return;
     }
     api.get('/api/users/me')
-      .then(res => setUserName(res.data.nickname ?? ''))
+      .then(res => {
+        setIsLoggedIn(true);
+        setUserName(res.data.nickname ?? '');
+      })
       .catch(err => {
         if (err?.response?.status === 401) handleLogout();
       });
