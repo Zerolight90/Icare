@@ -241,6 +241,28 @@ public class AdminController {
     }
 
     // ==========================================
+    // 채팅 내역 관리
+    // ==========================================
+
+    @GetMapping("/chats")
+    public ResponseEntity<List<Map<String, Object>>> searchChats(
+            @RequestParam(required = false) String searchType,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        java.time.LocalDateTime start = (startDate != null && !startDate.isBlank())
+                ? java.time.LocalDate.parse(startDate).atStartOfDay() : null;
+        java.time.LocalDateTime end = (endDate != null && !endDate.isBlank())
+                ? java.time.LocalDate.parse(endDate).atTime(23, 59, 59) : null;
+        return ResponseEntity.ok(adminService.searchChatRooms(searchType, keyword, start, end));
+    }
+
+    @GetMapping("/chats/{roomId}/messages")
+    public ResponseEntity<List<Map<String, Object>>> getChatMessages(@PathVariable String roomId) {
+        return ResponseEntity.ok(adminService.getAdminChatMessages(roomId));
+    }
+
+    // ==========================================
     // 일지 관리
     // ==========================================
 
@@ -248,9 +270,18 @@ public class AdminController {
     public ResponseEntity<?> getDailyLogs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String searchType,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String diaperType,
+            @RequestParam(required = false, defaultValue = "ALL") String breastfed,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(adminService.getAllDailyLogs(search, pageable));
+        java.time.LocalDateTime start = (startDate != null && !startDate.isBlank())
+                ? java.time.LocalDate.parse(startDate).atStartOfDay() : null;
+        java.time.LocalDateTime end = (endDate != null && !endDate.isBlank())
+                ? java.time.LocalDate.parse(endDate).atTime(23, 59, 59) : null;
+        return ResponseEntity.ok(adminService.getAllDailyLogs(searchType, keyword, diaperType, breastfed, start, end, pageable));
     }
 
     @DeleteMapping("/dailylogs/{logId}")

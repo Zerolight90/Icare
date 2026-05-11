@@ -3,6 +3,7 @@ package com.chatbot.parenting.service;
 import com.chatbot.parenting.domain.ChatMessage;
 import com.chatbot.parenting.domain.ChatRoom;
 import com.chatbot.parenting.domain.User;
+import com.chatbot.parenting.repository.ChatbotConfigRepository;
 import com.chatbot.parenting.repository.ChatMessageRepository;
 import com.chatbot.parenting.repository.ChatRoomRepository;
 import com.chatbot.parenting.repository.UserRepository;
@@ -10,11 +11,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -27,63 +28,72 @@ public class GeminiService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final ChatbotConfigRepository chatbotConfigRepository;
 
-    private static final String SYSTEM_PROMPT =
+    private static final String DEFAULT_SYSTEM_PROMPT =
         "당신은 'iCare' 플랫폼의 10년 차 소아과 의사 닥터 의비스 입니다.\n" +
         "[매우 엄격한 답변 규칙]\n" +
         "사용자의 질문이 '육아, 아이 건강, 수유, 수면, 아기 발달'과 직접적인 관련이 없다면, " +
         "어떤 위로나 부연 설명도 하지 말고 오직 아래 문장만 출력하세요.\n" +
         "\"해당 질문은 답변할 수 없습니다. 아이의 건강이나 육아와 관련된 내용을 질문해 주세요.\"\n\n" +
-        "[상담 모의 훈련 예시]\n" +
-        "사용자: 부천 매운 닭발집 추천 좀 해줘\n" +
-        "간호사: 해당 질문은 답변할 수 없습니다. 아이의 건강이나 육아와 관련된 내용을 질문해 주세요.\n\n" +
-        "사용자: 우리 유리 분유량이 너무 적은 것 같아\n" +
-        "간호사: (다정하고 전문적인 육아 상담 진행)\n\n" +
         "[RAG 지식 활용]\n" +
         "아래 제공된 참고 문서(육아 지식 베이스)를 활용하여 정확하고 구체적인 답변을 제공하세요. " +
         "문서에 없는 내용은 일반 의학 지식을 바탕으로 답하되, 항상 전문의 상담을 권유하세요.";
+
+    // DB에서 설정 값을 읽고, 없으면 defaultValue 반환
+    private String getConfig(String key, String defaultValue) {
+        return chatbotConfigRepository.findByConfigKey(key)
+                .map(c -> c.getConfigValue())
+                .filter(v -> v != null && !v.isBlank())
+                .orElse(defaultValue);
+    }
+
+    private int getConfigInt(String key, int defaultValue) {
+        try { return Integer.parseInt(getConfig(key, String.valueOf(defaultValue))); }
+        catch (NumberFormatException e) { return defaultValue; }
+    }
+
+    // 인증된 이메일로 User 조회
+    private User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + email));
+    }
 
     // ==========================================
     // 채팅방(Room) 관리
     // ==========================================
 
     @Transactional
-    public ChatRoom createNewRoom(String title) {
-        User testUser = userRepository.findByEmail("test@test.com").orElse(null);
-
-        if (testUser == null) {
-            testUser = new User(
-                "test@test.com",
-                "dummy_password",
-                "LOCAL",
-                "테스트아빠",
-                "test_nickname",
-                "DAD",
-                LocalDate.of(1990, 1, 1),
-                "010-1234-5678",
-                "테스트 주소"
-            );
-            testUser = userRepository.save(testUser);
-        }
-
-        ChatRoom newRoom = new ChatRoom(testUser, title);
+    public ChatRoom createNewRoom(String title, String email) {
+        User user = getUserByEmail(email);
+        ChatRoom newRoom = new ChatRoom(user, title);
         return chatRoomRepository.save(newRoom);
     }
 
-    public List<ChatRoom> getAllRooms() {
-        return chatRoomRepository.findAll();
+    public List<ChatRoom> getRoomsByUser(String email) {
+        return chatRoomRepository.findByUserEmailOrderByCreatedAtDesc(email);
     }
 
     // ==========================================
     // 메시지 관리 및 RAG 기반 AI 응답
     // ==========================================
 
-    public List<ChatMessage> getChatHistoryByRoom(String roomId) {
+    public List<ChatMessage> getChatHistoryByRoom(String roomId, String email) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+        if (!room.getUser().getEmail().equals(email)) {
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
         return chatMessageRepository.findByChatRoom_IdOrderByIdAsc(roomId);
     }
 
     @Transactional
-    public void resetChatHistory(String roomId) {
+    public void resetChatHistory(String roomId, String email) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+        if (!room.getUser().getEmail().equals(email)) {
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
         chatMessageRepository.deleteByChatRoom_Id(roomId);
     }
 
@@ -101,18 +111,28 @@ public class GeminiService {
     }
 
     @Transactional
-    public String askToGemini(String roomId, String prompt) {
+    public String askToGemini(String roomId, String prompt, String email) {
         ChatRoom room = chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
+        // 본인 채팅방인지 확인
+        if (!room.getUser().getEmail().equals(email)) {
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+
         chatMessageRepository.save(new ChatMessage(room, ChatMessage.RoleType.USER, prompt));
 
+        // DB에서 설정 읽기
+        String systemPrompt = getConfig("system_prompt", DEFAULT_SYSTEM_PROMPT);
+        int topK = getConfigInt("rag_top_k", 5);
+
         try {
-            // RAG: pgvector 유사도 검색 → 관련 육아 지식 주입 → Gemini 응답
             String response = chatClient.prompt()
-                .system(SYSTEM_PROMPT)
+                .system(systemPrompt)
                 .user(prompt)
-                .advisors(QuestionAnswerAdvisor.builder(vectorStore).build())
+                .advisors(QuestionAnswerAdvisor.builder(vectorStore)
+                        .searchRequest(SearchRequest.builder().topK(topK).build())
+                        .build())
                 .call()
                 .content();
 

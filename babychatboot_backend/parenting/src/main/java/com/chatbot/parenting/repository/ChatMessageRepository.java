@@ -11,4 +11,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     
     // ★ 삭제할 때도 String 타입으로!
     void deleteByChatRoom_Id(String roomId);
+
+    long countByChatRoom_Id(String roomId);
 }

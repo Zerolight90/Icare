@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -348,14 +349,84 @@ public class AdminService {
     }
 
     // ==========================================
+    // 채팅 내역 관리
+    // ==========================================
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> searchChatRooms(String searchType, String keyword, LocalDateTime start, LocalDateTime end) {
+        List<ChatRoom> rooms;
+        LocalDateTime effectiveStart = start != null ? start : LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime effectiveEnd   = end   != null ? end   : LocalDateTime.now().plusDays(1);
+
+        if (keyword == null || keyword.isBlank()) {
+            rooms = chatRoomRepository.findAllWithDateRange(effectiveStart, effectiveEnd);
+        } else {
+            rooms = switch (searchType != null ? searchType : "nickname") {
+                case "userId" -> {
+                    try { yield chatRoomRepository.findByUserIdExact(Long.parseLong(keyword.trim()), effectiveStart, effectiveEnd); }
+                    catch (NumberFormatException e) { yield List.of(); }
+                }
+                case "babyName" -> chatRoomRepository.findByBabyName(keyword, effectiveStart, effectiveEnd);
+                default         -> chatRoomRepository.findByNickname(keyword, effectiveStart, effectiveEnd);
+            };
+        }
+
+        return rooms.stream().map(r -> {
+            User u = r.getUser();
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", r.getId());
+            m.put("title", r.getTitle());
+            m.put("createdAt", r.getCreatedAt());
+            m.put("userId", u.getId());
+            m.put("userNickname", u.getNickname());
+            m.put("userName", u.getName());
+            m.put("messageCount", chatMessageRepository.countByChatRoom_Id(r.getId()));
+            return m;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAdminChatMessages(String roomId) {
+        return chatMessageRepository.findByChatRoom_IdOrderByIdAsc(roomId).stream()
+            .map(msg -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", msg.getId());
+                m.put("role", msg.getRole().toString());
+                m.put("content", msg.getContent());
+                m.put("createdAt", msg.getCreatedAt());
+                return m;
+            }).collect(Collectors.toList());
+    }
+
+    // ==========================================
     // 일지 관리
     // ==========================================
 
     @Transactional(readOnly = true)
-    public Page<Map<String, Object>> getAllDailyLogs(String search, Pageable pageable) {
-        Page<DailyLog> logs = (search != null && !search.isBlank())
-                ? dailyLogRepository.searchByKeyword(search.trim(), pageable)
-                : dailyLogRepository.findAllByOrderByCreatedAtDesc(pageable);
+    public Page<Map<String, Object>> getAllDailyLogs(
+            String searchType, String keyword, String diaperType,
+            String breastfed, LocalDateTime start, LocalDateTime end,
+            Pageable pageable) {
+
+        boolean hasFilter = (keyword != null && !keyword.isBlank())
+                || (diaperType != null && !diaperType.isBlank())
+                || (breastfed != null && !"ALL".equals(breastfed))
+                || start != null || end != null;
+
+        Page<DailyLog> logs;
+        if (hasFilter) {
+            LocalDateTime s = start != null ? start : LocalDateTime.of(2000, 1, 1, 0, 0);
+            LocalDateTime e = end   != null ? end   : LocalDateTime.now().plusDays(1);
+            logs = dailyLogRepository.searchAdvanced(
+                    s, e,
+                    diaperType != null ? diaperType : "",
+                    breastfed  != null ? breastfed  : "ALL",
+                    keyword    != null ? keyword    : "",
+                    searchType != null ? searchType : "babyName",
+                    pageable);
+        } else {
+            logs = dailyLogRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
         return logs.map(l -> {
             Map<String, Object> m = new HashMap<>();
             m.put("id", l.getId());
