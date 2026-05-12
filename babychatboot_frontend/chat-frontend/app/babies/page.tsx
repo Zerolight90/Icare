@@ -125,7 +125,7 @@ export default function BabiesPage() {
           </div>
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2.5 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-xl shadow-sm transition"
+            className="flex items-center gap-2 px-4 py-2.5 bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium rounded-xl shadow-sm transition"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -136,7 +136,7 @@ export default function BabiesPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-16">
-            <div className="w-8 h-8 border-2 border-pink-200 border-t-pink-500 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-sky-200 border-t-sky-500 rounded-full animate-spin" />
           </div>
         ) : babies.length === 0 ? (
           <div className="text-center py-20">
@@ -145,7 +145,7 @@ export default function BabiesPage() {
             <p className="text-sm text-gray-500 mb-6">아이를 등록하면 AI 상담 및 건강 문진을 이용할 수 있어요</p>
             <button
               onClick={openAdd}
-              className="px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-xl transition"
+              className="px-6 py-3 bg-sky-500 hover:bg-sky-600 text-white font-medium rounded-xl transition"
             >
               첫 번째 아이 등록하기
             </button>
@@ -156,7 +156,7 @@ export default function BabiesPage() {
               <div key={baby.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-pink-50 border-2 border-pink-100 flex items-center justify-center text-3xl">
+                    <div className="w-16 h-16 rounded-2xl bg-sky-50 border-2 border-sky-100 flex items-center justify-center text-3xl">
                       {GENDER_ICON[baby.gender] ?? '👶'}
                     </div>
                     <div>
@@ -175,7 +175,7 @@ export default function BabiesPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => openEdit(baby)}
-                      className="text-xs text-gray-500 hover:text-pink-500 px-3 py-1.5 rounded-lg hover:bg-pink-50 transition"
+                      className="text-xs text-gray-500 hover:text-sky-500 px-3 py-1.5 rounded-lg hover:bg-sky-50 transition"
                     >
                       수정
                     </button>
@@ -202,7 +202,7 @@ export default function BabiesPage() {
                   </button>
                   <button
                     onClick={() => router.push('/chat')}
-                    className="flex-1 text-xs py-2 rounded-xl border border-pink-200 text-pink-600 hover:bg-pink-50 transition"
+                    className="flex-1 text-xs py-2 rounded-xl border border-sky-200 text-sky-600 hover:bg-sky-50 transition"
                   >
                     💬 AI 상담하기
                   </button>
@@ -244,7 +244,7 @@ export default function BabiesPage() {
                       onClick={() => setForm(f => ({ ...f, gender: g }))}
                       className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition ${
                         form.gender === g
-                          ? 'border-pink-400 bg-pink-50 text-pink-600'
+                          ? 'border-sky-400 bg-sky-50 text-sky-600'
                           : 'border-gray-200 text-gray-500 hover:border-gray-300'
                       }`}
                     >
@@ -316,7 +316,7 @@ export default function BabiesPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 py-3 rounded-xl bg-pink-500 hover:bg-pink-600 disabled:bg-pink-300 text-white text-sm font-semibold transition"
+                className="flex-1 py-3 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 text-white text-sm font-semibold transition"
               >
                 {saving ? '저장 중...' : editId != null ? '수정 완료' : '등록하기'}
               </button>
@@ -329,4 +329,4 @@ export default function BabiesPage() {
 }
 
 const lbl = 'block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5';
-const inp = 'w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition';
+const inp = 'w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition';

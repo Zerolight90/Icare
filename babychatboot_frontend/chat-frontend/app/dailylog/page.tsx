@@ -274,9 +274,9 @@ export default function DailyLogPage() {
                 <p className="text-2xl font-bold text-blue-600">{totalFormula}</p>
                 <p className="text-xs text-blue-400 mt-0.5">분유(ml)</p>
               </div>
-              <div className="bg-pink-50 rounded-xl p-3 text-center">
-                <p className="text-2xl font-bold text-pink-600">{breastfeedCount}</p>
-                <p className="text-xs text-pink-400 mt-0.5">수유(회)</p>
+              <div className="bg-rose-50 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-rose-500">{breastfeedCount}</p>
+                <p className="text-xs text-rose-400 mt-0.5">수유(회)</p>
               </div>
               <div className="bg-yellow-50 rounded-xl p-3 text-center">
                 <p className="text-2xl font-bold text-yellow-600">{diaperWet}</p>
@@ -313,15 +313,15 @@ export default function DailyLogPage() {
               <div>
                 <label className="text-xs text-gray-500 block mb-1">시작일</label>
                 <input type="date" value={dlFrom} onChange={e => setDlFrom(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400" />
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400" />
               </div>
               <div>
                 <label className="text-xs text-gray-500 block mb-1">종료일</label>
                 <input type="date" value={dlTo} onChange={e => setDlTo(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400" />
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400" />
               </div>
               <button onClick={handleDownload}
-                className="px-4 py-2 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 transition">
+                className="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition">
                 CSV 다운로드
               </button>
             </div>
@@ -335,7 +335,7 @@ export default function DailyLogPage() {
             <p className="font-semibold text-gray-700 mb-1">등록된 아이가 없어요</p>
             <p className="text-sm text-gray-400 mb-5">회원가입 또는 마이페이지에서 아이를 추가해주세요</p>
             <button onClick={() => router.push('/mypage')}
-              className="px-4 py-2 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 transition">
+              className="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition">
               마이페이지로 이동
             </button>
           </div>
@@ -351,7 +351,7 @@ export default function DailyLogPage() {
                   onClick={() => setSelectedBaby(baby)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition shadow-sm border ${
                     selectedBaby?.id === baby.id
-                      ? 'bg-pink-500 text-white border-pink-500'
+                      ? 'bg-sky-500 text-white border-sky-500'
                       : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -391,7 +391,7 @@ export default function DailyLogPage() {
             {/* 기록 추가 버튼 */}
             <div className="flex justify-end mb-3">
               <button onClick={openAdd}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 transition shadow-sm">
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition shadow-sm">
                 + 기록 추가
               </button>
             </div>
@@ -400,14 +400,14 @@ export default function DailyLogPage() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {isLoading ? (
                 <div className="flex items-center justify-center py-16">
-                  <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : logs.length === 0 ? (
                 <div className="text-center py-16">
                   <p className="text-3xl mb-2">📝</p>
                   <p className="text-gray-500 text-sm">이 날의 기록이 없어요</p>
                   <button onClick={openAdd}
-                    className="mt-4 px-4 py-2 rounded-xl bg-pink-50 text-pink-500 text-sm font-medium hover:bg-pink-100 transition">
+                    className="mt-4 px-4 py-2 rounded-xl bg-sky-50 text-sky-500 text-sm font-medium hover:bg-sky-100 transition">
                     첫 기록 추가하기
                   </button>
                 </div>
@@ -442,7 +442,7 @@ export default function DailyLogPage() {
                           </td>
                           <td className="px-4 py-3 text-center">
                             {log.breastfed ? (
-                              <span className="text-pink-500 font-bold">O</span>
+                              <span className="text-sky-500 font-bold">O</span>
                             ) : (
                               <span className="text-gray-300">-</span>
                             )}
@@ -487,7 +487,7 @@ export default function DailyLogPage() {
                     </span>
                     <span>
                       수유:&nbsp;
-                      <strong className="text-pink-500">
+                      <strong className="text-rose-500">
                         {logs.filter(l => l.breastfed).length}회
                       </strong>
                     </span>
@@ -549,7 +549,7 @@ export default function DailyLogPage() {
                   <button
                     onClick={() => setForm(p => ({ ...p, breastfed: !p.breastfed }))}
                     className={`relative w-12 h-6 rounded-full transition-colors ${
-                      form.breastfed ? 'bg-pink-500' : 'bg-gray-200'
+                      form.breastfed ? 'bg-rose-400' : 'bg-gray-200'
                     }`}
                   >
                     <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
@@ -568,7 +568,7 @@ export default function DailyLogPage() {
                         onClick={() => setForm(p => ({ ...p, diaperType: key }))}
                         className={`py-2 px-3 rounded-xl text-sm text-left border transition ${
                           form.diaperType === key
-                            ? 'border-pink-400 bg-pink-50 text-pink-600 font-medium'
+                            ? 'border-sky-400 bg-sky-50 text-sky-600 font-medium'
                             : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                         }`}
                       >
@@ -601,7 +601,7 @@ export default function DailyLogPage() {
                   취소
                 </button>
                 <button onClick={handleSave} disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 transition disabled:opacity-50">
+                  className="flex-1 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition disabled:opacity-50">
                   {saving ? '저장 중...' : (editId ? '수정 완료' : '저장')}
                 </button>
               </div>
@@ -614,4 +614,4 @@ export default function DailyLogPage() {
 }
 
 const labelCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5';
-const inputCls = 'w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition';
+const inputCls = 'w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition';

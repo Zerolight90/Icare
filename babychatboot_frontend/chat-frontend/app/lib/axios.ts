@@ -14,16 +14,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 응답 인터셉터: 401이면 토큰 제거 후 로그인 페이지로
+// 응답 인터셉터: 401이면 토큰 제거 후 로그인 페이지로 (인증 필요 페이지만)
 api.interceptors.response.use(
   res => res,
   err => {
     if (err?.response?.status === 401 && typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
-      const skip = ['/login', '/signup', '/admin/login'];
-      if (!skip.includes(currentPath)) {
+      // 인증 없이 접근 가능한 공개 페이지 — 리다이렉트 하지 않음
+      const publicPaths = ['/', '/login', '/signup', '/community', '/hospitals', '/chat'];
+      const isPublic =
+        publicPaths.includes(currentPath) ||
+        currentPath.startsWith('/community/') ||
+        currentPath.startsWith('/admin/login');
+      if (!isPublic) {
         localStorage.removeItem('accessToken');
         window.location.href = currentPath.startsWith('/admin') ? '/admin/login' : '/login';
+      } else {
+        localStorage.removeItem('accessToken');
       }
     }
     return Promise.reject(err);

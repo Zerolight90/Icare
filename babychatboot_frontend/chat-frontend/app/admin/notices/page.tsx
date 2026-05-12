@@ -86,7 +86,7 @@ export default function AdminNoticesPage() {
         </div>
         <button
           onClick={openCreate}
-          className="px-4 py-2 bg-pink-500 text-white rounded-xl text-sm font-semibold hover:bg-pink-600 transition"
+          className="px-4 py-2 bg-sky-500 text-white rounded-xl text-sm font-semibold hover:bg-sky-600 transition"
         >
           + 공지 작성
         </button>
@@ -94,7 +94,7 @@ export default function AdminNoticesPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : notices.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
@@ -169,7 +169,7 @@ export default function AdminNoticesPage() {
                 <input
                   value={form.title}
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400"
                   placeholder="공지사항 제목"
                 />
               </div>
@@ -179,7 +179,7 @@ export default function AdminNoticesPage() {
                   value={form.content}
                   onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                   rows={8}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400 resize-none"
                   placeholder="공지사항 내용을 입력하세요..."
                 />
               </div>
@@ -188,7 +188,7 @@ export default function AdminNoticesPage() {
                   type="checkbox"
                   checked={form.pinned}
                   onChange={e => setForm(f => ({ ...f, pinned: e.target.checked }))}
-                  className="w-4 h-4 accent-pink-500"
+                  className="w-4 h-4 accent-sky-500"
                 />
                 <span className="text-sm text-gray-700">필수 공지 (상단 고정)</span>
               </label>
@@ -203,7 +203,7 @@ export default function AdminNoticesPage() {
               <button
                 onClick={handleSave}
                 disabled={saving || !form.title || !form.content}
-                className="flex-1 py-2.5 rounded-xl bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 disabled:opacity-50"
               >
                 {saving ? '저장 중...' : '저장'}
               </button>

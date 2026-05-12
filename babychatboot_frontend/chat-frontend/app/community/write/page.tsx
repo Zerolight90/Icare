@@ -121,7 +121,7 @@ function WritePageContent() {
                     <button key={b.id} onClick={() => setSelectedBoardId(String(b.id))}
                       className={`px-3 py-1.5 rounded-xl text-sm font-medium border transition ${
                         selectedBoardId === String(b.id)
-                          ? b.boardType === 'MEDICAL' ? 'bg-blue-500 text-white border-blue-500' : 'bg-pink-500 text-white border-pink-500'
+                          ? b.boardType === 'MEDICAL' ? 'bg-blue-500 text-white border-blue-500' : 'bg-sky-500 text-white border-sky-500'
                           : 'text-gray-600 border-gray-200 hover:bg-gray-50'
                       }`}>
                       {b.name}
@@ -162,10 +162,10 @@ function WritePageContent() {
                   <button
                     onClick={() => fileRef.current?.click()}
                     disabled={uploading}
-                    className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-pink-400 hover:text-pink-400 transition flex flex-col items-center justify-center gap-1 text-xs"
+                    className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-sky-400 hover:text-sky-400 transition flex flex-col items-center justify-center gap-1 text-xs"
                   >
                     {uploading ? (
-                      <div className="w-4 h-4 border-2 border-pink-300 border-t-pink-500 rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-sky-300 border-t-sky-500 rounded-full animate-spin" />
                     ) : (
                       <>
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,7 +189,7 @@ function WritePageContent() {
               취소
             </Link>
             <button onClick={handleSubmit} disabled={saving || uploading}
-              className="px-5 py-2.5 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 transition disabled:opacity-50">
+              className="px-5 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition disabled:opacity-50">
               {saving ? '저장 중...' : isEdit ? '수정 완료' : '게시하기'}
             </button>
           </div>
@@ -208,4 +208,4 @@ export default function WritePage() {
 }
 
 const labelCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5';
-const inputCls = 'w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition';
+const inputCls = 'w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition';

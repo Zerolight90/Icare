@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, KeyboardEvent, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import api from '../lib/axios';
 import ReactMarkdown from 'react-markdown';
 
@@ -109,11 +110,9 @@ export default function ChatPage() {
   const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
-      <div className="flex items-center gap-2 px-4 py-3.5 border-b border-gray-100 bg-gradient-to-r from-pink-50 to-white">
+      <div className="flex items-center gap-2 px-4 py-3.5 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white">
         <Link href="/" className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-            <span className="text-sm">🍼</span>
-          </div>
+          <Image src="/logo.png" alt="iCare" width={32} height={32} className="rounded-xl flex-shrink-0 shadow-sm" />
           <div className="min-w-0">
             <p className="text-sm font-bold text-gray-800 leading-tight">iCare</p>
             <p className="text-[10px] text-gray-400 leading-tight">AI 육아 상담</p>
@@ -121,7 +120,7 @@ export default function ChatPage() {
         </Link>
         <button
           onClick={() => { setIsCreating(true); if (onClose) onClose(); }}
-          className="p-2 rounded-xl text-gray-400 hover:text-pink-500 hover:bg-pink-50 transition flex-shrink-0"
+          className="p-2 rounded-xl text-gray-400 hover:text-sky-500 hover:bg-sky-50 transition flex-shrink-0"
           title="새 채팅"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +139,7 @@ export default function ChatPage() {
 
       {/* 새 채팅 입력 */}
       {isCreating && (
-        <div className="px-3 py-2.5 border-b border-gray-100 bg-pink-50/50">
+        <div className="px-3 py-2.5 border-b border-gray-100 bg-sky-50/50">
           <input
             autoFocus value={newRoomTitle}
             onChange={e => setNewRoomTitle(e.target.value)}
@@ -149,7 +148,7 @@ export default function ChatPage() {
               if (e.key === 'Escape') { setIsCreating(false); setNewRoomTitle(''); }
             }}
             placeholder="상담 제목 입력 후 Enter"
-            className="w-full bg-white border border-pink-200 rounded-xl px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition"
+            className="w-full bg-white border border-sky-200 rounded-xl px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition"
           />
         </div>
       )}
@@ -168,7 +167,7 @@ export default function ChatPage() {
                     if (onClose) onClose();
                   }
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-gray-600 hover:text-pink-600 hover:bg-pink-50 transition border border-gray-100 hover:border-pink-200"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-gray-600 hover:text-sky-600 hover:bg-sky-50 transition border border-gray-100 hover:border-sky-200"
               >
                 <span className="text-sm">{cat.icon}</span>
                 <span className="truncate">{cat.name}</span>
@@ -198,7 +197,7 @@ export default function ChatPage() {
               onClick={() => { setCurrentRoomId(room.id); if (onClose) onClose(); }}
               className={`w-full text-left px-3 py-2.5 rounded-xl text-xs truncate transition-all ${
                 currentRoomId === room.id
-                  ? 'bg-pink-50 text-pink-700 font-semibold border border-pink-100'
+                  ? 'bg-sky-50 text-sky-700 font-semibold border border-sky-100'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
               }`}
             >
@@ -216,7 +215,7 @@ export default function ChatPage() {
           {NAV_LINKS.map(link => (
             <Link
               key={link.href} href={link.href}
-              className="flex flex-col items-center gap-0.5 py-2 rounded-xl text-gray-500 hover:bg-pink-50 hover:text-pink-600 transition text-center"
+              className="flex flex-col items-center gap-0.5 py-2 rounded-xl text-gray-500 hover:bg-sky-50 hover:text-sky-600 transition text-center"
             >
               <span className="text-base">{link.icon}</span>
               <span className="text-[10px] leading-tight">{link.label}</span>
@@ -268,7 +267,7 @@ export default function ChatPage() {
           {/* 봇 정보 */}
           <div className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="w-8 h-8 rounded-xl bg-pink-100 border border-pink-200 flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-sky-100 border border-sky-200 flex items-center justify-center shadow-sm">
                 <span className="text-sm">🩺</span>
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 border-2 border-white rounded-full" />
@@ -287,7 +286,7 @@ export default function ChatPage() {
               </span>
             )}
             <Link href="/"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-gray-500 hover:text-pink-600 hover:bg-pink-50 border border-gray-200 hover:border-pink-200 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-gray-500 hover:text-sky-600 hover:bg-sky-50 border border-gray-200 hover:border-sky-200 transition"
               title="메인으로"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -297,7 +296,7 @@ export default function ChatPage() {
             </Link>
             <button
               onClick={openNewChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white bg-pink-500 hover:bg-pink-600 transition shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white bg-sky-500 hover:bg-sky-600 transition shadow-sm"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -309,13 +308,13 @@ export default function ChatPage() {
 
         {/* 메시지 영역 */}
         <div className="flex-1 overflow-y-auto"
-          style={{ background: 'linear-gradient(180deg, #fdf2f8 0%, #f9fafb 40%)' }}>
+          style={{ background: 'linear-gradient(180deg, #f0f9ff 0%, #f9fafb 40%)' }}>
           <div className="max-w-3xl mx-auto px-4 py-8">
 
             {isRoomLoading && (
               <div className="flex items-center justify-center py-24">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="w-8 h-8 border-2 border-pink-200 border-t-pink-500 rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-2 border-sky-200 border-t-sky-500 rounded-full animate-spin" />
                   <p className="text-xs text-gray-400">대화를 불러오는 중...</p>
                 </div>
               </div>
@@ -324,10 +323,10 @@ export default function ChatPage() {
             {!currentRoomId && !isRoomLoading && (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="relative mb-6">
-                  <div className="w-24 h-24 rounded-3xl bg-pink-500 flex items-center justify-center shadow-lg shadow-pink-200">
-                    <span className="text-5xl">🍼</span>
+                  <div className="w-24 h-24 rounded-3xl bg-sky-50 border-2 border-sky-100 flex items-center justify-center shadow-lg shadow-sky-100">
+                    <Image src="/logo.png" alt="iCare" width={72} height={72} className="rounded-2xl" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full border-2 border-pink-100 flex items-center justify-center shadow-sm">
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full border-2 border-sky-100 flex items-center justify-center shadow-sm">
                     <span className="text-base">🩺</span>
                   </div>
                 </div>
@@ -339,7 +338,7 @@ export default function ChatPage() {
                   <div className="flex flex-wrap gap-2 justify-center mb-8 max-w-sm">
                     {categories.map(cat => (
                       <span key={cat.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-pink-100 bg-white text-xs text-gray-500 shadow-sm">
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-sky-100 bg-white text-xs text-gray-500 shadow-sm">
                         <span>{cat.icon}</span>{cat.name}
                       </span>
                     ))}
@@ -347,7 +346,7 @@ export default function ChatPage() {
                 )}
                 <button
                   onClick={openNewChat}
-                  className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold transition shadow-md shadow-pink-200 hover:shadow-lg hover:shadow-pink-200"
+                  className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold transition shadow-md shadow-sky-200 hover:shadow-lg hover:shadow-sky-200"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -359,7 +358,7 @@ export default function ChatPage() {
 
             {currentRoomId && messages.length === 0 && !isRoomLoading && (
               <div className="flex flex-col items-center py-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white border border-pink-100 shadow-sm flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-sky-100 shadow-sm flex items-center justify-center mb-4">
                   <span className="text-3xl">💬</span>
                 </div>
                 <h2 className="text-lg font-semibold text-gray-800 mb-1.5">무엇이 궁금하신가요?</h2>
@@ -369,7 +368,7 @@ export default function ChatPage() {
                     {categories.map(cat => (
                       <button key={cat.id}
                         onClick={() => handleSend(`${cat.name}에 대해서 상담하고 싶어요.`)}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs text-gray-600 hover:text-pink-600 hover:bg-pink-50 hover:border-pink-200 transition shadow-sm"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs text-gray-600 hover:text-sky-600 hover:bg-sky-50 hover:border-sky-200 transition shadow-sm"
                       >
                         <span>{cat.icon}</span>{cat.name}
                       </button>
@@ -387,16 +386,16 @@ export default function ChatPage() {
                 return (
                   <div key={msg.id} className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
                     {!isUser && (
-                      <div className="w-8 h-8 rounded-xl bg-pink-100 border border-pink-200 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                      <div className="w-8 h-8 rounded-xl bg-sky-100 border border-sky-200 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                         <span className="text-sm">🩺</span>
                       </div>
                     )}
                     <div className={`${isUser ? 'max-w-[75%]' : 'flex-1 min-w-0'}`}>
                       {!isUser && (
-                        <span className="text-xs font-semibold text-pink-500 mb-1.5 block">닥터 의비스</span>
+                        <span className="text-xs font-semibold text-sky-500 mb-1.5 block">닥터 의비스</span>
                       )}
                       {isUser ? (
-                        <div className="px-4 py-3 rounded-2xl rounded-tr-md text-sm leading-relaxed text-white bg-gradient-to-br from-pink-500 to-pink-600 whitespace-pre-wrap shadow-md shadow-pink-100">
+                        <div className="px-4 py-3 rounded-2xl rounded-tr-md text-sm leading-relaxed text-white bg-gradient-to-br from-sky-500 to-sky-600 whitespace-pre-wrap shadow-md shadow-sky-100">
                           {msg.content}
                         </div>
                       ) : (
@@ -410,12 +409,12 @@ export default function ChatPage() {
                           [&_li]:text-gray-700 [&_li]:leading-6
                           [&_strong]:text-gray-900 [&_strong]:font-semibold
                           [&_em]:text-gray-500 [&_em]:italic
-                          [&_blockquote]:border-l-2 [&_blockquote]:border-pink-300 [&_blockquote]:pl-4 [&_blockquote]:text-gray-500 [&_blockquote]:my-3 [&_blockquote]:bg-pink-50/50 [&_blockquote]:py-1 [&_blockquote]:rounded-r
-                          [&_code]:text-pink-600 [&_code]:bg-pink-50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs
+                          [&_blockquote]:border-l-2 [&_blockquote]:border-sky-300 [&_blockquote]:pl-4 [&_blockquote]:text-gray-500 [&_blockquote]:my-3 [&_blockquote]:bg-sky-50/50 [&_blockquote]:py-1 [&_blockquote]:rounded-r
+                          [&_code]:text-sky-600 [&_code]:bg-sky-50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs
                           [&_pre]:bg-gray-50 [&_pre]:border [&_pre]:border-gray-200 [&_pre]:rounded-xl [&_pre]:p-4 [&_pre]:my-3 [&_pre]:overflow-x-auto
                           [&_hr]:border-gray-200 [&_hr]:my-4
                           [&_table]:w-full [&_table]:border-collapse [&_table]:my-3
-                          [&_th]:bg-pink-50 [&_th]:border [&_th]:border-gray-200 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:text-gray-700
+                          [&_th]:bg-sky-50 [&_th]:border [&_th]:border-gray-200 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:text-gray-700
                           [&_td]:border [&_td]:border-gray-100 [&_td]:px-3 [&_td]:py-2 [&_td]:text-sm">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
@@ -436,14 +435,14 @@ export default function ChatPage() {
               {/* 로딩 애니메이션 */}
               {isLoading && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-pink-100 border border-pink-200 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                  <div className="w-8 h-8 rounded-xl bg-sky-100 border border-sky-200 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                     <span className="text-sm">🩺</span>
                   </div>
                   <div className="flex-1">
-                    <span className="text-xs font-semibold text-pink-500 mb-1.5 block">닥터 의비스</span>
+                    <span className="text-xs font-semibold text-sky-500 mb-1.5 block">닥터 의비스</span>
                     <div className="flex items-center gap-1.5 py-3 px-4 bg-white rounded-2xl rounded-tl-md border border-gray-100 shadow-sm w-fit">
                       {[0, 160, 320].map(d => (
-                        <span key={d} className="w-2 h-2 bg-pink-400 rounded-full animate-bounce"
+                        <span key={d} className="w-2 h-2 bg-sky-400 rounded-full animate-bounce"
                           style={{ animationDelay: `${d}ms` }} />
                       ))}
                     </div>
@@ -460,7 +459,7 @@ export default function ChatPage() {
           <div className="max-w-3xl mx-auto">
             <div className={`relative rounded-2xl border bg-white transition-all shadow-sm ${
               currentRoomId && !isLoading
-                ? 'border-gray-200 focus-within:border-pink-400 focus-within:ring-2 focus-within:ring-pink-100 focus-within:shadow-md'
+                ? 'border-gray-200 focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 focus-within:shadow-md'
                 : 'border-gray-100 opacity-60'
             }`}>
               <textarea
@@ -481,7 +480,7 @@ export default function ChatPage() {
                 disabled={isLoading || !input.trim() || !currentRoomId}
                 className={`absolute right-3 bottom-3 p-2 rounded-xl transition-all ${
                   input.trim() && !isLoading && currentRoomId
-                    ? 'bg-pink-500 hover:bg-pink-600 text-white cursor-pointer shadow-md'
+                    ? 'bg-sky-500 hover:bg-sky-600 text-white cursor-pointer shadow-md'
                     : 'bg-gray-100 text-gray-300 cursor-not-allowed'
                 }`}
               >

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import api from '../lib/axios';
 
 type Step = 'info' | 'baby' | 'verify';
@@ -26,7 +27,7 @@ interface FormData {
 }
 
 const inputClass =
-  'w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all bg-white';
+  'w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-400 transition-all bg-white';
 
 const STEPS: Step[] = ['info', 'baby', 'verify'];
 
@@ -142,12 +143,14 @@ export default function SignupPage() {
   const stepIndex = STEPS.indexOf(step);
 
   return (
-    <div className="min-h-screen bg-pink-50 flex items-center justify-center p-4 py-12">
+    <div className="min-h-screen bg-sky-50 flex items-center justify-center p-4 py-12">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8">
 
         {/* 헤더 */}
         <div className="text-center mb-6">
-          <span className="text-4xl block mb-2">👶</span>
+          <div className="flex justify-center mb-3">
+            <Image src="/logo.png" alt="iCare 로고" width={72} height={72} className="rounded-2xl" />
+          </div>
           <h2 className="text-2xl font-bold text-gray-900">iCare 가입하기</h2>
         </div>
 
@@ -157,13 +160,13 @@ export default function SignupPage() {
             <div key={s} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                 stepIndex === i
-                  ? 'bg-pink-500 text-white shadow-md'
+                  ? 'bg-sky-500 text-white shadow-md'
                   : stepIndex > i
-                  ? 'bg-pink-200 text-pink-600'
+                  ? 'bg-sky-200 text-sky-600'
                   : 'bg-gray-100 text-gray-400'
               }`}>{i + 1}</div>
               {i < STEPS.length - 1 && (
-                <div className={`w-10 h-0.5 mx-1 transition-colors ${stepIndex > i ? 'bg-pink-300' : 'bg-gray-200'}`} />
+                <div className={`w-10 h-0.5 mx-1 transition-colors ${stepIndex > i ? 'bg-sky-300' : 'bg-gray-200'}`} />
               )}
             </div>
           ))}
@@ -199,7 +202,7 @@ export default function SignupPage() {
               {([['DAD', '아빠 👨'], ['MOM', '엄마 👩']] as [Role, string][]).map(([val, label]) => (
                 <label key={val}
                   className={`flex-1 text-center py-2.5 rounded-lg cursor-pointer font-semibold transition-colors ${
-                    form.role === val ? 'bg-pink-500 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                    form.role === val ? 'bg-sky-500 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
                   }`}>
                   <input type="radio" name="role" value={val} className="hidden"
                     checked={form.role === val} onChange={e => set('role', e.target.value)} />
@@ -209,7 +212,7 @@ export default function SignupPage() {
             </div>
 
             <button type="submit"
-              className="w-full py-4 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 mt-2">
+              className="w-full py-4 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 mt-2">
               다음 →
             </button>
           </form>
@@ -231,8 +234,8 @@ export default function SignupPage() {
                     onClick={() => setBabyCount(value)}
                     className={`flex-1 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
                       form.babyCount === value
-                        ? 'border-pink-500 bg-pink-50 text-pink-600 shadow-sm'
-                        : 'border-gray-200 text-gray-400 hover:border-pink-300'
+                        ? 'border-sky-500 bg-sky-50 text-sky-600 shadow-sm'
+                        : 'border-gray-200 text-gray-400 hover:border-sky-300'
                     }`}
                   >
                     <span className="block text-lg mb-0.5">{icon}</span>
@@ -251,8 +254,8 @@ export default function SignupPage() {
 
             {/* 아기별 이름 + 성별 */}
             {Array.from({ length: form.babyCount }).map((_, i) => (
-              <div key={i} className="p-4 bg-pink-50 rounded-2xl space-y-3">
-                <p className="text-sm font-semibold text-pink-500">
+              <div key={i} className="p-4 bg-sky-50 rounded-2xl space-y-3">
+                <p className="text-sm font-semibold text-sky-500">
                   {form.babyCount === 1 ? '👶 아기' : `👶 ${i + 1}번째 아기`}
                 </p>
 
@@ -270,7 +273,7 @@ export default function SignupPage() {
                     <label key={value}
                       className={`flex-1 text-center py-2 rounded-lg cursor-pointer text-sm font-semibold transition-colors ${
                         form.babyGenders[i] === value
-                          ? 'bg-pink-500 text-white shadow-sm'
+                          ? 'bg-sky-500 text-white shadow-sm'
                           : 'text-gray-400 hover:text-gray-600'
                       }`}>
                       <input type="radio" name={`babyGender_${i}`} value={value} className="hidden"
@@ -300,11 +303,11 @@ export default function SignupPage() {
 
             <div className="flex gap-3 pt-1">
               <button type="button" onClick={() => { setStep('info'); setError(''); }}
-                className="flex-1 py-4 border-2 border-pink-200 text-pink-500 font-bold rounded-2xl transition hover:bg-pink-50 active:scale-95">
+                className="flex-1 py-4 border-2 border-sky-200 text-sky-500 font-bold rounded-2xl transition hover:bg-sky-50 active:scale-95">
                 ← 이전
               </button>
               <button type="submit" disabled={isLoading}
-                className="flex-1 py-4 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 disabled:opacity-50">
+                className="flex-1 py-4 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 disabled:opacity-50">
                 {isLoading ? '처리 중...' : '가입 완료'}
               </button>
             </div>
@@ -314,11 +317,11 @@ export default function SignupPage() {
         {/* ─── Step 3: 이메일 인증 ─── */}
         {step === 'verify' && (
           <form onSubmit={handleVerify} className="space-y-5">
-            <div className="text-center py-4 bg-pink-50 rounded-2xl px-4">
+            <div className="text-center py-4 bg-sky-50 rounded-2xl px-4">
               <span className="text-5xl block mb-3">📧</span>
               <p className="text-gray-800 font-semibold">인증 메일을 발송했습니다</p>
               <p className="text-sm text-gray-500 mt-2">
-                <span className="text-pink-500 font-bold break-all">{form.email}</span>
+                <span className="text-sky-500 font-bold break-all">{form.email}</span>
                 <br />으로 인증번호 6자리를 보내드렸습니다.
               </p>
               <p className="text-xs text-amber-500 mt-2 font-medium">⏱ 유효시간: 3분</p>
@@ -337,12 +340,12 @@ export default function SignupPage() {
             )}
 
             <button type="submit" disabled={isLoading || verifyCode.length !== 6}
-              className="w-full py-4 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 disabled:opacity-50">
+              className="w-full py-4 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 disabled:opacity-50">
               {isLoading ? '확인 중...' : '인증 완료 ✓'}
             </button>
 
             <button type="button" onClick={handleResend}
-              className="w-full py-2 text-sm text-gray-400 hover:text-pink-500 transition underline-offset-2 hover:underline">
+              className="w-full py-2 text-sm text-gray-400 hover:text-sky-500 transition underline-offset-2 hover:underline">
               인증번호가 오지 않나요? 재발송
             </button>
           </form>
@@ -350,7 +353,7 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-gray-500">
           이미 계정이 있으신가요?{' '}
-          <Link href="/login" className="text-pink-500 font-bold hover:underline">로그인 하기</Link>
+          <Link href="/login" className="text-sky-500 font-bold hover:underline">로그인 하기</Link>
         </p>
       </div>
     </div>

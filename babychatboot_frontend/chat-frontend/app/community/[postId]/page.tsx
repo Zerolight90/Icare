@@ -115,7 +115,7 @@ export default function PostDetailPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex items-center justify-center h-screen">
-          <div className="w-6 h-6 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -141,7 +141,7 @@ export default function PostDetailPage() {
           {/* 헤더 */}
           <div className="px-6 pt-6 pb-4 border-b border-gray-100">
             <div className="flex items-start gap-3 mb-3">
-              <span className="inline-block px-2.5 py-0.5 rounded-full bg-pink-50 text-pink-500 text-xs font-semibold">
+              <span className="inline-block px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-500 text-xs font-semibold">
                 {post.boardName}
               </span>
             </div>
@@ -200,7 +200,7 @@ export default function PostDetailPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-800 text-sm">
-              댓글 <span className="text-pink-500">{post.comments.length}</span>
+              댓글 <span className="text-sky-500">{post.comments.length}</span>
             </h2>
           </div>
 
@@ -215,7 +215,7 @@ export default function PostDetailPage() {
                 <div key={comment.id} className="px-6 py-4">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center text-xs">
+                      <span className="w-6 h-6 rounded-full bg-sky-100 flex items-center justify-center text-xs">
                         👤
                       </span>
                       <span className="text-sm font-medium text-gray-700">{comment.authorNickname}</span>
@@ -254,12 +254,12 @@ export default function PostDetailPage() {
                     }}
                     placeholder="댓글을 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"
                     rows={2}
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 resize-none transition"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 resize-none transition"
                   />
                   <button
                     onClick={handleAddComment}
                     disabled={commentSaving}
-                    className="px-4 py-2 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 transition disabled:opacity-50 self-end"
+                    className="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition disabled:opacity-50 self-end"
                   >
                     {commentSaving ? '...' : '등록'}
                   </button>
@@ -269,7 +269,7 @@ export default function PostDetailPage() {
             ) : (
               <p className="text-sm text-gray-400 text-center py-2">
                 댓글을 작성하려면{' '}
-                <Link href="/login" className="text-pink-500 font-medium hover:underline">
+                <Link href="/login" className="text-sky-500 font-medium hover:underline">
                   로그인
                 </Link>
                 이 필요합니다.

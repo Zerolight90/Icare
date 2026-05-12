@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/axios';
 
@@ -52,25 +53,26 @@ export default function Header() {
   return (
     <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-bold text-pink-500 flex items-center gap-2">
-          👶 <span className="hidden sm:block">iCare</span>
+        <Link href="/" className="text-2xl font-bold text-sky-600 flex items-center gap-2">
+          <Image src="/logo.png" alt="iCare 로고" width={36} height={36} className="rounded-xl" />
+          <span className="hidden sm:block">iCare</span>
         </Link>
 
         {/* 네비게이션 */}
         <nav className="hidden md:flex items-center gap-1">
-          <Link href="/community" className="text-sm text-gray-500 hover:text-pink-500 transition px-3 py-1.5 rounded-lg hover:bg-pink-50">
+          <Link href="/community" className="text-sm text-gray-500 hover:text-sky-500 transition px-3 py-1.5 rounded-lg hover:bg-sky-50">
             커뮤니티
           </Link>
-          <Link href="/hospitals" className="text-sm text-gray-500 hover:text-pink-500 transition px-3 py-1.5 rounded-lg hover:bg-pink-50">
+          <Link href="/hospitals" className="text-sm text-gray-500 hover:text-sky-500 transition px-3 py-1.5 rounded-lg hover:bg-sky-50">
             병원찾기
           </Link>
-          <Link href="/chat" className="text-sm text-gray-500 hover:text-pink-500 transition px-3 py-1.5 rounded-lg hover:bg-pink-50">
+          <Link href="/chat" className="text-sm text-gray-500 hover:text-sky-500 transition px-3 py-1.5 rounded-lg hover:bg-sky-50">
             AI 상담
           </Link>
-          <Link href="/dailylog" className="text-sm text-gray-500 hover:text-pink-500 transition px-3 py-1.5 rounded-lg hover:bg-pink-50">
+          <Link href="/dailylog" className="text-sm text-gray-500 hover:text-sky-500 transition px-3 py-1.5 rounded-lg hover:bg-sky-50">
             일과표
           </Link>
-          <Link href="/babies" className="text-sm text-gray-500 hover:text-pink-500 transition px-3 py-1.5 rounded-lg hover:bg-pink-50">
+          <Link href="/babies" className="text-sm text-gray-500 hover:text-sky-500 transition px-3 py-1.5 rounded-lg hover:bg-sky-50">
             아이관리
           </Link>
         </nav>
@@ -79,7 +81,7 @@ export default function Header() {
           {isLoggedIn ? (
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                <span className="text-pink-500 font-bold">{userName}</span>님
+                <span className="text-sky-500 font-bold">{userName}</span>님
               </span>
               {isAdmin && (
                 <Link
@@ -91,7 +93,7 @@ export default function Header() {
               )}
               <Link
                 href="/mypage"
-                className="text-xs font-medium text-gray-500 hover:text-pink-500 transition px-2 py-1 rounded-lg hover:bg-pink-50"
+                className="text-xs font-medium text-gray-500 hover:text-sky-500 transition px-2 py-1 rounded-lg hover:bg-sky-50"
               >
                 마이페이지
               </Link>
@@ -107,7 +109,7 @@ export default function Header() {
               <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
                 로그인
               </Link>
-              <Link href="/signup" className="text-sm font-medium bg-pink-500 text-white px-4 py-2 rounded-2xl hover:bg-pink-600 transition shadow-sm">
+              <Link href="/signup" className="text-sm font-medium bg-sky-500 text-white px-4 py-2 rounded-2xl hover:bg-sky-600 transition shadow-sm">
                 시작하기
               </Link>
             </div>

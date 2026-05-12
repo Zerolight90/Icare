@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '../lib/axios'; // 이전에 만든 axios 인터셉터 인스턴스
-import { isAxiosError } from 'axios'; // 🟢 TypeScript 에러 방지용 도구 추가
+import Image from 'next/image';
+import api from '../lib/axios';
+import { isAxiosError } from 'axios';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -47,12 +48,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-sky-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl overflow-hidden p-8">
-        
+
         {/* 헤더 부분 */}
         <div className="text-center mb-8">
-          <span className="text-4xl block mb-2">🍼</span>
+          <div className="flex justify-center mb-3">
+            <Image src="/logo.png" alt="iCare 로고" width={72} height={72} className="rounded-2xl" />
+          </div>
           <h2 className="text-2xl font-bold text-gray-900">iCare 로그인</h2>
           <p className="text-sm text-gray-500 mt-2">우리아이 스마트 육아 비서에 오신 것을 환영해요!</p>
         </div>
@@ -66,7 +69,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
               placeholder="이메일을 입력해주세요"
             />
           </div>
@@ -78,7 +81,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
               placeholder="비밀번호를 입력해주세요"
             />
           </div>
@@ -86,7 +89,7 @@ export default function LoginPage() {
           {/* 🟢 회원가입 연결부 */}
           <p className="mt-6 text-center text-sm text-gray-500">
             계정이 없으신가요?{" "}
-            <Link href="/signup" className="text-pink-500 font-bold hover:underline">
+            <Link href="/signup" className="text-sky-500 font-bold hover:underline">
               회원가입 하기
             </Link>
           </p>
@@ -102,7 +105,7 @@ export default function LoginPage() {
             type="submit" 
             disabled={isLoading}
             className={`w-full py-3 rounded-xl text-white font-bold text-lg shadow-md transition-all ${
-              isLoading ? 'bg-pink-300 cursor-not-allowed' : 'bg-pink-500 hover:bg-pink-600 active:scale-95'
+              isLoading ? 'bg-sky-300 cursor-not-allowed' : 'bg-sky-500 hover:bg-sky-600 active:scale-95'
             }`}
           >
             {isLoading ? '로그인 중...' : '로그인'}
@@ -113,7 +116,7 @@ export default function LoginPage() {
         <div className="mt-8 text-center border-t border-gray-100 pt-6">
           <p className="text-sm text-gray-600">
             아직 iCare 회원이 아니신가요? <br/>
-            <Link href="/register" className="text-pink-500 font-bold hover:underline mt-1 inline-block">
+            <Link href="/register" className="text-sky-500 font-bold hover:underline mt-1 inline-block">
               회원가입하고 무료 상담받기
             </Link>
           </p>

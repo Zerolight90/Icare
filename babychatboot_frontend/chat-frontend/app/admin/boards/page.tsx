@@ -81,7 +81,7 @@ export default function AdminBoardsPage() {
         </div>
         <button
           onClick={openCreate}
-          className="px-4 py-2 bg-pink-500 text-white rounded-xl text-sm font-semibold hover:bg-pink-600 transition"
+          className="px-4 py-2 bg-sky-500 text-white rounded-xl text-sm font-semibold hover:bg-sky-600 transition"
         >
           + 게시판 추가
         </button>
@@ -89,7 +89,7 @@ export default function AdminBoardsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -116,7 +116,7 @@ export default function AdminBoardsPage() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         board.boardType === 'MEDICAL'
                           ? 'bg-blue-100 text-blue-700'
-                          : 'bg-pink-100 text-pink-700'
+                          : 'bg-sky-100 text-sky-700'
                       }`}>
                         {board.boardType === 'MEDICAL' ? '의학' : '커뮤니티'}
                       </span>
@@ -169,7 +169,7 @@ export default function AdminBoardsPage() {
                 <input
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400"
                   placeholder="예: 자유게시판"
                 />
               </div>
@@ -178,7 +178,7 @@ export default function AdminBoardsPage() {
                 <input
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400"
                   placeholder="게시판 설명"
                 />
               </div>
@@ -189,7 +189,7 @@ export default function AdminBoardsPage() {
                     type="number"
                     value={form.displayOrder}
                     onChange={e => setForm(f => ({ ...f, displayOrder: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400"
                     min={1}
                   />
                 </div>
@@ -198,7 +198,7 @@ export default function AdminBoardsPage() {
                   <select
                     value={form.boardType}
                     onChange={e => setForm(f => ({ ...f, boardType: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400"
                   >
                     <option value="COMMUNITY">커뮤니티</option>
                     <option value="MEDICAL">의학 상담</option>
@@ -216,7 +216,7 @@ export default function AdminBoardsPage() {
               <button
                 onClick={handleSave}
                 disabled={saving || !form.name}
-                className="flex-1 py-2 rounded-xl bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 disabled:opacity-50"
+                className="flex-1 py-2 rounded-xl bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 disabled:opacity-50"
               >
                 {saving ? '저장 중...' : '저장'}
               </button>

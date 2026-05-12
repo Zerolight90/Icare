@@ -155,7 +155,7 @@ export default function AdminDocumentsPage() {
                     <input
                       value={entry.source}
                       onChange={e => updateEntry(i, 'source', e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400"
                       placeholder="예: 수유 가이드라인 2024"
                     />
                     <div className="flex flex-wrap gap-1.5 mt-2">
@@ -163,7 +163,7 @@ export default function AdminDocumentsPage() {
                         <button
                           key={s}
                           onClick={() => updateEntry(i, 'source', s)}
-                          className="px-2 py-0.5 rounded-lg bg-gray-100 text-xs text-gray-600 hover:bg-pink-100 hover:text-pink-600 transition"
+                          className="px-2 py-0.5 rounded-lg bg-gray-100 text-xs text-gray-600 hover:bg-sky-100 hover:text-sky-600 transition"
                         >
                           {s}
                         </button>
@@ -176,7 +176,7 @@ export default function AdminDocumentsPage() {
                       value={entry.content}
                       onChange={e => updateEntry(i, 'content', e.target.value)}
                       rows={8}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:border-pink-400 resize-y"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:border-sky-400 resize-y"
                       placeholder="육아 지식, 의학 정보, 가이드라인 등을 입력하세요..."
                     />
                     <p className="text-xs text-gray-400 mt-1">{entry.content.length}자</p>
@@ -195,7 +195,7 @@ export default function AdminDocumentsPage() {
             <button
               onClick={handleSubmit}
               disabled={saving || entries.every(e => !e.source || !e.content)}
-              className="px-6 py-2 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 disabled:opacity-50 transition"
+              className="px-6 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 disabled:opacity-50 transition"
             >
               {saving ? '임베딩 중...' : '벡터스토어에 저장'}
             </button>
@@ -221,7 +221,7 @@ export default function AdminDocumentsPage() {
             <div>
               <label className="text-xs font-medium text-gray-600 mb-2 block">파일 선택 (.txt, .csv, .md)</label>
               <div
-                className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-pink-300 transition"
+                className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-sky-300 transition"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <p className="text-3xl mb-2">📄</p>
@@ -264,7 +264,7 @@ export default function AdminDocumentsPage() {
               <input
                 value={fileSource}
                 onChange={e => setFileSource(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400"
                 placeholder="예: 수유 가이드라인 2024 (선택)"
               />
             </div>
@@ -272,7 +272,7 @@ export default function AdminDocumentsPage() {
             <button
               onClick={handleUpload}
               disabled={uploadSaving || selectedFiles.length === 0}
-              className="w-full py-2.5 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 disabled:opacity-50 transition"
+              className="w-full py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 disabled:opacity-50 transition"
             >
               {uploadSaving ? '임베딩 중...' : `${selectedFiles.length}개 파일 업로드 & 임베딩`}
             </button>

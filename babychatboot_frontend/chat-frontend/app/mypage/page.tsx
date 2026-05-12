@@ -184,7 +184,7 @@ export default function MyPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex items-center justify-center h-screen">
-          <div className="w-6 h-6 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -203,13 +203,13 @@ export default function MyPage() {
 
         {/* 상단 프로필 요약 */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-pink-100 border-2 border-pink-200 flex items-center justify-center text-2xl flex-shrink-0">
+          <div className="w-16 h-16 rounded-full bg-sky-100 border-2 border-sky-200 flex items-center justify-center text-2xl flex-shrink-0">
             {profile?.role === 'MOM' ? '👩' : '👨'}
           </div>
           <div>
             <p className="font-bold text-gray-900 text-lg">{profile?.nickname}</p>
             <p className="text-sm text-gray-500">{profile?.email}</p>
-            <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-pink-100 text-pink-600 font-medium">
+            <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-sky-100 text-sky-600 font-medium">
               {roleLabel(profile?.role ?? '')}
             </span>
           </div>
@@ -223,7 +223,7 @@ export default function MyPage() {
               onClick={() => setTab(t.key)}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
                 tab === t.key
-                  ? 'bg-pink-500 text-white shadow-sm'
+                  ? 'bg-sky-500 text-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -274,7 +274,7 @@ export default function MyPage() {
                 />
                 <button
                   onClick={openAddressSearch}
-                  className="px-3 py-2.5 rounded-xl bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 transition whitespace-nowrap"
+                  className="px-3 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition whitespace-nowrap"
                 >
                   주소 검색
                 </button>
@@ -296,7 +296,7 @@ export default function MyPage() {
             <button
               onClick={handleProfileSave}
               disabled={profileSaving}
-              className="w-full py-3 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-600 transition disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-sky-500 text-white font-semibold hover:bg-sky-600 transition disabled:opacity-50"
             >
               {profileSaving ? '저장 중...' : '저장하기'}
             </button>
@@ -353,7 +353,7 @@ export default function MyPage() {
                 <button
                   onClick={handlePasswordChange}
                   disabled={pwSaving}
-                  className="w-full py-3 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-600 transition disabled:opacity-50"
+                  className="w-full py-3 rounded-xl bg-sky-500 text-white font-semibold hover:bg-sky-600 transition disabled:opacity-50"
                 >
                   {pwSaving ? '변경 중...' : '비밀번호 변경'}
                 </button>
@@ -371,8 +371,8 @@ export default function MyPage() {
                 <h2 className="font-semibold text-gray-800 mb-4">내 가족 초대 코드</h2>
                 <p className="text-xs text-gray-400 mb-3">배우자에게 아래 코드를 공유하여 가족으로 연결하세요</p>
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 bg-pink-50 border border-pink-200 rounded-xl py-3 text-center">
-                    <span className="text-2xl font-bold text-pink-500 tracking-[0.3em]">
+                  <div className="flex-1 bg-sky-50 border border-sky-200 rounded-xl py-3 text-center">
+                    <span className="text-2xl font-bold text-sky-500 tracking-[0.3em]">
                       {profile.inviteCode}
                     </span>
                   </div>
@@ -426,7 +426,7 @@ export default function MyPage() {
                 <button
                   onClick={handleJoinFamily}
                   disabled={familySaving}
-                  className="px-4 py-2.5 rounded-xl bg-pink-500 text-white font-semibold text-sm hover:bg-pink-600 transition disabled:opacity-50"
+                  className="px-4 py-2.5 rounded-xl bg-sky-500 text-white font-semibold text-sm hover:bg-sky-600 transition disabled:opacity-50"
                 >
                   {familySaving ? '연결 중...' : '합류'}
                 </button>
@@ -457,4 +457,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputCls =
-  'w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition';
+  'w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition';

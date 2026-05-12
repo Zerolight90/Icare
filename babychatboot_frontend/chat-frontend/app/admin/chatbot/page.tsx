@@ -176,7 +176,7 @@ export default function AdminChatbotPage() {
           onClick={() => setActiveTab('config')}
           className={`px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition ${
             activeTab === 'config'
-              ? 'border-pink-500 text-pink-600'
+              ? 'border-sky-500 text-sky-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
@@ -186,7 +186,7 @@ export default function AdminChatbotPage() {
           onClick={() => setActiveTab('chat')}
           className={`px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition ${
             activeTab === 'chat'
-              ? 'border-pink-500 text-pink-600'
+              ? 'border-sky-500 text-sky-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
@@ -199,7 +199,7 @@ export default function AdminChatbotPage() {
         <div>
           {/* RAG / 청킹 설정 슬라이더 카드 */}
           {!loading && (
-            <div className="bg-white rounded-2xl border border-pink-100 shadow-sm p-5 mb-4">
+            <div className="bg-white rounded-2xl border border-sky-100 shadow-sm p-5 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="font-semibold text-gray-800">RAG / 청킹 설정</p>
@@ -209,7 +209,7 @@ export default function AdminChatbotPage() {
                   {ragSaved && <span className="text-xs text-green-600 font-medium">저장됨 ✓</span>}
                   <button
                     onClick={saveRagSettings} disabled={ragSaving}
-                    className="px-4 py-1.5 rounded-lg bg-pink-500 text-white text-xs font-medium hover:bg-pink-600 disabled:opacity-50 transition"
+                    className="px-4 py-1.5 rounded-lg bg-sky-500 text-white text-xs font-medium hover:bg-sky-600 disabled:opacity-50 transition"
                   >
                     {ragSaving ? '저장 중...' : '저장'}
                   </button>
@@ -219,31 +219,31 @@ export default function AdminChatbotPage() {
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
                     <label className="text-sm text-gray-700 font-medium">검색 문서 수 (rag_top_k)</label>
-                    <span className="text-sm font-bold text-pink-500 w-8 text-right">{ragTopK}</span>
+                    <span className="text-sm font-bold text-sky-500 w-8 text-right">{ragTopK}</span>
                   </div>
                   <input type="range" min={1} max={20} step={1} value={ragTopK}
                     onChange={e => setRagTopK(Number(e.target.value))}
-                    className="w-full h-2 rounded-full accent-pink-500 cursor-pointer" />
+                    className="w-full h-2 rounded-full accent-sky-500 cursor-pointer" />
                   <div className="flex justify-between text-xs text-gray-400 mt-1"><span>1</span><span>권장: 3–10</span><span>20</span></div>
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
                     <label className="text-sm text-gray-700 font-medium">청킹 크기 (rag_chunk_size)</label>
-                    <span className="text-sm font-bold text-pink-500 w-12 text-right">{ragChunkSize}</span>
+                    <span className="text-sm font-bold text-sky-500 w-12 text-right">{ragChunkSize}</span>
                   </div>
                   <input type="range" min={128} max={2048} step={64} value={ragChunkSize}
                     onChange={e => setRagChunkSize(Number(e.target.value))}
-                    className="w-full h-2 rounded-full accent-pink-500 cursor-pointer" />
+                    className="w-full h-2 rounded-full accent-sky-500 cursor-pointer" />
                   <div className="flex justify-between text-xs text-gray-400 mt-1"><span>128</span><span>권장: 512</span><span>2048</span></div>
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
                     <label className="text-sm text-gray-700 font-medium">청크 겹침 (rag_chunk_overlap)</label>
-                    <span className="text-sm font-bold text-pink-500 w-12 text-right">{ragChunkOverlap}</span>
+                    <span className="text-sm font-bold text-sky-500 w-12 text-right">{ragChunkOverlap}</span>
                   </div>
                   <input type="range" min={0} max={512} step={32} value={ragChunkOverlap}
                     onChange={e => setRagChunkOverlap(Number(e.target.value))}
-                    className="w-full h-2 rounded-full accent-pink-500 cursor-pointer" />
+                    className="w-full h-2 rounded-full accent-sky-500 cursor-pointer" />
                   <div className="flex justify-between text-xs text-gray-400 mt-1"><span>0</span><span>권장: 64</span><span>512</span></div>
                 </div>
               </div>
@@ -252,7 +252,7 @@ export default function AdminChatbotPage() {
 
           {loading ? (
             <div className="flex items-center justify-center h-40">
-              <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <div className="space-y-4">
@@ -288,13 +288,13 @@ export default function AdminChatbotPage() {
                           value={editValue}
                           onChange={e => setEditValue(e.target.value)}
                           rows={10}
-                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:border-pink-400 resize-y"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:border-sky-400 resize-y"
                         />
                       ) : (
                         <input
                           value={editValue}
                           onChange={e => setEditValue(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400"
                         />
                       )}
                       <div className="flex gap-2 mt-2">
@@ -307,7 +307,7 @@ export default function AdminChatbotPage() {
                         <button
                           onClick={() => handleSave(config.configKey)}
                           disabled={saving}
-                          className="px-3 py-1.5 rounded-lg bg-pink-500 text-white text-xs font-medium hover:bg-pink-600 disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-lg bg-sky-500 text-white text-xs font-medium hover:bg-sky-600 disabled:opacity-50"
                         >
                           {saving ? '저장 중...' : '저장'}
                         </button>
@@ -347,14 +347,14 @@ export default function AdminChatbotPage() {
                 type="date"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-100"
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-100"
               />
               <span className="text-gray-400 font-medium">~</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-100"
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-100"
               />
               {(startDate || endDate) && (
                 <button
@@ -374,7 +374,7 @@ export default function AdminChatbotPage() {
               <select
                 value={searchType}
                 onChange={e => setSearchType(e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-400 bg-white text-gray-700"
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400 bg-white text-gray-700"
               >
                 <option value="nickname">닉네임</option>
                 <option value="userId">유저 아이디</option>
@@ -389,12 +389,12 @@ export default function AdminChatbotPage() {
                   searchType === 'userId'   ? '유저 아이디 번호 입력' :
                   searchType === 'babyName' ? '아기 이름 입력' : '닉네임 입력'
                 }
-                className="flex-1 min-w-48 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-100"
+                className="flex-1 min-w-48 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-100"
               />
               <button
                 onClick={handleSearch}
                 disabled={isSearching}
-                className="px-5 py-2 rounded-xl bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 disabled:opacity-50 transition flex items-center gap-2"
+                className="px-5 py-2 rounded-xl bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 disabled:opacity-50 transition flex items-center gap-2"
               >
                 {isSearching ? (
                   <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> 검색 중</>
@@ -493,7 +493,7 @@ export default function AdminChatbotPage() {
                                     </p>
                                     <div className={`px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed ${
                                       msg.role === 'USER'
-                                        ? 'bg-pink-500 text-white rounded-tr-sm'
+                                        ? 'bg-sky-500 text-white rounded-tr-sm'
                                         : 'bg-white text-gray-700 border border-gray-200 rounded-tl-sm shadow-sm'
                                     }`}>
                                       {msg.content}

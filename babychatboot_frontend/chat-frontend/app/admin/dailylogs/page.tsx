@@ -116,7 +116,7 @@ export default function AdminDailyLogsPage() {
         <h1 className="text-2xl font-bold text-gray-800">일지 관리</h1>
         <p className="text-sm text-gray-500 mt-1">
           전체 {pageData?.totalElements ?? '-'}개
-          {hasFilter && <span className="text-pink-500 ml-1">· 필터 적용 중</span>}
+          {hasFilter && <span className="text-sky-500 ml-1">· 필터 적용 중</span>}
         </p>
       </div>
 
@@ -127,10 +127,10 @@ export default function AdminDailyLogsPage() {
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">기간 설정</p>
           <div className="flex flex-wrap items-center gap-2">
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-400" />
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400" />
             <span className="text-gray-400">~</span>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-400" />
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400" />
           </div>
         </div>
 
@@ -143,25 +143,25 @@ export default function AdminDailyLogsPage() {
           <div className="flex flex-wrap gap-2">
             {/* 검색 타입 + 키워드 */}
             <select value={searchType} onChange={e => setSearchType(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pink-400">
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-sky-400">
               {SEARCH_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
             <input
               type="text" value={keyword} onChange={e => setKeyword(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
               placeholder="검색어 입력..."
-              className="flex-1 min-w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-400"
+              className="flex-1 min-w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400"
             />
 
             {/* 기저귀 */}
             <select value={diaperType} onChange={e => setDiaperType(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pink-400">
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-sky-400">
               {DIAPER_OPTIONS.map(o => <option key={o.value} value={o.value}>기저귀: {o.label}</option>)}
             </select>
 
             {/* 수유 */}
             <select value={breastfed} onChange={e => setBreastfed(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pink-400">
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-sky-400">
               {BREASTFED_OPTIONS.map(o => <option key={o.value} value={o.value}>모유: {o.label}</option>)}
             </select>
           </div>
@@ -171,7 +171,7 @@ export default function AdminDailyLogsPage() {
         <div className="flex gap-2 pt-1">
           <button
             onClick={handleSearch}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 transition"
+            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -191,7 +191,7 @@ export default function AdminDailyLogsPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-40">
-            <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : !pageData || pageData.content.length === 0 ? (
           <div className="text-center py-16">
@@ -229,7 +229,7 @@ export default function AdminDailyLogsPage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         {log.breastfed === true
-                          ? <span className="text-pink-500 text-base">✓</span>
+                          ? <span className="text-sky-500 text-base">✓</span>
                           : <span className="text-gray-300 text-xs">-</span>}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -256,7 +256,7 @@ export default function AdminDailyLogsPage() {
                   className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30">‹</button>
                 {Array.from({ length: Math.min(pageData.totalPages, 10) }, (_, i) => (
                   <button key={i} onClick={() => setPage(i)}
-                    className={`w-8 h-8 rounded-lg text-sm ${page === i ? 'bg-pink-500 text-white font-semibold' : 'text-gray-500 hover:bg-gray-100'}`}>
+                    className={`w-8 h-8 rounded-lg text-sm ${page === i ? 'bg-sky-500 text-white font-semibold' : 'text-gray-500 hover:bg-gray-100'}`}>
                     {i + 1}
                   </button>
                 ))}

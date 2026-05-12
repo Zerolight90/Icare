@@ -236,7 +236,7 @@ export default function HospitalsPage() {
                   className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 text-gray-700 placeholder-gray-400 cursor-default focus:outline-none"
                 />
                 <button onClick={handleAddressSearch}
-                  className="px-3 py-2.5 rounded-xl bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 transition whitespace-nowrap">
+                  className="px-3 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition whitespace-nowrap">
                   주소 검색
                 </button>
                 <button onClick={handleCurrentLocation}
@@ -251,7 +251,7 @@ export default function HospitalsPage() {
             <div>
               <label className={lbl}>병원 유형</label>
               <select value={query} onChange={e => setQuery(e.target.value)}
-                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:border-pink-400 transition">
+                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:border-sky-400 transition">
                 {QUERY_OPTIONS.map(o => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
@@ -266,7 +266,7 @@ export default function HospitalsPage() {
                   <button key={o.value} onClick={() => setRadius(o.value)}
                     className={`px-3 py-2 rounded-xl text-sm transition border ${
                       radius === o.value
-                        ? 'bg-pink-500 text-white border-pink-500'
+                        ? 'bg-sky-500 text-white border-sky-500'
                         : 'text-gray-600 border-gray-200 hover:bg-gray-50'
                     }`}>
                     {o.label}
@@ -279,7 +279,7 @@ export default function HospitalsPage() {
             <button
               onClick={() => location && searchHospitals(location)}
               disabled={isLoading || !location}
-              className="px-5 py-2.5 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 transition disabled:opacity-40 whitespace-nowrap">
+              className="px-5 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition disabled:opacity-40 whitespace-nowrap">
               {isLoading ? '검색 중...' : '🔍 검색'}
             </button>
           </div>
@@ -307,7 +307,7 @@ export default function HospitalsPage() {
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500">
                 {KAKAO_MAP_KEY ? (
                   <>
-                    <div className="w-8 h-8 border-2 border-pink-400 border-t-transparent rounded-full animate-spin mb-3" />
+                    <div className="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin mb-3" />
                     <p className="text-sm">지도 로딩 중...</p>
                   </>
                 ) : (
@@ -330,10 +330,10 @@ export default function HospitalsPage() {
               <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center justify-between">
                 <h2 className="font-semibold text-gray-800 text-sm">
                   검색 결과{' '}
-                  <span className="text-pink-500 font-bold">{hospitals.length}</span>개
+                  <span className="text-sky-500 font-bold">{hospitals.length}</span>개
                 </h2>
                 {isLoading && (
-                  <div className="w-4 h-4 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
                 )}
               </div>
 
@@ -367,7 +367,7 @@ export default function HospitalsPage() {
                       }}
                       className={`px-4 py-3.5 cursor-pointer transition-colors ${
                         selected?.id === h.id
-                          ? 'bg-pink-50 border-l-4 border-l-pink-500'
+                          ? 'bg-sky-50 border-l-4 border-l-sky-500'
                           : 'hover:bg-gray-50'
                       }`}
                     >
@@ -387,7 +387,7 @@ export default function HospitalsPage() {
                             </a>
                           )}
                         </div>
-                        <span className="text-xs font-bold text-pink-500 flex-shrink-0 mt-0.5">
+                        <span className="text-xs font-bold text-sky-500 flex-shrink-0 mt-0.5">
                           {fmtDist(h.distance)}
                         </span>
                       </div>
@@ -396,7 +396,7 @@ export default function HospitalsPage() {
                       <div className="mt-2 flex gap-3">
                         <a href={h.place_url} target="_blank" rel="noopener noreferrer"
                           onClick={e => e.stopPropagation()}
-                          className="text-xs text-gray-400 hover:text-pink-500 transition">
+                          className="text-xs text-gray-400 hover:text-sky-500 transition">
                           카카오맵 상세 →
                         </a>
                         {h.phone && (

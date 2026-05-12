@@ -15,7 +15,7 @@ interface UserItem {
 
 const ROLE_LABELS: Record<string, string> = { MOM: '엄마', DAD: '아빠' };
 const ROLE_COLORS: Record<string, string> = {
-  MOM: 'bg-pink-100 text-pink-700',
+  MOM: 'bg-sky-100 text-sky-700',
   DAD: 'bg-blue-100 text-blue-700',
 };
 
@@ -65,14 +65,14 @@ export default function AdminUsersPage() {
             placeholder="이메일 / 이름 / 닉네임 검색..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+            className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400"
           />
           <span className="text-sm text-gray-400">{filtered.length}명</span>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center h-40">
-            <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <div className="overflow-x-auto">

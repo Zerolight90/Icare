@@ -63,7 +63,7 @@ export default function AdminPostsPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-40">
-            <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <>
@@ -147,7 +147,7 @@ export default function AdminPostsPage() {
                   <button
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`w-8 h-8 rounded-lg text-sm ${page === i ? 'bg-pink-500 text-white font-semibold' : 'text-gray-500 hover:bg-gray-100'}`}
+                    className={`w-8 h-8 rounded-lg text-sm ${page === i ? 'bg-sky-500 text-white font-semibold' : 'text-gray-500 hover:bg-gray-100'}`}
                   >
                     {i + 1}
                   </button>

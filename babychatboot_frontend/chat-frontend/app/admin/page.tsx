@@ -20,7 +20,7 @@ const STAT_CARDS = [
   { key: 'totalFamilies',  label: '가족 그룹',    icon: '👨‍👩‍👧', color: 'bg-purple-500' },
   { key: 'totalPosts',     label: '게시글',       icon: '📝', color: 'bg-green-500' },
   { key: 'totalComments',  label: '댓글',         icon: '💬', color: 'bg-yellow-500' },
-  { key: 'totalBoards',    label: '게시판',       icon: '📋', color: 'bg-pink-500' },
+  { key: 'totalBoards',    label: '게시판',       icon: '📋', color: 'bg-sky-500' },
   { key: 'totalChatRooms', label: '채팅방',       icon: '🤖', color: 'bg-indigo-500' },
   { key: 'totalMessages',  label: 'AI 메시지',    icon: '✉️', color: 'bg-cyan-500' },
   { key: 'totalDailyLogs', label: '일지 기록',    icon: '📅', color: 'bg-orange-500' },
@@ -47,7 +47,7 @@ export default function AdminDashboard() {
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <div className="w-6 h-6 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
             <a
               key={item.href}
               href={item.href}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-pink-300 hover:bg-pink-50 transition text-sm font-medium text-gray-700"
+              className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition text-sm font-medium text-gray-700"
             >
               <span>{item.icon}</span>
               {item.label}

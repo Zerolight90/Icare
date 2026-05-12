@@ -118,7 +118,7 @@ function CommunityPageContent() {
         selectedBoard?.id === board.id
           ? board.boardType === 'MEDICAL'
             ? 'bg-blue-500 text-white border-blue-500'
-            : 'bg-pink-500 text-white border-pink-500'
+            : 'bg-sky-500 text-white border-sky-500'
           : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
       }`}
     >
@@ -138,7 +138,7 @@ function CommunityPageContent() {
           {isLoggedIn && selectedBoard && (
             <Link
               href={`/community/write?boardId=${selectedBoard.id}`}
-              className="px-4 py-2 rounded-xl bg-pink-500 text-white text-sm font-semibold hover:bg-pink-600 transition shadow-sm"
+              className="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition shadow-sm"
             >
               + 글쓰기
             </Link>
@@ -181,7 +181,7 @@ function CommunityPageContent() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : !pageData || pageData.content.length === 0 ? (
             <div className="text-center py-16">
@@ -190,7 +190,7 @@ function CommunityPageContent() {
               {isLoggedIn && selectedBoard && (
                 <Link
                   href={`/community/write?boardId=${selectedBoard.id}`}
-                  className="inline-block px-4 py-2 rounded-xl bg-pink-50 text-pink-500 text-sm font-medium hover:bg-pink-100 transition"
+                  className="inline-block px-4 py-2 rounded-xl bg-sky-50 text-sky-500 text-sm font-medium hover:bg-sky-100 transition"
                 >
                   첫 글 작성하기
                 </Link>
@@ -219,11 +219,11 @@ function CommunityPageContent() {
                       <span className="text-xs text-gray-400 mr-2 hidden sm:inline">
                         {(pageData.number * 10) + idx + 1}
                       </span>
-                      <span className="font-medium text-gray-800 group-hover:text-pink-500 transition-colors text-sm truncate">
+                      <span className="font-medium text-gray-800 group-hover:text-sky-500 transition-colors text-sm truncate">
                         {post.title}
                       </span>
                       {post.commentCount > 0 && (
-                        <span className="ml-1.5 text-xs text-pink-400 font-semibold">
+                        <span className="ml-1.5 text-xs text-sky-400 font-semibold">
                           [{post.commentCount}]
                         </span>
                       )}
@@ -266,7 +266,7 @@ function CommunityPageContent() {
                       onClick={() => setCurrentPage(i)}
                       className={`w-8 h-8 rounded-lg text-sm transition ${
                         currentPage === i
-                          ? 'bg-pink-500 text-white font-semibold'
+                          ? 'bg-sky-500 text-white font-semibold'
                           : 'text-gray-500 hover:bg-gray-100'
                       }`}
                     >
