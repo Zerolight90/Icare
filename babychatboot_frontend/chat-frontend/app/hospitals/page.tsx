@@ -151,7 +151,12 @@ export default function HospitalsPage() {
   const handleCurrentLocation = () => {
     setError('');
     if (!navigator.geolocation) {
-      setError('현재 위치를 지원하지 않는 브라우저입니다.');
+      setError('이 브라우저는 위치 기능을 지원하지 않습니다. 주소를 직접 검색해주세요.');
+      return;
+    }
+    // 모바일 브라우저는 HTTPS가 아니면 Geolocation을 허용하지 않음
+    if (!window.isSecureContext) {
+      setError('현재 위치 기능은 보안 연결(HTTPS)에서만 사용할 수 있습니다. 주소 검색을 이용해주세요.');
       return;
     }
     setIsLoading(true);
@@ -163,9 +168,15 @@ export default function HospitalsPage() {
         initMap(loc.y, loc.x);
         searchHospitals(loc);
       },
-      () => {
+      err => {
         setIsLoading(false);
-        setError('위치 권한이 거부됐습니다. 주소를 직접 검색해주세요.');
+        if (err.code === 1) {
+          setError('위치 권한이 거부됐습니다. 브라우저 설정에서 이 사이트의 위치 권한을 허용한 뒤 다시 시도하거나, 주소를 직접 검색해주세요.');
+        } else if (err.code === 2) {
+          setError('현재 위치를 가져올 수 없습니다. 주소를 직접 검색해주세요.');
+        } else {
+          setError('위치 요청이 시간 초과됐습니다. 주소를 직접 검색해주세요.');
+        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -222,76 +233,73 @@ export default function HospitalsPage() {
         <h1 className="text-2xl font-bold text-gray-800 mb-6">🏥 주변 병원 찾기</h1>
 
         {/* ── 검색 컨트롤 ── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5">
-          <div className="flex flex-wrap gap-3 items-end">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+          <div className="space-y-3">
 
-            {/* 위치 입력 */}
-            <div className="flex-1 min-w-[240px]">
+            {/* 위치 입력 — 모바일: 세로 배치, 데스크탑: 가로 배치 */}
+            <div>
               <label className={lbl}>위치</label>
+              <input
+                value={locationLabel}
+                readOnly
+                placeholder="주소 검색 또는 현재 위치 사용"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 text-gray-700 placeholder-gray-400 cursor-default focus:outline-none mb-2"
+              />
               <div className="flex gap-2">
-                <input
-                  value={locationLabel}
-                  readOnly
-                  placeholder="주소 검색 또는 현재 위치 사용"
-                  className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 text-gray-700 placeholder-gray-400 cursor-default focus:outline-none"
-                />
                 <button onClick={handleAddressSearch}
-                  className="px-3 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition whitespace-nowrap">
-                  주소 검색
+                  className="flex-1 px-3 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition">
+                  🔍 주소 검색
                 </button>
                 <button onClick={handleCurrentLocation}
-                  title="현재 위치 사용"
-                  className="px-3 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition whitespace-nowrap">
+                  className="flex-1 px-3 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition">
                   📍 현재위치
                 </button>
               </div>
             </div>
 
-            {/* 병원 유형 */}
-            <div>
-              <label className={lbl}>병원 유형</label>
-              <select value={query} onChange={e => setQuery(e.target.value)}
-                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:border-sky-400 transition">
-                {QUERY_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* 검색 반경 */}
-            <div>
-              <label className={lbl}>검색 반경</label>
-              <div className="flex gap-1">
-                {RADIUS_OPTIONS.map(o => (
-                  <button key={o.value} onClick={() => setRadius(o.value)}
-                    className={`px-3 py-2 rounded-xl text-sm transition border ${
-                      radius === o.value
-                        ? 'bg-sky-500 text-white border-sky-500'
-                        : 'text-gray-600 border-gray-200 hover:bg-gray-50'
-                    }`}>
-                    {o.label}
-                  </button>
-                ))}
+            {/* 병원 유형 + 검색 반경 */}
+            <div className="flex flex-wrap gap-3 items-end">
+              <div className="flex-1 min-w-[140px]">
+                <label className={lbl}>병원 유형</label>
+                <select value={query} onChange={e => setQuery(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:border-sky-400 transition bg-white">
+                  {QUERY_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
               </div>
-            </div>
 
-            {/* 재검색 버튼 */}
-            <button
-              onClick={() => location && searchHospitals(location)}
-              disabled={isLoading || !location}
-              className="px-5 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition disabled:opacity-40 whitespace-nowrap">
-              {isLoading ? '검색 중...' : '🔍 검색'}
-            </button>
+              <div className="flex-1 min-w-[160px]">
+                <label className={lbl}>검색 반경</label>
+                <div className="flex gap-1">
+                  {RADIUS_OPTIONS.map(o => (
+                    <button key={o.value} onClick={() => setRadius(o.value)}
+                      className={`flex-1 py-2 rounded-xl text-xs font-medium transition border ${
+                        radius === o.value
+                          ? 'bg-sky-500 text-white border-sky-500'
+                          : 'text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => location && searchHospitals(location)}
+                disabled={isLoading || !location}
+                className="px-5 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition disabled:opacity-40 whitespace-nowrap w-full sm:w-auto">
+                {isLoading ? '검색 중...' : '🔍 검색'}
+              </button>
+            </div>
           </div>
 
           {/* 안내 메시지 */}
-          {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
+          {error && <p className="text-sm text-red-500 mt-3 bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
           {!KAKAO_MAP_KEY && (
             <p className="text-xs text-amber-500 mt-3 bg-amber-50 px-3 py-2 rounded-lg">
               ⚠️ Kakao 지도 API 키 미설정 — .env.local에{' '}
               <code className="font-mono">NEXT_PUBLIC_KAKAO_MAP_KEY</code>를 추가해주세요.
-              (백엔드는 application-secret.yml에{' '}
-              <code className="font-mono">kakao.rest-api-key</code> 추가)
             </p>
           )}
         </div>
@@ -299,9 +307,8 @@ export default function HospitalsPage() {
         {/* ── 지도 + 목록 ── */}
         <div className="flex flex-col lg:flex-row gap-4">
 
-          {/* 지도 */}
-          <div className="lg:flex-1 rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-gray-200 relative"
-            style={{ height: '520px' }}>
+          {/* 지도 — 모바일: 300px, 데스크탑: 520px */}
+          <div className="lg:flex-1 rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-gray-200 relative h-[300px] sm:h-[400px] lg:h-[520px]">
             <div ref={mapRef} className="w-full h-full" />
             {!sdkReady && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500">
@@ -323,8 +330,7 @@ export default function HospitalsPage() {
 
           {/* 병원 목록 */}
           <div className="lg:w-80 flex flex-col">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
-              style={{ height: '520px' }}>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[300px] sm:h-[400px] lg:h-[520px]">
 
               {/* 헤더 */}
               <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center justify-between">

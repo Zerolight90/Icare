@@ -278,6 +278,10 @@ export default function DailyLogPage() {
                 <p className="text-2xl font-bold text-rose-500">{breastfeedCount}</p>
                 <p className="text-xs text-rose-400 mt-0.5">수유(회)</p>
               </div>
+              <div className="bg-rose-50 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-rose-500">{breastfeedCount}</p>
+                <p className="text-xs text-rose-400 mt-0.5">이유식(회)</p>
+              </div>
               <div className="bg-yellow-50 rounded-xl p-3 text-center">
                 <p className="text-2xl font-bold text-yellow-600">{diaperWet}</p>
                 <p className="text-xs text-yellow-500 mt-0.5">💧소변</p>
