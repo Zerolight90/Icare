@@ -1,6 +1,25 @@
 # Flyway 구현·검증·적용안
 
-현재 상태: **구현·격리 검증 완료. main 병합과 실제 DB 초기화는 승인 대기.**
+현재 상태: **사용자 승인 후 main 병합 및 실제 DB V1 적용·백업 복원 검증 완료.** 애플리케이션 실행과 2단계 접근 제어는 아직 완료되지 않았다.
+
+## 실제 적용 결과 — 2026-09-08
+
+- 사용자에게 기능 브랜치 main 병합, 실패한 컨테이너만 제거, 빈 볼륨 재사용, V1 적용 승인을 받았다. main은 `7e31f2f`까지 fast-forward 병합했다. 원격 push는 하지 않았다.
+- 대상 볼륨이 여전히 비어 있고 사용 중이 아님을 재확인했다. `tender_feistel`만 제거했으며 볼륨과 원래 D: 데이터 폴더는 삭제하지 않았다.
+- `parenting-postgres`가 healthy 상태로 실행 중이다. 기존 볼륨을 재사용하며 DB `parenting_db`, 사용자 `icare`, 접속 `127.0.0.1:5432`다.
+- 임의 생성한 DB 비밀번호와 연결 설정은 `C:\Users\USER\.icare\local-db\database.env`에 저장했다. 해당 폴더는 현재 Windows 사용자 접근으로 제한했고 비밀번호는 출력하거나 Git에 넣지 않았다.
+- 21:50 KST에 Flyway V1 migrate 및 validate 성공. history의 version=1, type=SQL, success=true, checksum=691030920이다. 업무/벡터 테이블 15개와 history를 포함한 public 테이블 16개를 확인했다. 업무/벡터 행은 모두 0개, 벡터 컬럼은 vector(3072)다.
+- 적용 전후 실제 DB 백업을 각각 별도 검증 DB에 복원했다. 적용 전 public 테이블 0개, 적용 후 16개·초기 행 0개·V1 이력·벡터 차원 검증을 통과했다. 검증 후 테스트 컨테이너만 중지했고 실제 DB는 실행 상태다.
+- 원래 D: 파일 클러스터를 복구한 것은 아니다. 이번에 초기화한 빈 서비스 DB에 대한 적용·백업 검증 결과다. 관리자·지식 등록, 앱 실행, Gemini·SMTP 호출, DNS·배포는 수행하지 않았다.
+
+| 백업 | 경로 | 크기 / SHA-256 |
+| --- | --- | --- |
+| V1 적용 전 | `C:\Users\USER\.icare\backups\20260908-before-v1\database.dump` | 886 bytes / `5759E14C04FDECF7A7C0AB0496A13F3358EAB90896FD942CBC55447D05F99F35` |
+| V1 적용 후 | `C:\Users\USER\.icare\backups\20260908-after-v1\database.dump` | 33,298 bytes / `C76AE42E54AD9C77B38A8248233CB13A178F8CE61E1D9B69AFE60507149F58C6` |
+
+복원 증거는 같은 backups 폴더의 `20260908-restore-verification.json`에 기록했다. 복원은 no-owner/no-privileges 방식이므로 운영 역할/비밀번호 복원은 검증하지 않았다. 현재 백업과 Docker 데이터는 모두 C:에 있으므로 C: 물리 디스크 손실까지 대비한 백업은 아니다.
+
+상태 조회/재시작은 저장소 루트에서 `docker compose --env-file C:/Users/USER/.icare/local-db/database.env -p icare-local-db -f compose.database.yml ps` 또는 마지막 인수를 `up -d`로 사용한다. 중지 시 `stop`을 사용하며 볼륨을 지우지 않는다. Flyway 재실행 시 이 보안 파일의 ICARE_DB_* 값을 프로세스 환경변수로 읽고 아래 관리 스크립트를 사용한다.
 
 ## 변경된 전제와 대상
 
@@ -54,7 +73,7 @@ C:\Users\USER\.codex\visualizations\2026\09\08\01a080bd-d055-76a1-9403-34fda0726
 
 임베딩 모델/API 가용성·결제, 기존 임베딩 출처, 전체 앱·프론트 연동·접근 제어는 미검증이다. 2단계 전 공개 서비스로 사용하지 않는다.
 
-## 실제 적용 검수안 — 아직 미실행
+## 승인받아 실행한 적용 절차
 
 1. 기능 브랜치 변경을 검수하고 main 병합을 승인받는다.
 2. 위 볼륨이 여전히 비어 있고 사용 중이 아님을 재확인한다. 같은 볼륨의 동시 기동을 방지하기 위해 실패한 `tender_feistel`의 **컨테이너만 제거하고 볼륨은 보존**하는 안이다. 적용안 승인 후에만 실행한다.
@@ -87,4 +106,4 @@ docker compose -p icare-local-db -f compose.database.yml up -d
 - 테스트는 `ICARE_TEST_JDBC_URL=jdbc:postgresql://127.0.0.1:<port>/icare_validation`, `ICARE_TEST_DB_USER`, `ICARE_TEST_DB_PASSWORD`를 명시한 뒤 backend에서 `./mvnw.cmd test`를 실행한다. 개별 검증 DB는 검수용으로 남는다.
 - 복원 비교는 추가로 `ICARE_TEST_BACKUP_SOURCE_DB`, `ICARE_TEST_RESTORED_DB`를 서로 다른 검증 DB명으로 공급한다. 일반 test는 환경변수가 없으면 실제 DB/AI에 연결하지 않는다. JAR 재빌드만 필요하면 `./mvnw.cmd package -DskipTests`를 사용한다.
 
-실제 적용·병합 승인은 아직 받지 않았다. 위 검수안은 손상 의심 원본을 버리는 안이 아니다.
+위 적용안은 사용자 승인 후 실행했다. 손상 의심 원본은 보존했고 해당 원본의 폐기·복구 승인을 대신하지 않는다.
