@@ -10,6 +10,12 @@ public class PrivateBackendSmoke {
     static HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
     static int checks;
 
+    static String roomId(String json) {
+        var match = java.util.regex.Pattern.compile("\"id\":\"([a-z0-9-]+)\"").matcher(json);
+        if (!match.find()) throw new IllegalStateException("Room id missing");
+        return match.group(1);
+    }
+
     static HttpResponse<String> call(String method, String path, String body, String token, boolean proxy, int expected) throws Exception {
         var builder = HttpRequest.newBuilder(URI.create(BASE + path)).timeout(Duration.ofSeconds(10));
         if (proxy) builder.header("X-Icare-Proxy-Secret", PROXY);
@@ -34,6 +40,26 @@ public class PrivateBackendSmoke {
         } else {
             String login = "{\"email\":\"parent@example.test\",\"password\":\"" + PASSWORD + "\"}";
             String token = call("POST", "/api/users/login", login, null, true, 200).body();
+            if (args[0].equals("context")) {
+                String general = call("POST", "/api/chat/rooms?title=general", null, token, true, 200).body();
+                if (!general.contains("\"contextVersion\":1") || !general.contains("\"contextBabyId\":null")
+                        || general.contains("contextFamilyId") || general.contains("parent@example.test"))
+                    throw new IllegalStateException("General context or serialization failed");
+                checks++;
+                String selected = call("POST", "/api/chat/rooms?title=selected&babyId=1", null, token, true, 200).body();
+                if (!selected.contains("\"contextBabyId\":1")) throw new IllegalStateException("Selected baby missing");
+                checks++;
+                call("POST", "/api/chat/rooms?title=foreign&babyId=2", null, token, true, 403);
+                call("POST", "/api/chat/rooms?title=" + "x".repeat(121), null, token, true, 400);
+                String second = call("POST", "/api/users/login", "{\"email\":\"second@example.test\",\"password\":\"" + PASSWORD + "\"}", null, true, 200).body();
+                call("GET", "/api/chat/rooms/" + roomId(selected) + "/messages", null, second, true, 403);
+                call("POST", "/api/chat/message?roomId=" + roomId(selected) + "&message=question", null, second, true, 403);
+                call("POST", "/api/chat/message?roomId=" + roomId(general) + "&message=" + "x".repeat(4001), null, token, true, 400);
+                call("GET", "/api/chat/rooms/legacy-context-smoke/messages", null, token, true, 200);
+                call("POST", "/api/chat/message?roomId=legacy-context-smoke&message=question", null, token, true, 409);
+                System.out.println("Offline context HTTP checks passed: " + checks);
+                return;
+            }
             call("GET", "/api/users/profile", null, token, true, 200);
             call("GET", "/api/admin/stats", null, token, true, 403);
             var logs = call("GET", "/api/logs/1?date=2026-09-08", null, token, true, 200).body();

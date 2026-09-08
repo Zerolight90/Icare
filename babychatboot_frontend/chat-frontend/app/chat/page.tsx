@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import api from '../lib/axios';
 import ReactMarkdown from 'react-markdown';
+import { isAxiosError } from 'axios';
+import { RoomRequests } from '../lib/room-requests';
 
 const NAV_LINKS = [
   { href: '/',          icon: '🏠', label: '메인' },
@@ -15,7 +17,8 @@ const NAV_LINKS = [
   { href: '/mypage',    icon: '👤', label: '마이페이지' },
 ];
 
-interface ChatRoom { id: string; title: string; }
+interface ChatRoom { id: string; title: string; contextVersion: number; contextBabyId: number | null; }
+interface BabyChoice { id: number; name: string; }
 interface ChatMessage {
   id: number;
   role: 'USER' | 'ASSISTANT' | 'SYSTEM';
@@ -35,33 +38,53 @@ export default function ChatPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newRoomTitle, setNewRoomTitle] = useState('');
+  const [babies, setBabies] = useState<BabyChoice[]>([]);
+  const [newBabyId, setNewBabyId] = useState('');
+  const [chatError, setChatError] = useState('');
+  const requestTracker = useRef(new RoomRequests());
+  const sending = useRef(false);
+  const currentRoom = rooms.find(room => room.id === currentRoomId);
+  const contextReady = currentRoom?.contextVersion === 1;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    fetchRooms();
-    api.get('/api/categories').then(r => setCategories(r.data)).catch(() => {});
+  const selectRoom = useCallback((id: string) => {
+    if (requestTracker.current.current() === id) return;
+    requestTracker.current.select(id);
+    setCurrentRoomId(id); setMessages([]); setInput(''); setChatError('');
   }, []);
 
   const fetchRooms = useCallback(async () => {
     try {
-      const res = await api.get('/api/chat/rooms');
+      const res = await api.get<ChatRoom[]>('/api/chat/rooms');
       setRooms(res.data);
-      if (res.data.length > 0 && !currentRoomId) setCurrentRoomId(res.data[0].id);
-    } catch { /* not logged in */ }
-  }, [currentRoomId]);
+      if (res.data.length && !requestTracker.current.current()) selectRoom(res.data[0].id);
+    } catch { /* The authenticated API rejects unauthenticated readers. */ }
+  }, [selectRoom]);
+
+  useEffect(() => {
+    void fetchRooms();
+    api.get('/api/categories').then(r => setCategories(r.data)).catch(() => {});
+    api.get<BabyChoice[]>('/api/babies').then(r => setBabies(r.data)).catch(() => setBabies([]));
+  }, [fetchRooms]);
 
   useEffect(() => {
     if (!currentRoomId) return;
+    const controller = new AbortController();
+    const ticket = requestTracker.current.begin(currentRoomId);
     const load = async () => {
       setIsRoomLoading(true);
-      setMessages([]);
       try {
-        const res = await api.get(`/api/chat/rooms/${currentRoomId}/messages`);
-        setMessages(res.data);
-      } finally { setIsRoomLoading(false); }
+        const res = await api.get(`/api/chat/rooms/${currentRoomId}/messages`, { signal: controller.signal });
+        if (requestTracker.current.accepts(ticket)) setMessages(res.data);
+      } catch {
+        if (!controller.signal.aborted && requestTracker.current.accepts(ticket)) setChatError('대화를 불러오지 못했습니다.');
+      } finally {
+        if (requestTracker.current.accepts(ticket)) setIsRoomLoading(false);
+      }
     };
-    load();
+    void load();
+    return () => controller.abort();
   }, [currentRoomId]);
 
   useEffect(() => {
@@ -74,40 +97,56 @@ export default function ChatPage() {
   }, [input]);
 
   const handleCreateRoom = async () => {
-    const title = newRoomTitle.trim() || '새 육아 상담';
-    setIsCreating(false);
-    setNewRoomTitle('');
+    const params = new URLSearchParams({ title: newRoomTitle.trim() || '새 육아 상담' });
+    if (newBabyId) params.set('babyId', newBabyId);
     try {
-      const res = await api.post(`/api/chat/rooms?title=${encodeURIComponent(title)}`);
+      const res = await api.post('/api/chat/rooms', params);
       await fetchRooms();
-      setCurrentRoomId(res.data.id);
+      selectRoom(res.data.id);
+      setIsCreating(false); setNewRoomTitle(''); setNewBabyId('');
       setIsMobileSidebarOpen(false);
-    } catch { alert('방 생성에 실패했습니다. 로그인 후 이용해주세요.'); }
+    } catch { alert('상담을 만들지 못했습니다. 로그인과 선택한 아이 정보를 확인해 주세요.'); }
   };
 
   const handleSend = async (quickMessage?: string) => {
     const question = quickMessage || input.trim();
-    if (!question || isLoading || !currentRoomId) return;
-    setInput('');
+    if (!question || sending.current || isRoomLoading || !currentRoomId || !contextReady) return;
+    if (question.length > 4000) { setChatError('질문은 4,000자 이내로 입력해 주세요.'); return; }
+    const roomId = currentRoomId;
+    const sendTicket = requestTracker.current.begin(roomId);
+    let responseTicket = sendTicket;
+    let answerSaved = false;
     const tempMsg: ChatMessage = { id: Date.now(), role: 'USER', content: question, createdAt: new Date().toISOString() };
+    sending.current = true; setInput(''); setChatError(''); setIsLoading(true);
     setMessages(prev => [...prev, tempMsg]);
-    setIsLoading(true);
     try {
-      await api.post('/api/chat/message', new URLSearchParams({ roomId: currentRoomId, message: question }));
-      const res = await api.get(`/api/chat/rooms/${currentRoomId}/messages`);
-      setMessages(res.data);
-    } catch { alert('연결이 끊어졌거나, 질문 한도를 초과했어요.'); }
-    finally { setIsLoading(false); }
+      await api.post('/api/chat/message', new URLSearchParams({ roomId, message: question }));
+      answerSaved = true;
+      if (requestTracker.current.current() !== roomId) return;
+      const ticket = requestTracker.current.begin(roomId);
+      responseTicket = ticket;
+      const res = await api.get(`/api/chat/rooms/${roomId}/messages`);
+      if (requestTracker.current.accepts(ticket)) { setMessages(res.data); setIsRoomLoading(false); }
+    } catch (error) {
+      if (requestTracker.current.accepts(responseTicket)) {
+        if (!answerSaved) {
+          setMessages(prev => prev.filter(message => message.id !== tempMsg.id));
+          setInput(question);
+        }
+        const data = isAxiosError(error) ? error.response?.data : null;
+        const message = typeof data === 'string' ? data : data?.error;
+        setChatError(typeof message === 'string' ? message : '응답을 확인하지 못했습니다. 대화 기록을 확인한 뒤 다시 시도해 주세요.');
+      }
+    } finally { sending.current = false; setIsLoading(false); }
   };
-
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const openNewChat = () => { setIsCreating(true); setIsMobileSidebarOpen(true); };
+  const openNewChat = () => { setNewBabyId(''); setIsCreating(true); setIsMobileSidebarOpen(true); };
 
   // 사이드바 내용 컴포넌트 (모바일 오버레이 + 데스크탑 공통)
-  const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
+  const renderSidebar = (onClose?: () => void) => (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
       <div className="flex items-center gap-2 px-4 py-3.5 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white">
@@ -119,7 +158,7 @@ export default function ChatPage() {
           </div>
         </Link>
         <button
-          onClick={() => { setIsCreating(true); if (onClose) onClose(); }}
+          onClick={() => { setNewBabyId(''); setIsCreating(true); }}
           className="p-2 rounded-xl text-gray-400 hover:text-sky-500 hover:bg-sky-50 transition flex-shrink-0"
           title="새 채팅"
         >
@@ -140,8 +179,14 @@ export default function ChatPage() {
       {/* 새 채팅 입력 */}
       {isCreating && (
         <div className="px-3 py-2.5 border-b border-gray-100 bg-sky-50/50">
+          <label className="block text-xs text-gray-600 mb-1" htmlFor={onClose ? 'chat-baby-mobile' : 'chat-baby-desktop'}>상담할 아이</label>
+          <select id={onClose ? 'chat-baby-mobile' : 'chat-baby-desktop'} value={newBabyId} onChange={e => setNewBabyId(e.target.value)}
+            className="w-full border border-sky-200 rounded-xl px-3 py-2 mb-2 text-sm bg-white text-gray-800">
+            <option value="">일반 상담 · 아이 정보 사용 안 함</option>
+            {babies.map(baby => <option key={baby.id} value={baby.id}>{baby.name}</option>)}
+          </select>
           <input
-            autoFocus value={newRoomTitle}
+            autoFocus value={newRoomTitle} maxLength={120}
             onChange={e => setNewRoomTitle(e.target.value)}
             onKeyDown={e => {
               if (e.key === 'Enter') handleCreateRoom();
@@ -150,6 +195,7 @@ export default function ChatPage() {
             placeholder="상담 제목 입력 후 Enter"
             className="w-full bg-white border border-sky-200 rounded-xl px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition"
           />
+          <button onClick={handleCreateRoom} className="mt-2 px-3 py-2 bg-sky-500 text-white rounded-xl text-xs">상담 시작</button>
         </div>
       )}
 
@@ -194,7 +240,7 @@ export default function ChatPage() {
           {rooms.map(room => (
             <button
               key={room.id}
-              onClick={() => { setCurrentRoomId(room.id); if (onClose) onClose(); }}
+              onClick={() => { selectRoom(room.id); if (onClose) onClose(); }}
               className={`w-full text-left px-3 py-2.5 rounded-xl text-xs truncate transition-all ${
                 currentRoomId === room.id
                   ? 'bg-sky-50 text-sky-700 font-semibold border border-sky-100'
@@ -245,7 +291,7 @@ export default function ChatPage() {
         transition-transform duration-200 ease-in-out md:translate-x-0
         ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <SidebarContent onClose={() => setIsMobileSidebarOpen(false)} />
+        {renderSidebar(() => setIsMobileSidebarOpen(false))}
       </aside>
 
       {/* ── 메인 채팅 영역 ── */}
@@ -273,7 +319,7 @@ export default function ChatPage() {
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 border-2 border-white rounded-full" />
             </div>
             <div>
-              <span className="font-semibold text-gray-800 text-sm block leading-tight">닥터 의비스</span>
+              <span className="font-semibold text-gray-800 text-sm block leading-tight">iCare 육아 안내</span>
               <span className="text-[10px] text-green-500 font-medium">온라인</span>
             </div>
           </div>
@@ -332,7 +378,7 @@ export default function ChatPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">iCare에 오신 걸 환영해요</h2>
                 <p className="text-sm text-gray-500 mb-8 max-w-sm leading-relaxed">
-                  닥터 의비스가 육아 고민을<br/>RAG 기반 최신 지식으로 도와드립니다
+                  iCare 육아 안내가 육아 고민을<br/>RAG 기반 최신 지식으로 도와드립니다
                 </p>
                 {categories.length > 0 && (
                   <div className="flex flex-wrap gap-2 justify-center mb-8 max-w-sm">
@@ -392,7 +438,7 @@ export default function ChatPage() {
                     )}
                     <div className={`${isUser ? 'max-w-[75%]' : 'flex-1 min-w-0'}`}>
                       {!isUser && (
-                        <span className="text-xs font-semibold text-sky-500 mb-1.5 block">닥터 의비스</span>
+                        <span className="text-xs font-semibold text-sky-500 mb-1.5 block">iCare 육아 안내</span>
                       )}
                       {isUser ? (
                         <div className="px-4 py-3 rounded-2xl rounded-tr-md text-sm leading-relaxed text-white bg-gradient-to-br from-sky-500 to-sky-600 whitespace-pre-wrap shadow-md shadow-sky-100">
@@ -439,7 +485,7 @@ export default function ChatPage() {
                     <span className="text-sm">🩺</span>
                   </div>
                   <div className="flex-1">
-                    <span className="text-xs font-semibold text-sky-500 mb-1.5 block">닥터 의비스</span>
+                    <span className="text-xs font-semibold text-sky-500 mb-1.5 block">iCare 육아 안내</span>
                     <div className="flex items-center gap-1.5 py-3 px-4 bg-white rounded-2xl rounded-tl-md border border-gray-100 shadow-sm w-fit">
                       {[0, 160, 320].map(d => (
                         <span key={d} className="w-2 h-2 bg-sky-400 rounded-full animate-bounce"
@@ -457,6 +503,12 @@ export default function ChatPage() {
         {/* 입력 영역 */}
         <div className="border-t border-gray-200 bg-white/90 backdrop-blur-sm px-4 pb-5 pt-3 flex-shrink-0">
           <div className="max-w-3xl mx-auto">
+            {currentRoom && <p className="text-xs text-gray-500 mb-2">
+              {!contextReady ? '이전 상담은 기록 조회만 가능합니다. 새 상담에서 아이 또는 일반 상담을 선택해 주세요.'
+                : currentRoom.contextBabyId == null ? '일반 상담 · 등록된 아이 프로필을 사용하지 않습니다.'
+                : `상담 대상: ${babies.find(baby => baby.id === currentRoom.contextBabyId)?.name ?? '선택한 아이'} · 다른 아이 상담은 새 대화에서 시작해 주세요.`}
+            </p>}
+            {chatError && <p role="alert" className="text-sm text-red-600 mb-2">{chatError}</p>}
             <div className={`relative rounded-2xl border bg-white transition-all shadow-sm ${
               currentRoomId && !isLoading
                 ? 'border-gray-200 focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 focus-within:shadow-md'
@@ -465,19 +517,20 @@ export default function ChatPage() {
               <textarea
                 ref={textareaRef}
                 value={input}
+                maxLength={4000}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={currentRoomId
                   ? '메시지를 입력하세요... (Shift+Enter 줄바꿈)'
                   : '새 채팅을 시작하거나 채팅방을 선택하세요'}
-                disabled={isLoading || !currentRoomId}
+                disabled={isLoading || isRoomLoading || !currentRoomId || !contextReady}
                 rows={1}
                 className="w-full bg-transparent text-gray-800 placeholder-gray-400 px-4 py-3.5 pr-14 resize-none outline-none text-sm leading-relaxed disabled:cursor-not-allowed"
                 style={{ maxHeight: '200px' }}
               />
               <button
                 onClick={() => handleSend()}
-                disabled={isLoading || !input.trim() || !currentRoomId}
+                disabled={isLoading || isRoomLoading || !input.trim() || !currentRoomId || !contextReady}
                 className={`absolute right-3 bottom-3 p-2 rounded-xl transition-all ${
                   input.trim() && !isLoading && currentRoomId
                     ? 'bg-sky-500 hover:bg-sky-600 text-white cursor-pointer shadow-md'

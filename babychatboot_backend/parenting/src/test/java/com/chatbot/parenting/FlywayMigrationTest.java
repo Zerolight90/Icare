@@ -66,7 +66,7 @@ class FlywayMigrationTest {
                 .baselineVersion("1").placeholders(Map.of("vectorDimensions", "" + dimensions)).load();
     }
 
-    private static void hibernate(String url, String action) {
+    private static org.hibernate.SessionFactory sessionFactory(String url, String action) {
         Configuration config = new Configuration();
         for (Class<?> entity : ENTITIES) config.addAnnotatedClass(entity);
         config.setProperty("hibernate.connection.url", url);
@@ -75,7 +75,17 @@ class FlywayMigrationTest {
         config.setProperty("hibernate.hbm2ddl.auto", action);
         config.setProperty("hibernate.physical_naming_strategy",
                 "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
-        try (var ignored = config.buildSessionFactory()) { /* construction validates schema */ }
+        return config.buildSessionFactory();
+    }
+
+    private static void hibernate(String url, String action) {
+        try (var ignored = sessionFactory(url, action)) { }
+    }
+
+    private static Map<String, Object> v1Snapshot(String url) {
+        var result = snapshot(url);
+        result.put("chat_room", jdbc(url).queryForObject("SELECT COALESCE(jsonb_agg(to_jsonb(t) - 'context_version' - 'context_family_id' - 'context_baby_id' ORDER BY id)::text, '[]') FROM chat_room t", String.class));
+        return result;
     }
 
     private static void validateVector(String url, int dimensions) {
@@ -204,7 +214,7 @@ class FlywayMigrationTest {
     @Test
     void emptyDatabaseMatchesIndependentHibernateSchema() {
         String fresh = database();
-        assertThat(flyway(fresh, 3072).migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(flyway(fresh, 3072).migrate().migrationsExecuted).isEqualTo(2);
         hibernate(fresh, "validate");
         validateVector(fresh, 3072);
         String legacy = database();
@@ -222,19 +232,52 @@ class FlywayMigrationTest {
     void explicitBaselinePreservesAllRowsVectorsAndIdentitySequences() {
         String legacy = database();
         legacySchema(legacy, 3072);
+        jdbc(legacy).execute("ALTER TABLE chat_room DROP COLUMN context_version, DROP COLUMN context_family_id, DROP COLUMN context_baby_id");
         seed(legacy, 3072);
-        var before = snapshot(legacy);
+        var before = v1Snapshot(legacy);
         assertThatThrownBy(() -> flyway(legacy, 3072).migrate()).isInstanceOf(FlywayException.class);
-        assertThat(snapshot(legacy)).isEqualTo(before);
-        hibernate(legacy, "validate");
+        assertThat(v1Snapshot(legacy)).isEqualTo(before);
+        assertThatThrownBy(() -> hibernate(legacy, "validate")).isInstanceOf(Exception.class);
         validateVector(legacy, 3072);
         flyway(legacy, 3072).baseline();
-        assertThat(flyway(legacy, 3072).migrate().migrationsExecuted).isZero();
-        assertThat(snapshot(legacy)).isEqualTo(before);
+        assertThat(flyway(legacy, 3072).migrate().migrationsExecuted).isEqualTo(1);
+        hibernate(legacy, "validate");
+        assertThat(v1Snapshot(legacy)).isEqualTo(before);
         assertThat(jdbc(legacy).queryForObject("SELECT type FROM flyway_schema_history WHERE version='1'", String.class))
                 .isEqualTo("BASELINE");
         assertThat(jdbc(legacy).queryForObject("INSERT INTO families(invite_code) VALUES ('TEST02') RETURNING id", Long.class))
                 .isEqualTo(2L);
+    }
+
+    @Test
+    void v1UpgradePreservesDataAndBoundsOwnerHistoryQuery() {
+        String url = database();
+        var v1 = Flyway.configure().configuration(flyway(url, 3072).getConfiguration()).target("1").load();
+        assertThat(v1.migrate().migrationsExecuted).isEqualTo(1);
+        seed(url, 3072);
+        var before = v1Snapshot(url);
+        assertThat(flyway(url, 3072).migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(v1Snapshot(url)).isEqualTo(before);
+        assertThat(jdbc(url).queryForObject("SELECT context_version FROM chat_room WHERE id='fixture-room'", Integer.class)).isZero();
+        assertThat(jdbc(url).queryForObject("SELECT context_family_id IS NULL AND context_baby_id IS NULL FROM chat_room WHERE id='fixture-room'", Boolean.class)).isTrue();
+        assertThat(jdbc(url).queryForObject("SELECT checksum FROM flyway_schema_history WHERE version='1'", Integer.class)).isEqualTo(691030920);
+        hibernate(url, "validate"); validateVector(url, 3072);
+        jdbc(url).execute("INSERT INTO chat_messages(room_id,role,content,token_count) SELECT 'fixture-room', CASE WHEN i % 2 = 0 THEN 'ASSISTANT' ELSE 'USER' END, 'turn-'||i, 0 FROM generate_series(1,20) i");
+        jdbc(url).update("INSERT INTO chat_messages(room_id,role,content,token_count) VALUES ('fixture-room','ASSISTANT',?,0)", "x".repeat(5000));
+        jdbc(url).execute("INSERT INTO chat_messages(room_id,role,content,token_count) VALUES ('fixture-room','SYSTEM','never expose',0)");
+        try (var factory = sessionFactory(url, "validate"); var session = factory.openSession()) {
+            var repository = new org.springframework.data.jpa.repository.support.JpaRepositoryFactory(session)
+                    .getRepository(com.chatbot.parenting.repository.ChatMessageRepository.class);
+            var roles = List.of(ChatMessage.RoleType.USER, ChatMessage.RoleType.ASSISTANT);
+            var page = org.springframework.data.domain.PageRequest.of(0, 12);
+            var recent = repository.findRecentForOwner("fixture-room", "fixture@example.invalid", roles, page);
+            assertThat(recent).hasSize(12);
+            assertThat(recent.get(0).getContent()).hasSize(2001);
+            assertThat(recent.get(1).getContent()).isEqualTo("turn-20");
+            assertThat(recent).noneMatch(row -> row.getRole() == ChatMessage.RoleType.SYSTEM);
+            assertThat(repository.findRecentForOwner("fixture-room", "outsider@example.invalid", roles, page)).isEmpty();
+            assertThat(repository.findRecentForOwner("other-room", "fixture@example.invalid", roles, page)).isEmpty();
+        }
     }
 
     @Test

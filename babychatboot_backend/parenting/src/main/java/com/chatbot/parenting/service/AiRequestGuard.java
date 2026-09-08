@@ -42,7 +42,19 @@ public class AiRequestGuard {
 
     public class Permit implements AutoCloseable {
         private final Window window;
+        private boolean closed;
         private Permit(Window window) { this.window = window; }
-        @Override public void close() { synchronized (AiRequestGuard.this) { window.busy = false; } }
+        @Override public void close() {
+            if (closed) return;
+            closed = true;
+            // The next conversation request must see the previous transaction's committed messages.
+            if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override public void afterCompletion(int status) { release(); }
+                    });
+            } else release();
+        }
+        private void release() { synchronized (AiRequestGuard.this) { window.busy = false; } }
     }
 }

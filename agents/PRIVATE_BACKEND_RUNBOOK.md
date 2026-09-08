@@ -118,4 +118,4 @@ Set-Location D:\work\babychatboot
 
 문제가 있으면 `docker compose -f compose.backend.yml stop`으로 백엔드만 중지하고 검수된 이미지/환경설정으로 수정한다. 이 기능은 V1 SQL/서비스 스키마를 변경하지 않았다. 애플리케이션 중지에 DB 볼륨 삭제나 초기화는 필요하지 않다. 데이터 복구가 실제 필요한 경우에만 [Flyway 작업서](FLYWAY_RUNBOOK.md)의 백업/복원 검수 절차를 따른다.
 
-2단계 브랜치의 main 병합은 사용자 검수 대상이다. 원격 push, 실제 DNS 변경/Vercel 배포, 실제 관리자/지식 생성·교체는 수행하지 않았다. 3·4단계는 브랜치 구성부터 별도 검수받는다.
+후속 사용자 승인으로 2단계 52245b7을 main에 병합하고 feat/chat-context에서 3단계를 진행했다. 원격 push, 실제 DNS 변경/Vercel 배포, 실제 관리자/지식 생성·교체는 수행하지 않았다. 현재 소스에는 V2가 있으므로 실제 DB 연결 전 [3단계 작업서](CHAT_CONTEXT_RUNBOOK.md)의 별도 적용 승인을 받는다. 4단계 브랜치 구성은 아직 검수 전이다.

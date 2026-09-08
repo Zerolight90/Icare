@@ -22,8 +22,9 @@ public class ChatController {
     // 2. 새 방 만들기
     @PostMapping("/rooms")
     public ResponseEntity<?> createRoom(@RequestParam String title,
+                                        @RequestParam(required = false) Long babyId,
                                         @AuthenticationPrincipal String email) {
-        return ResponseEntity.ok(geminiService.createNewRoom(title, email));
+        return ResponseEntity.ok(geminiService.createNewRoom(title, email, babyId));
     }
 
     // 3. 특정 방의 대화 기록 불러오기

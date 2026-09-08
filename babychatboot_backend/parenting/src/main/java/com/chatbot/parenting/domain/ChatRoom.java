@@ -22,6 +22,14 @@ public class ChatRoom {
     private User user;
 
     private String title;
+
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int contextVersion;
+
+    @JsonIgnore
+    private Long contextFamilyId;
+
+    private Long contextBabyId;
     
     private boolean isActive = true;
 
@@ -31,5 +39,12 @@ public class ChatRoom {
     public ChatRoom(User user, String title) {
         this.user = user;
         this.title = title;
+        this.contextVersion = 1;
+        this.contextFamilyId = user.getFamily() == null ? null : user.getFamily().getId();
+    }
+
+    public ChatRoom(User user, String title, Long babyId) {
+        this(user, title);
+        this.contextBabyId = babyId;
     }
 }

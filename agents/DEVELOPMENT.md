@@ -1,5 +1,7 @@
 # 실행·검증 안내
 
+3단계의 최신 검사 결과와 V2 적용 전 실행 제한은 [대화 맥락 작업서](CHAT_CONTEXT_RUNBOOK.md)를 우선한다. 일반 JUnit 20개, PostgreSQL 통합 6개, Node 7개, Docker HTTP 16+19개를 통과했다. 실제 DB V2 적용 승인이 없으면 현재 소스를 서비스 DB에 연결하여 시작하지 않는다.
+
 ## 2026-09-08 비공개 백엔드 변경 이후
 
 [2단계 실행·검증 안내](PRIVATE_BACKEND_RUNBOOK.md)를 최신 실행 기준으로 사용한다. Dockerfile은 소스 빌드 방식이고 `compose.backend.yml`은 기존 DB 네트워크에 백엔드만 연결한다. 브라우저는 Next 서버 `/api`를 사용한다. 실제 환경변수는 Git 밖 파일에 있으며 아직 Gemini/SMTP/Cloudflare 설정은 비어 있다. 서비스 DB와 외부 배포에는 2단계 변경을 적용하지 않았다.
