@@ -10,6 +10,7 @@
 | --- | --- |
 | [EXECUTION_PLAN.md](EXECUTION_PLAN.md) | 비공개 테스트 목표, 단계별 범위, 승인 경계, 사용량 예산 |
 | [WORK_LOG.md](WORK_LOG.md) | 2026-09-08 재확인 결과, 수행·미수행, 다음 작업 |
+| [DATABASE_MIGRATION.md](DATABASE_MIGRATION.md) | 백업·복원/Flyway 절차, 원본 CRC 오류와 재개 조건 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 경계, 기술 구성, 핵심 요청 흐름과 데이터 관계 |
 | [BACKEND.md](BACKEND.md) | API 영역, 서비스 책임, 인증·RAG·영속성 구조 |
 | [FRONTEND.md](FRONTEND.md) | 페이지 구성, 상태 관리, HTTP와 인증 흐름 |
