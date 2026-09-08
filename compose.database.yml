@@ -1,0 +1,24 @@
+# Explicitly reuse a reviewed volume. This file never creates a second service data volume.
+services:
+  db:
+    image: pgvector/pgvector@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b
+    container_name: parenting-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ICARE_DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${ICARE_DB_USER:?Set ICARE_DB_USER}
+      POSTGRES_PASSWORD: ${ICARE_DB_PASSWORD:?Set ICARE_DB_PASSWORD}
+      POSTGRES_DB: parenting_db
+    volumes:
+      - existing-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  existing-db:
+    external: true
+    name: ${ICARE_DB_VOLUME:?Set the reviewed existing Docker volume name}

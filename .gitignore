@@ -4,8 +4,6 @@
 babychatboot_backend/parenting/target/
 babychatboot_backend/parenting/build/
 babychatboot_backend/parenting/.mvn/wrapper/maven-wrapper.jar
-babychatboot_backend/parenting/mvnw
-babychatboot_backend/parenting/mvnw.cmd
 
 # IDE
 babychatboot_backend/parenting/.idea/
@@ -51,6 +49,9 @@ babychatboot_frontend/chat-frontend/.env*.local
 mysql_data/
 postgres_data/
 data/
+backups/
+*.dump
+*.backup
 
 # ===============================================
 # Claude Code 설정 (로컬 전용)

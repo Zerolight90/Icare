@@ -1,4 +1,19 @@
 spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    clean-disabled: true
+    validate-on-migrate: true
+    placeholders:
+      vectorDimensions: ${spring.ai.vectorstore.pgvector.dimensions}
   profiles:
-    active: dev       
-    include: secret   
+    active: dev
+    include: secret
+
+# Enable only as an explicit, reviewed operation. Normal starts do not seed data.
+icare:
+  bootstrap:
+    enabled: false
+  knowledge:
+    load-on-startup: false

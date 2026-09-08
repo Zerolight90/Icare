@@ -45,6 +45,14 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
@@ -135,8 +143,58 @@
         </dependency>
 	</dependencies>
 
+	<profiles>
+		<profile>
+			<id>db-migration</id>
+			<properties>
+				<migration.vector-dimensions>3072</migration.vector-dimensions>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-maven-plugin</artifactId>
+						<version>${flyway.version}</version>
+						<configuration>
+							<url>${env.ICARE_DB_URL}</url>
+							<user>${env.ICARE_DB_USER}</user>
+							<password>${env.ICARE_DB_PASSWORD}</password>
+							<locations><location>filesystem:src/main/resources/db/migration</location></locations>
+							<baselineVersion>1</baselineVersion>
+							<baselineOnMigrate>false</baselineOnMigrate>
+							<cleanDisabled>true</cleanDisabled>
+							<placeholders><vectorDimensions>${migration.vector-dimensions}</vectorDimensions></placeholders>
+						</configuration>
+						<dependencies>
+							<dependency>
+								<groupId>org.flywaydb</groupId>
+								<artifactId>flyway-database-postgresql</artifactId>
+								<version>${flyway.version}</version>
+							</dependency>
+							<dependency>
+								<groupId>org.postgresql</groupId>
+								<artifactId>postgresql</artifactId>
+								<version>${postgresql.version}</version>
+							</dependency>
+						</dependencies>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>application-secret.yml</exclude>
+						<exclude>application-secret.properties</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

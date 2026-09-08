@@ -1,5 +1,15 @@
 # 실행·검증 안내
 
+## 2026-09-08 Flyway 변경 이후
+
+최신 실행과 실제 DB 적용 승인 절차는 [Flyway 작업서](FLYWAY_RUNBOOK.md)를 우선한다. dev/prod 모두 Hibernate validate와 Spring AI 스키마 자동 생성 비활성화를 사용한다. 빈 DB는 Flyway V1으로 구성하며 기존 DB는 검수한 명시적 baseline이 필요하다.
+
+일반 `mvnw.cmd test`는 실제 DB/AI를 시작하지 않는다. 이전 contextLoads는 기본 초기화 runner가 비활성화되는지 확인하는 격리 테스트로 교체했다. PostgreSQL 통합 테스트는 ICARE_TEST_* 환경변수를 명시해야 실행한다. JAR 빌드와 합성 DB 검증을 수행했으며 실제 서비스·Gemini 연동은 미검증이다.
+
+JAR에는 application-secret.yml/properties가 포함되지 않는다. JAR 실행 시 SPRING_DATASOURCE_URL/USERNAME/PASSWORD, JWT_SECRET, GEMINI_API_KEY 등 필요한 값을 외부 설정으로 공급해야 한다. 현재 `gemini.api.key` 참조는 환경변수 GEMINI_API_KEY로 공급할 수 있다. SMTP·Kakao 등 추가 설정은 기존 기능 사용 여부에 따라 별도로 준비한다.
+
+아래 실행 예제와 결과는 2026-09-06 분석 당시의 이력이다. 특히 루트 Compose 전체 실행은 이번 DB 전환 절차로 사용하지 않는다.
+
 ## 실행 전제
 
 백엔드는 Java 17과 Maven Wrapper, 프론트엔드는 Node/npm을 사용한다. 프론트엔드 Dockerfile의 런타임은 Node 20이다. 실제 모델·임베딩 API의 현재 지원 여부와 운영 자격증명은 이번 분석에서 확인하지 않았다.

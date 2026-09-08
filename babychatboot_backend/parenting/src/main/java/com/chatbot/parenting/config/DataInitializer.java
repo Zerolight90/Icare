@@ -9,12 +9,14 @@ import com.chatbot.parenting.repository.ChatbotConfigRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "icare.bootstrap.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class DataInitializer implements ApplicationRunner {
 
