@@ -34,8 +34,8 @@ public class DailyLogController {
 
     private final DailyLogService dailyLogService;
     private final GeminiService geminiService;
-    private final BabyRepository babyRepository;
-    private final UserRepository userRepository;
+    private final com.chatbot.parenting.service.FamilyAccessService familyAccess;
+
 
     @GetMapping("/{babyId}")
     public ResponseEntity<?> getLogs(
@@ -45,7 +45,7 @@ public class DailyLogController {
         if (extractEmail(principal) == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         if (date == null) date = LocalDate.now();
         try {
-            return ResponseEntity.ok(dailyLogService.getLogs(babyId, date));
+            return ResponseEntity.ok(dailyLogService.getLogs(extractEmail(principal), babyId, date));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -59,7 +59,7 @@ public class DailyLogController {
             @AuthenticationPrincipal Object principal) {
         if (extractEmail(principal) == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         try {
-            return ResponseEntity.ok(dailyLogService.getLogsByRange(babyId, from, to));
+            return ResponseEntity.ok(dailyLogService.getLogsByRange(extractEmail(principal), babyId, from, to));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -76,8 +76,8 @@ public class DailyLogController {
 
         if (extractEmail(principal) == null) { response.setStatus(401); return; }
 
-        Baby baby = babyRepository.findById(babyId).orElseThrow();
-        List<DailyLogResponseDto> rows = dailyLogService.getLogsByRange(babyId, from, to);
+        Baby baby = familyAccess.requireBaby(extractEmail(principal), babyId);
+        List<DailyLogResponseDto> rows = dailyLogService.getLogsByRange(extractEmail(principal), babyId, from, to);
 
         String rawName = baby.getName() + "_일과표_" + from + "_" + to + ".csv";
         String encoded = URLEncoder.encode(rawName, StandardCharsets.UTF_8).replace("+", "%20");
@@ -118,10 +118,9 @@ public class DailyLogController {
             @AuthenticationPrincipal Object principal) {
         if (extractEmail(principal) == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        Baby baby = babyRepository.findById(babyId)
-                .orElseThrow(() -> new IllegalArgumentException("아이 정보를 찾을 수 없습니다."));
+        Baby baby = familyAccess.requireBaby(extractEmail(principal), babyId);
 
-        List<DailyLogResponseDto> logs = dailyLogService.getLogs(babyId, date);
+        List<DailyLogResponseDto> logs = dailyLogService.getLogs(extractEmail(principal), babyId, date);
         if (logs.isEmpty()) return ResponseEntity.ok(Map.of("result", "해당 날짜에 기록된 일과가 없습니다."));
 
         Period age = Period.between(baby.getBirthDate(), LocalDate.now());
@@ -153,7 +152,7 @@ public class DailyLogController {
                 .forEach(l -> prompt.append(l.getMemo()).append(" / "));
         prompt.append("\n\n위 데이터를 바탕으로 오늘 수유량과 배변이 적절한지, 주의할 점은 없는지 친절하게 문진해주세요.");
 
-        String result = geminiService.healthCheck(prompt.toString());
+        String result = geminiService.healthCheck(prompt.toString(), extractEmail(principal));
         return ResponseEntity.ok(Map.of("result", result));
     }
 
@@ -178,7 +177,7 @@ public class DailyLogController {
             @AuthenticationPrincipal Object principal) {
         if (extractEmail(principal) == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         try {
-            return ResponseEntity.ok(dailyLogService.updateLog(logId, dto));
+            return ResponseEntity.ok(dailyLogService.updateLog(extractEmail(principal), logId, dto));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -190,9 +189,9 @@ public class DailyLogController {
             @AuthenticationPrincipal Object principal) {
         if (extractEmail(principal) == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         try {
-            dailyLogService.deleteLog(logId);
+            dailyLogService.deleteLog(extractEmail(principal), logId);
             return ResponseEntity.ok("삭제되었습니다.");
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

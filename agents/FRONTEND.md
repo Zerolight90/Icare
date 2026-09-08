@@ -2,6 +2,8 @@
 
 기준 경로: `babychatboot_frontend/chat-frontend`.
 
+2026-09-08 2단계 변경: 브라우저 API는 같은 origin의 Next.js 서버 경로를 사용하며 기존 rewrite/NEXT_PUBLIC_API_URL 직접 연결을 제거했다. 서버 경로에서 서비스 인증을 붙이고, 이미지 읽기에 한정된 HttpOnly 쿠키를 로그인/로그아웃에 연결했다. [비공개 실행 안내](PRIVATE_BACKEND_RUNBOOK.md)를 최신 기준으로 적용한다. 아래 분석은 기존 화면/구조의 이력이다.
+
 ## 화면과 공통 구조
 
 | 페이지 | 책임 |

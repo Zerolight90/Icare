@@ -93,7 +93,7 @@ export default function ChatPage() {
     setMessages(prev => [...prev, tempMsg]);
     setIsLoading(true);
     try {
-      await api.post(`/api/chat/message?roomId=${currentRoomId}&message=${encodeURIComponent(question)}`);
+      await api.post('/api/chat/message', new URLSearchParams({ roomId: currentRoomId, message: question }));
       const res = await api.get(`/api/chat/rooms/${currentRoomId}/messages`);
       setMessages(res.data);
     } catch { alert('연결이 끊어졌거나, 질문 한도를 초과했어요.'); }

@@ -19,6 +19,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     @Column(nullable = false)
@@ -39,6 +40,7 @@ public class User {
     private LocalDate birthDate;
     private String phoneNumber;
     private String address;
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String verificationCode;
     private LocalDateTime codeCreatedAt;
 

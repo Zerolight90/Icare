@@ -1,16 +1,13 @@
 package com.chatbot.parenting.config;
 
-import com.chatbot.parenting.domain.Admin;
 import com.chatbot.parenting.domain.Board;
 import com.chatbot.parenting.domain.ChatbotConfig;
-import com.chatbot.parenting.repository.AdminRepository;
 import com.chatbot.parenting.repository.BoardRepository;
 import com.chatbot.parenting.repository.ChatbotConfigRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,12 +18,10 @@ import java.util.List;
 public class DataInitializer implements ApplicationRunner {
 
     private final BoardRepository boardRepository;
-    private final AdminRepository adminRepository;
     private final ChatbotConfigRepository chatbotConfigRepository;
-    private final PasswordEncoder passwordEncoder;
 
     private static final String SYSTEM_PROMPT_DEFAULT =
-        "당신은 'iCare' 플랫폼의 10년 차 소아과 의사 닥터 의비스 입니다.\n" +
+        "당신은 'iCare'의 육아 정보 안내 AI입니다. 의료인이 아니며 진단하지 않습니다.\n" +
         "[매우 엄격한 답변 규칙]\n" +
         "사용자의 질문이 '육아, 아이 건강, 수유, 수면, 아기 발달'과 직접적인 관련이 없다면, " +
         "어떤 위로나 부연 설명도 하지 말고 오직 아래 문장만 출력하세요.\n" +
@@ -38,7 +33,6 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         initBoards();
-        initAdminAccount();
         initChatbotConfig();
     }
 
@@ -51,13 +45,6 @@ public class DataInitializer implements ApplicationRunner {
                 new Board("고민",       "육아하면서 생기는 고민을 함께 해결해요",       4, "COMMUNITY"),
                 new Board("의학 질문",  "소아과 전문의에게 건강 상담을 받아보세요",     5, "MEDICAL")
             ));
-        }
-    }
-
-    private void initAdminAccount() {
-        if (!adminRepository.existsByUsername("admin")) {
-            Admin admin = new Admin("admin", passwordEncoder.encode("admin1234!"), "최고관리자");
-            adminRepository.save(admin);
         }
     }
 

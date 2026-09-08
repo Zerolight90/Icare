@@ -1,0 +1,30 @@
+# Backend only: joins the existing DB network without declaring or creating any DB service/volume.
+services:
+  backend:
+    build: ./babychatboot_backend/parenting
+    image: icare-backend:private-test
+    container_name: icare-backend
+    env_file:
+      - ${ICARE_BACKEND_ENV_FILE:?Set the external private runtime env file}
+    environment:
+      SPRING_PROFILES_ACTIVE: private
+      ICARE_DB_URL: jdbc:postgresql://parenting-postgres:5432/parenting_db
+      ICARE_BOOTSTRAP_ENABLED: "false"
+      ICARE_KNOWLEDGE_LOAD_ON_STARTUP: "false"
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ${ICARE_UPLOAD_DIR:?Set an existing uploads directory}:/app/uploads
+    networks:
+      - existing-db
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+networks:
+  existing-db:
+    external: true
+    name: ${ICARE_DB_NETWORK:-icare-local-db_default}

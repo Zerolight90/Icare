@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import api from '../../lib/axios';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -17,14 +18,14 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'}/api/admin/auth/login`,
+      const res = await api.post(
+        '/api/admin/auth/login',
         { username, password }
       );
       localStorage.setItem('accessToken', res.data.token);
       router.replace('/admin');
-    } catch (err: any) {
-      setError(err.response?.data?.error ?? '로그인에 실패했습니다.');
+    } catch (err: unknown) {
+      setError(axios.isAxiosError(err) ? err.response?.data?.error ?? '로그인에 실패했습니다.' : '로그인에 실패했습니다.');
     } finally {
       setLoading(false);
     }

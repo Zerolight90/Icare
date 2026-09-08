@@ -23,6 +23,7 @@ public class BabyController {
 
     private final BabyRepository babyRepository;
     private final UserRepository userRepository;
+    private final com.chatbot.parenting.service.FamilyAccessService familyAccess;
 
     @GetMapping
     public ResponseEntity<?> getBabies(@AuthenticationPrincipal Object principal) {
@@ -65,14 +66,7 @@ public class BabyController {
         String email = extractEmail(principal);
         if (email == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        Baby baby = babyRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("아이 정보를 찾을 수 없습니다."));
-
-        if (!baby.getFamily().getId().equals(user.getFamily().getId()))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("권한이 없습니다.");
+        Baby baby = familyAccess.requireBaby(email, id);
 
         baby.update(dto.getName(), dto.getGender(), dto.getBirthDate(),
                 dto.getWeight(), dto.getHeight(), dto.getSpecialNotes());
@@ -86,14 +80,7 @@ public class BabyController {
         String email = extractEmail(principal);
         if (email == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        Baby baby = babyRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("아이 정보를 찾을 수 없습니다."));
-
-        if (!baby.getFamily().getId().equals(user.getFamily().getId()))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("권한이 없습니다.");
+        Baby baby = familyAccess.requireBaby(email, id);
 
         babyRepository.delete(baby);
         return ResponseEntity.ok().build();

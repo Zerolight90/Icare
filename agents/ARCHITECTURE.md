@@ -4,13 +4,14 @@
 
 ## 구성과 경계
 
+2단계에서는 서버 전달 경로·서비스 인증·계정 종류/허용 이메일·가족 검증을 보강했다. 아래 도식은 코드의 요청 흐름이다. Cloudflare/Vercel 실제 배포는 미수행이며 [비공개 실행 안내](PRIVATE_BACKEND_RUNBOOK.md)를 따른다.
+
 iCare는 AI 육아 상담, 아기·가족 관리, 육아 일지, 커뮤니티, 병원 검색, 관리자 기능을 제공한다. 프론트엔드와 백엔드는 별도 프로젝트이며, 백엔드는 기술 계층별 패키지를 사용하는 단일 애플리케이션이다.
 
 ```mermaid
 flowchart LR
-    Browser[브라우저 / React 화면] -->|Axios / Bearer JWT| Next[Next.js /api rewrite]
-    Next --> API[Spring Security / REST Controllers]
-    Browser -. NEXT_PUBLIC_API_URL 지정 시 직접 요청 .-> API
+    Browser[브라우저 / React 화면] -->|Axios / Bearer JWT| Next[Next.js 서버 /api 경로]
+    Next -->|서버 인증 + 사용자 JWT| API[Spring Security / REST Controllers]
     API --> Services[업무 서비스 / 일부 Controller 직접 처리]
     Services --> JPA[Spring Data JPA]
     JPA --> DB[(PostgreSQL)]

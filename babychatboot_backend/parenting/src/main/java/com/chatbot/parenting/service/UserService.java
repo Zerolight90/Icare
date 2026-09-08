@@ -29,10 +29,16 @@ public class UserService {
     private final BabyRepository babyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final com.chatbot.parenting.config.PrivateAccessPolicy privateAccess;
 
     @Transactional
     public String signup(SignupRequestDto requestDto) {
-        if (userRepository.existsByEmail(requestDto.getEmail())) {
+        String email = privateAccess.requireAllowed(requestDto.getEmail());
+        if (!"MOM".equals(requestDto.getRole()) && !"DAD".equals(requestDto.getRole())) {
+            throw new IllegalArgumentException("부모 역할을 선택해 주세요.");
+        }
+        com.chatbot.parenting.config.PrivateAccessPolicy.requirePassword(requestDto.getPassword());
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
@@ -43,6 +49,13 @@ public class UserService {
             family = familyRepository.findByInviteCode(requestDto.getInviteCode())
                     .orElseThrow(() -> new IllegalArgumentException("잘못된 초대 코드입니다."));
         } else {
+            if (requestDto.getBabyCount() < 1 || requestDto.getBabyCount() > 3
+                    || requestDto.getBabyNames() == null || requestDto.getBabyGenders() == null
+                    || requestDto.getBabyNames().size() != requestDto.getBabyCount()
+                    || requestDto.getBabyGenders().size() != requestDto.getBabyCount()
+                    || requestDto.getBabyBirthDate() == null) {
+                throw new IllegalArgumentException("아기 정보를 확인해 주세요.");
+            }
             String newCode = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
             family = new Family(newCode);
             familyRepository.save(family);
@@ -60,7 +73,7 @@ public class UserService {
         }
 
         User user = new User(
-                requestDto.getEmail(),
+                email,
                 encodedPassword,
                 "LOCAL",
                 requestDto.getName(),
@@ -78,7 +91,8 @@ public class UserService {
 
     @Transactional
     public boolean verifyEmail(String email, String code) {
-        User user = userRepository.findByEmail(email)
+        email = privateAccess.requireAllowed(email);
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 사용자가 없습니다."));
 
         if (user.getCodeCreatedAt() == null ||
@@ -96,7 +110,8 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public String login(LoginRequestDto loginRequestDto) {
-        User user = userRepository.findByEmail(loginRequestDto.getEmail())
+        String email = privateAccess.requireAllowed(loginRequestDto.getEmail());
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
@@ -107,7 +122,7 @@ public class UserService {
             throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
         }
 
-        return jwtUtil.createToken(user.getEmail(), user.getRole());
+        return jwtUtil.createUserToken(user.getEmail(), user.getRole());
     }
 
     // ==========================================
@@ -167,6 +182,7 @@ public class UserService {
             throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
         }
 
+        com.chatbot.parenting.config.PrivateAccessPolicy.requirePassword(dto.getNewPassword());
         user.changePassword(passwordEncoder.encode(dto.getNewPassword()));
     }
 
@@ -175,6 +191,7 @@ public class UserService {
     // ==========================================
     @Transactional
     public String joinFamily(String email, String inviteCode) {
+        if (inviteCode == null || inviteCode.isBlank()) throw new IllegalArgumentException("초대 코드를 입력해 주세요.");
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 

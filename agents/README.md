@@ -12,6 +12,7 @@
 | [WORK_LOG.md](WORK_LOG.md) | 2026-09-08 재확인 결과, 수행·미수행, 다음 작업 |
 | [DATABASE_MIGRATION.md](DATABASE_MIGRATION.md) | 백업·복원/Flyway 절차, 원본 CRC 오류와 재개 조건 |
 | [FLYWAY_RUNBOOK.md](FLYWAY_RUNBOOK.md) | 최신 Flyway 구현·격리 검증 결과와 실제 DB 적용 검수안 |
+| [PRIVATE_BACKEND_RUNBOOK.md](PRIVATE_BACKEND_RUNBOOK.md) | 2단계 인증·권한·Docker·서버 프록시 변경, 실행 설정과 검증/미검증 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 경계, 기술 구성, 핵심 요청 흐름과 데이터 관계 |
 | [BACKEND.md](BACKEND.md) | API 영역, 서비스 책임, 인증·RAG·영속성 구조 |
 | [FRONTEND.md](FRONTEND.md) | 페이지 구성, 상태 관리, HTTP와 인증 흐름 |

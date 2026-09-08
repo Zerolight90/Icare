@@ -11,11 +11,12 @@ class ParentingApplicationTests {
 	@Test
 	void normalStartupDoesNotCreateAccountsOrLoadKnowledge() {
 		new ApplicationContextRunner()
-			.withUserConfiguration(DataInitializer.class, KnowledgeLoaderService.class)
+			.withUserConfiguration(DataInitializer.class, KnowledgeLoaderService.class, com.chatbot.parenting.config.AdminBootstrap.class)
 			.run(context -> {
 				assertThat(context).hasNotFailed();
 				assertThat(context).doesNotHaveBean(DataInitializer.class);
 				assertThat(context).doesNotHaveBean(KnowledgeLoaderService.class);
+				assertThat(context).doesNotHaveBean(com.chatbot.parenting.config.AdminBootstrap.class);
 			});
 	}
 

@@ -1,5 +1,11 @@
 # 실행·검증 안내
 
+## 2026-09-08 비공개 백엔드 변경 이후
+
+[2단계 실행·검증 안내](PRIVATE_BACKEND_RUNBOOK.md)를 최신 실행 기준으로 사용한다. Dockerfile은 소스 빌드 방식이고 `compose.backend.yml`은 기존 DB 네트워크에 백엔드만 연결한다. 브라우저는 Next 서버 `/api`를 사용한다. 실제 환경변수는 Git 밖 파일에 있으며 아직 Gemini/SMTP/Cloudflare 설정은 비어 있다. 서비스 DB와 외부 배포에는 2단계 변경을 적용하지 않았다.
+
+백엔드 격리 테스트, Docker 시작/권한 HTTP 검사, 프록시 테스트, Next production build는 통과했다. 기존 프론트 lint 오류 7개/경고 11개는 남아 있다. 아래 오래된 루트 Compose/직접 API 연결 예제는 이번 실행 절차로 사용하지 않는다.
+
 ## 2026-09-08 Flyway 변경 이후
 
 최신 실행과 실제 DB 적용 승인 절차는 [Flyway 작업서](FLYWAY_RUNBOOK.md)를 우선한다. dev/prod 모두 Hibernate validate와 Spring AI 스키마 자동 생성 비활성화를 사용한다. 빈 DB는 Flyway V1으로 구성하며 기존 DB는 검수한 명시적 baseline이 필요하다.

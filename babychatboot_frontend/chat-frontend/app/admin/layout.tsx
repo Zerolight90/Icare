@@ -96,7 +96,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span>←</span> 사이트로 돌아가기
           </Link>
           <button
-            onClick={() => { localStorage.removeItem('accessToken'); router.replace('/admin/login'); }}
+            onClick={async () => {
+              const response = await fetch('/api/session/logout', { method: 'POST' });
+              if (!response.ok) { alert('로그아웃을 다시 시도해 주세요.'); return; }
+              localStorage.removeItem('accessToken'); router.replace('/admin/login');
+            }}
             className="flex items-center gap-2 text-gray-400 hover:text-red-400 text-sm transition w-full"
           >
             <span>⏏</span> 로그아웃

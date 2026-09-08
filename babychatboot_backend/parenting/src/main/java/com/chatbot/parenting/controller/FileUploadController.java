@@ -32,8 +32,8 @@ public class FileUploadController {
         String ext = originalName.contains(".")
                 ? originalName.substring(originalName.lastIndexOf('.'))
                 : "";
-        String allowed = ".jpg.jpeg.png.gif.webp";
-        if (!allowed.contains(ext.toLowerCase()))
+        var allowed = java.util.Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
+        if (!allowed.contains(ext.toLowerCase(java.util.Locale.ROOT)))
             return ResponseEntity.badRequest().body("이미지 파일(jpg, png, gif, webp)만 업로드 가능합니다.");
 
         try {
@@ -51,14 +51,17 @@ public class FileUploadController {
     @GetMapping("/{filename:.+}")
     public ResponseEntity<byte[]> getFile(@PathVariable String filename) {
         try {
-            Path path = Paths.get(uploadDir).resolve(filename).normalize();
-            if (!path.startsWith(Paths.get(uploadDir)))
+            Path root = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path path = root.resolve(filename).normalize();
+            if (!path.startsWith(root) || Files.isSymbolicLink(path))
                 return ResponseEntity.badRequest().build();
+            if (Files.size(path) > 4 * 1024 * 1024) return ResponseEntity.status(413).build();
             byte[] data = Files.readAllBytes(path);
             String contentType = determineContentType(filename);
             return ResponseEntity.ok()
                     .header("Content-Type", contentType)
-                    .header("Cache-Control", "max-age=86400")
+                    .header("Cache-Control", "private, no-store")
+                    .header("X-Content-Type-Options", "nosniff")
                     .body(data);
         } catch (IOException e) {
             return ResponseEntity.notFound().build();

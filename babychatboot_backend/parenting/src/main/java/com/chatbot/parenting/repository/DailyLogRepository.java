@@ -12,6 +12,7 @@ import java.util.List;
 
 public interface DailyLogRepository extends JpaRepository<DailyLog, Long> {
 
+    @Query("select l from DailyLog l where l.baby = :baby and l.recordTime >= :start and l.recordTime < :end order by l.recordTime")
     List<DailyLog> findByBabyAndRecordTimeBetweenOrderByRecordTimeAsc(
             Baby baby, LocalDateTime start, LocalDateTime end);
 

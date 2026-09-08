@@ -39,6 +39,8 @@ public class AdminService {
     private final ChatMessageRepository chatMessageRepository;
     private final VectorStore vectorStore;
     private final JwtUtil jwtUtil;
+    private final AiRequestGuard aiGuard;
+    private final com.chatbot.parenting.config.PrivateAccessPolicy privateAccess;
 
     // ==========================================
     // 관리자 인증
@@ -46,7 +48,8 @@ public class AdminService {
 
     @Transactional
     public String login(String username, String password) {
-        Admin admin = adminRepository.findByUsername(username)
+        username = privateAccess.requireAllowed(username);
+        Admin admin = adminRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다."));
         if (!admin.isActive()) {
             throw new IllegalArgumentException("비활성화된 관리자 계정입니다.");
@@ -55,7 +58,7 @@ public class AdminService {
             throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
         admin.recordLogin();
-        return jwtUtil.createToken(admin.getUsername(), "ADMIN");
+        return jwtUtil.createAdminToken(admin.getUsername());
     }
 
     // ==========================================
@@ -78,7 +81,9 @@ public class AdminService {
 
     @Transactional
     public Map<String, Object> createAdminAccount(String username, String password, String name) {
-        if (adminRepository.existsByUsername(username)) {
+        username = privateAccess.requireAllowed(username);
+        com.chatbot.parenting.config.PrivateAccessPolicy.requirePassword(password);
+        if (adminRepository.existsByUsernameIgnoreCase(username)) {
             throw new IllegalArgumentException("이미 사용 중인 아이디입니다: " + username);
         }
         Admin admin = new Admin(username, passwordEncoder.encode(password), name);
@@ -309,22 +314,24 @@ public class AdminService {
 
     @Transactional
     public void addKnowledge(String content, String source) {
+        if (content == null || content.length() > 4000) throw new IllegalArgumentException("한 번에 최대 4000자까지 등록할 수 있습니다.");
         Document doc = new Document(content, Map.of("source", source));
         List<Document> chunks = buildSplitter().apply(List.of(doc));
-        vectorStore.add(chunks);
+        try (var permit = aiGuard.acquire("admin-knowledge", content)) { vectorStore.add(chunks); }
         log.info("[Admin RAG] 지식 추가: {} → {}개 청크", source, chunks.size());
     }
 
     @Transactional
     public Map<String, Object> uploadKnowledgeFile(MultipartFile file, String source) {
         try {
+            if (file.getSize() > 16000) throw new IllegalArgumentException("이번 비공개 테스트의 문서는 최대 16KB입니다.");
             String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "upload";
             String src = (source != null && !source.isBlank()) ? source : fileName;
             String content = new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
             if (content.isBlank()) throw new IllegalArgumentException("파일 내용이 비어 있습니다.");
             Document doc = new Document(content, Map.of("source", src));
             List<Document> chunks = buildSplitter().apply(List.of(doc));
-            vectorStore.add(chunks);
+            try (var permit = aiGuard.acquire("admin-knowledge", content)) { vectorStore.add(chunks); }
             log.info("[Admin RAG] 파일 업로드: {} → {}개 청크", src, chunks.size());
             return Map.of("message", "파일이 임베딩되었습니다.", "source", src, "chunks", chunks.size());
         } catch (java.io.IOException e) {
@@ -333,8 +340,8 @@ public class AdminService {
     }
 
     private TokenTextSplitter buildSplitter() {
-        int chunkSize = getConfigInt("rag_chunk_size", 512);
-        int overlap = getConfigInt("rag_chunk_overlap", 64);
+        int chunkSize = Math.max(256, Math.min(1024, getConfigInt("rag_chunk_size", 512)));
+        int overlap = Math.max(0, Math.min(128, getConfigInt("rag_chunk_overlap", 64)));
         return new TokenTextSplitter(chunkSize, overlap, 5, 10000, true,
                 List.of('.', ',', '!', '?', ';', ':'));
     }

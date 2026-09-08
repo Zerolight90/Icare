@@ -235,7 +235,7 @@ public class AdminController {
         try {
             Map<String, Object> result = adminService.uploadKnowledgeFile(file, source);
             return ResponseEntity.ok(result);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }

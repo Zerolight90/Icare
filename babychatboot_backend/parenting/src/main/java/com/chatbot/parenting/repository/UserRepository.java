@@ -7,6 +7,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     // 이메일로 유저 찾기 (Optional로 감싸서 NullPointException 방지)
     Optional<User> findByEmail(String email);
+    Optional<User> findByEmailIgnoreCase(String email);
+    boolean existsByEmailIgnoreCase(String email);
     
     // 이메일 중복 확인용 (가입 시 필요)
     boolean existsByEmail(String email);

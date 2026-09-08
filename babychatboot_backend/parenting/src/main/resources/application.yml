@@ -1,4 +1,6 @@
 spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -13,6 +15,12 @@ spring:
 
 # Enable only as an explicit, reviewed operation. Normal starts do not seed data.
 icare:
+  security:
+    allowed-emails: ${ICARE_ALLOWED_EMAILS:}
+    proxy-secret: ${ICARE_PROXY_SECRET:}
+  admin:
+    bootstrap:
+      enabled: false
   bootstrap:
     enabled: false
   knowledge:

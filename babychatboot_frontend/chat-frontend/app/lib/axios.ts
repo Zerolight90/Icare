@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL, // .env.local에서 읽어옴
+  baseURL: '/', // Browser requests always use the same-origin server route.
   withCredentials: true, // 필요한 경우 쿠키 포함
 });
 

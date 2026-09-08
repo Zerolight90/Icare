@@ -20,6 +20,7 @@ public class UserController {
     private final UserService userService;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final com.chatbot.parenting.config.PrivateAccessPolicy privateAccess;
 
     // 회원가입
     @PostMapping("/signup")
@@ -34,19 +35,18 @@ public class UserController {
     // 이메일 인증번호 발송
     @PostMapping("/send-email")
     public ResponseEntity<String> sendVerificationEmail(@RequestParam String email) {
+        email = privateAccess.requireAllowed(email);
         try {
-            User user = userRepository.findByEmail(email)
+            User user = userRepository.findByEmailIgnoreCase(email)
                     .orElseThrow(() -> new IllegalArgumentException("가입된 이메일이 아닙니다."));
             String code = emailService.generateVerificationCode();
             user.setVerificationCode(code);
             userRepository.save(user);
             emailService.sendVerificationEmail(email, code);
-            System.out.println("발송된 인증번호: " + code);
             return ResponseEntity.ok("이메일로 인증번호가 발송되었습니다.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.internalServerError().body("이메일 발송에 실패했습니다.");
         }
     }

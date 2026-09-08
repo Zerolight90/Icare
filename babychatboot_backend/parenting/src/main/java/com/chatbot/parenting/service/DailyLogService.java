@@ -22,13 +22,13 @@ import java.util.stream.Collectors;
 public class DailyLogService {
 
     private final DailyLogRepository dailyLogRepository;
-    private final BabyRepository babyRepository;
+    private final FamilyAccessService familyAccess;
     private final UserRepository userRepository;
 
     // 특정 날짜 로그 조회
     @Transactional(readOnly = true)
-    public List<DailyLogResponseDto> getLogs(Long babyId, LocalDate date) {
-        Baby baby = findBaby(babyId);
+    public List<DailyLogResponseDto> getLogs(String email, Long babyId, LocalDate date) {
+        Baby baby = familyAccess.requireBaby(email, babyId);
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.plusDays(1).atStartOfDay();
         return dailyLogRepository
@@ -38,8 +38,9 @@ public class DailyLogService {
 
     // 기간 조회 (CSV 다운로드용)
     @Transactional(readOnly = true)
-    public List<DailyLogResponseDto> getLogsByRange(Long babyId, LocalDate from, LocalDate to) {
-        Baby baby = findBaby(babyId);
+    public List<DailyLogResponseDto> getLogsByRange(String email, Long babyId, LocalDate from, LocalDate to) {
+        Baby baby = familyAccess.requireBaby(email, babyId);
+        if (from == null || to == null || to.isBefore(from) || java.time.temporal.ChronoUnit.DAYS.between(from, to) > 366) throw new IllegalArgumentException("조회 기간은 최대 1년입니다.");
         LocalDateTime start = from.atStartOfDay();
         LocalDateTime end = to.plusDays(1).atStartOfDay();
         return dailyLogRepository
@@ -51,7 +52,7 @@ public class DailyLogService {
     @Transactional
     public DailyLogResponseDto addLog(String email, Long babyId, DailyLogRequestDto dto) {
         User user = findUser(email);
-        Baby baby = findBaby(babyId);
+        Baby baby = familyAccess.requireBaby(email, babyId);
         LocalDateTime recordTime = LocalDateTime.parse(dto.getRecordTime());
         DailyLog log = new DailyLog(
                 recordTime,
@@ -66,9 +67,10 @@ public class DailyLogService {
 
     // 로그 수정
     @Transactional
-    public DailyLogResponseDto updateLog(Long logId, DailyLogRequestDto dto) {
+    public DailyLogResponseDto updateLog(String email, Long logId, DailyLogRequestDto dto) {
         DailyLog log = dailyLogRepository.findById(logId)
                 .orElseThrow(() -> new IllegalArgumentException("기록을 찾을 수 없습니다."));
+        familyAccess.requireBaby(email, log.getBaby().getId());
         log.update(
                 LocalDateTime.parse(dto.getRecordTime()),
                 dto.getFormulaAmount(),
@@ -81,13 +83,11 @@ public class DailyLogService {
 
     // 로그 삭제
     @Transactional
-    public void deleteLog(Long logId) {
-        dailyLogRepository.deleteById(logId);
-    }
-
-    private Baby findBaby(Long babyId) {
-        return babyRepository.findById(babyId)
-                .orElseThrow(() -> new IllegalArgumentException("아기를 찾을 수 없습니다."));
+    public void deleteLog(String email, Long logId) {
+        DailyLog log = dailyLogRepository.findById(logId)
+                .orElseThrow(() -> new IllegalArgumentException("기록을 찾을 수 없습니다."));
+        familyAccess.requireBaby(email, log.getBaby().getId());
+        dailyLogRepository.delete(log);
     }
 
     private User findUser(String email) {

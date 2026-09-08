@@ -2,6 +2,8 @@
 
 소스 기준 경로: `babychatboot_backend/parenting/src/main/java/com/chatbot/parenting`.
 
+2026-09-08 2단계 변경: [비공개 실행 안내](PRIVATE_BACKEND_RUNBOOK.md)의 현황을 우선한다. 허용 이메일/계정 종류/관리자 활성 상태를 요청마다 확인하고, FamilyAccessService로 일지·아기 가족 권한을 검증한다. 일반 API도 사용자 인증을 요구하며 서비스 헤더 확인이 선행한다. 고정 관리자 생성은 제거했고 별도 bootstrap은 기본 비활성이다. AI 입력/검색 문맥/출력/빈도 제한과 공통 예외 처리를 추가했다. 아래 표와 개선 제안은 2026-09-06 분석 이력이다.
+
 ## 계층과 책임
 
 | 구성 | 현재 책임 | 경계상 특징 |

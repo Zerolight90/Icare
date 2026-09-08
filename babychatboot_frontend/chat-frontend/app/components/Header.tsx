@@ -17,7 +17,9 @@ export default function Header() {
   const [userName, setUserName] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    const response = await fetch('/api/session/logout', { method: 'POST' });
+    if (!response.ok) { alert('로그아웃을 다시 시도해 주세요.'); return; }
     localStorage.removeItem('accessToken');
     setIsLoggedIn(false);
     setUserName('');

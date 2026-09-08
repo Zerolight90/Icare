@@ -5,13 +5,13 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 20MB
+      max-file-size: 3MB
+      max-request-size: 4MB
 
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
@@ -21,7 +21,7 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: "ant7773@gmail.com"
+    username: ${SMTP_USERNAME:}
     properties:
       mail:
         smtp:

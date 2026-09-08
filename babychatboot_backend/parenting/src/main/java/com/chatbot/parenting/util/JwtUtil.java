@@ -20,13 +20,22 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createToken(String email, String role) {
+    public String createUserToken(String email, String role) {
+        return createToken(email, role, "USER");
+    }
+
+    public String createAdminToken(String email) {
+        return createToken(email, "ADMIN", "ADMIN");
+    }
+
+    private String createToken(String email, String role, String kind) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + accessTokenExpiration);
 
         return Jwts.builder()
                 .subject(email)
                 .claim("role", role)
+                .claim("kind", kind)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
@@ -42,7 +51,7 @@ public class JwtUtil {
         return getClaims(token).get("role", String.class);
     }
 
-    private Claims getClaims(String token) {
+    public Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
