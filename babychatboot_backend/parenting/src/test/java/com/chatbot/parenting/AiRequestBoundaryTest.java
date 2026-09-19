@@ -26,7 +26,7 @@ class AiRequestBoundaryTest {
         when(room.getContextFamilyId()).thenReturn(null);
         when(room.getContextBabyId()).thenReturn(null);
         when(configs.findByConfigKey("system_prompt")).thenReturn(Optional.of(new ChatbotConfig("system_prompt", "당신은 소아과 전문의입니다.", "old fixture")));
-        var ai = new GeminiService(client, new KnowledgeSearchService(vector, new com.fasterxml.jackson.databind.ObjectMapper()), messages, rooms, users, configs, new AiRequestGuard(4000, 1024, 5), new ChatContextService(messages, mock(FamilyAccessService.class)));
+        var ai = new GeminiService(client, new KnowledgeSearchService(vector, new com.fasterxml.jackson.databind.ObjectMapper()), messages, rooms, users, configs, new AiRequestGuard(4000, 1024, 5, new FakeRequestControl()), new ChatContextService(messages, mock(FamilyAccessService.class)));
         assertThatThrownBy(() -> ai.askToGemini("room", "x".repeat(4001), "parent@example.test")).hasMessageContaining("400");
         verifyNoInteractions(client, vector, messages);
 

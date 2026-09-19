@@ -28,6 +28,7 @@ public class AdminService {
     private final CommunityPostRepository communityPostRepository;
     private final CommunityCommentRepository communityCommentRepository;
     private final BoardRepository boardRepository;
+    private final CommunityCache communityCache;
     private final NoticeRepository noticeRepository;
     private final ChatbotConfigRepository chatbotConfigRepository;
     private final DailyLogRepository dailyLogRepository;
@@ -169,6 +170,7 @@ public class AdminService {
         CommunityPost post = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
         post.softDelete();
+        communityCache.invalidateAfterCommit();
     }
 
     @Transactional
@@ -176,6 +178,7 @@ public class AdminService {
         CommunityPost post = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
         post.restore();
+        communityCache.invalidateAfterCommit();
     }
 
     // ==========================================
@@ -190,6 +193,7 @@ public class AdminService {
     @Transactional
     public Board createBoard(String name, String description, Integer displayOrder, String boardType) {
         Board board = new Board(name, description, displayOrder, boardType);
+        communityCache.invalidateAfterCommit();
         return boardRepository.save(board);
     }
 
@@ -198,6 +202,7 @@ public class AdminService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("게시판을 찾을 수 없습니다."));
         board.updateAll(name, description, displayOrder, boardType);
+        communityCache.invalidateAfterCommit();
         return board;
     }
 
@@ -206,11 +211,13 @@ public class AdminService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("게시판을 찾을 수 없습니다."));
         board.setActive(active);
+        communityCache.invalidateAfterCommit();
     }
 
     @Transactional
     public void deleteBoard(Long boardId) {
         boardRepository.deleteById(boardId);
+        communityCache.invalidateAfterCommit();
     }
 
     // ==========================================

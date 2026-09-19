@@ -76,7 +76,7 @@ class FamilyBoundaryTest {
         var model = mock(org.springframework.ai.chat.client.ChatClient.class); var vector = mock(org.springframework.ai.vectorstore.VectorStore.class);
         var config = mock(ChatbotConfigRepository.class); var room = mock(ChatRoom.class);
         when(room.getUser()).thenReturn(user); when(user.getEmail()).thenReturn("owner@example.test"); when(rooms.findById("room")).thenReturn(Optional.of(room));
-        var ai = new GeminiService(model, new KnowledgeSearchService(vector, new com.fasterxml.jackson.databind.ObjectMapper()), messages, rooms, users, config, new AiRequestGuard(4000, 1024, 5), new ChatContextService(messages, mock(FamilyAccessService.class)));
+        var ai = new GeminiService(model, new KnowledgeSearchService(vector, new com.fasterxml.jackson.databind.ObjectMapper()), messages, rooms, users, config, new AiRequestGuard(4000, 1024, 5, new FakeRequestControl()), new ChatContextService(messages, mock(FamilyAccessService.class)));
         assertThatThrownBy(() -> ai.askToGemini("room", "question", "parent@example.test")).isInstanceOf(AccessDeniedException.class);
         assertThatThrownBy(() -> ai.getChatHistoryByRoom("room", "parent@example.test")).isInstanceOf(AccessDeniedException.class);
         assertThatThrownBy(() -> ai.resetChatHistory("room", "parent@example.test")).isInstanceOf(AccessDeniedException.class);

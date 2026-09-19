@@ -5,6 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
+@lombok.NoArgsConstructor
 public class PostListResponseDto {
     private Long id;
     private String title;

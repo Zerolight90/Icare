@@ -121,7 +121,7 @@ class PrivateSecurityTest {
         @Bean JwtAuthenticationFilter jwtFilter(JwtUtil jwt, AccountPolicy policy, UserRepository users, AdminRepository admins) {
             return new JwtAuthenticationFilter(jwt, policy, users, admins);
         }
-        @Bean ProxyAuthenticationFilter proxy() { return new ProxyAuthenticationFilter(PROXY); }
+        @Bean ProxyAuthenticationFilter proxy() { return new ProxyAuthenticationFilter(PROXY, new FakeRequestControl()); }
         @Bean Probe probe() { return new Probe(); }
     }
     @RestController static class Probe {

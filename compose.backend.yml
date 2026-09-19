@@ -9,6 +9,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: private
       ICARE_DB_URL: jdbc:postgresql://parenting-postgres:5432/parenting_db
+      ICARE_REDIS_HOST: icare-redis
+      ICARE_REDIS_PORT: 6379
       ICARE_BOOTSTRAP_ENABLED: "false"
       ICARE_KNOWLEDGE_LOAD_ON_STARTUP: "false"
       ICARE_UPLOAD_DIR: /app/uploads

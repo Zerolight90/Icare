@@ -53,7 +53,7 @@ class KnowledgePipelineTest {
         });
         vectors = PgVectorStore.builder(jdbc, embedding).dimensions(3072).initializeSchema(false)
                 .distanceType(PgVectorStore.PgDistanceType.COSINE_DISTANCE).indexType(PgVectorStore.PgIndexType.NONE).build();
-        service = new KnowledgeService(jdbc, vectors, json, new AiRequestGuard(4000,1024,10));
+        service = new KnowledgeService(jdbc, vectors, json, new AiRequestGuard(4000, 1024, 10, new FakeRequestControl()));
     }
     Map<String,Object> ingest(KnowledgeService target, String text, KnowledgeService.Metadata metadata, String expected, boolean approved) {
         var parts = extractor.text(text); var preview = target.preview(parts, metadata);
@@ -85,7 +85,7 @@ class KnowledgePipelineTest {
         var before = jdbc.queryForList("SELECT id,content,metadata::text FROM vector_store ORDER BY id");
         VectorStore failing = mock(VectorStore.class);
         doAnswer(call -> { vectors.add(call.<List<Document>>getArgument(0)); throw new IllegalStateException("synthetic embedding failure after write"); }).when(failing).add(anyList());
-        var failService = new KnowledgeService(jdbc,failing,json,new AiRequestGuard(4000,1024,10));
+        var failService = new KnowledgeService(jdbc,failing,json,new AiRequestGuard(4000, 1024, 10, new FakeRequestControl()));
         assertThatThrownBy(() -> ingest(failService,"new failed text",meta,first.get("version").toString(),true)).isInstanceOf(IllegalStateException.class);
         assertThat(jdbc.queryForList("SELECT id,content,metadata::text FROM vector_store ORDER BY id")).isEqualTo(before);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM knowledge_revision",Integer.class)).isEqualTo(1);

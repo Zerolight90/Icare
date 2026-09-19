@@ -75,7 +75,7 @@ class ChatContextTest {
         verifyNoInteractions(messages, access);
     }
     @Test void permitStaysBusyUntilTheMessageTransactionCompletes() {
-        var guard = new AiRequestGuard(4000, 1024, 5);
+        var guard = new AiRequestGuard(4000, 1024, 5, new FakeRequestControl());
         TransactionSynchronizationManager.initSynchronization();
         try {
             guard.acquire("parent", "question").close();

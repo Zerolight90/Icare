@@ -17,21 +17,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ProxyAuthenticationFilter extends OncePerRequestFilter {
     private final byte[] expected;
     private final boolean configured;
-    private long windowStart = System.nanoTime();
-    private int attempts;
+    private final com.chatbot.parenting.service.RequestControl control;
     private static final Set<String> AUTH_PATHS = Set.of("/api/users/login", "/api/users/signup",
             "/api/users/send-email", "/api/users/verify", "/api/admin/auth/login");
 
-    public ProxyAuthenticationFilter(@Value("${icare.security.proxy-secret:}") String secret) {
+    public ProxyAuthenticationFilter(@Value("${icare.security.proxy-secret:}") String secret, com.chatbot.parenting.service.RequestControl control) {
+        this.control = control;
         configured = secret.length() >= 32;
         expected = secret.getBytes(StandardCharsets.UTF_8);
         if (!secret.isEmpty() && !configured) throw new IllegalArgumentException("Proxy secret must have at least 32 characters");
-    }
-
-    private synchronized boolean allowAuthAttempt() {
-        long now = System.nanoTime();
-        if (now - windowStart >= 60_000_000_000L) { windowStart = now; attempts = 0; }
-        return ++attempts <= 20;
     }
 
     @Override
@@ -46,10 +40,12 @@ public class ProxyAuthenticationFilter extends OncePerRequestFilter {
             res.setStatus(403);
             return;
         }
-        if (AUTH_PATHS.contains(req.getRequestURI()) && !allowAuthAttempt()) {
-            res.setHeader("Retry-After", "60");
-            res.setStatus(429);
-            return;
+        if (AUTH_PATHS.contains(req.getRequestURI())) {
+            try {
+                if (!control.allowAuthAttempt()) { res.setHeader("Retry-After", "60"); res.setStatus(429); return; }
+            } catch (org.springframework.web.server.ResponseStatusException e) {
+                res.setStatus(503); return;
+            }
         }
         chain.doFilter(req, res);
     }

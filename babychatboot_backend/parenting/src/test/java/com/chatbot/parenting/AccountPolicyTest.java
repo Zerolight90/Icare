@@ -21,7 +21,7 @@ class AccountPolicyTest {
     }
     @Test void signupRejectsPrivilegeInjectionBeforeAnyWrites() {
         var users = mock(UserRepository.class); var families = mock(FamilyRepository.class); var babies = mock(BabyRepository.class);
-        var service = new UserService(users, families, babies, new BCryptPasswordEncoder(), mock(JwtUtil.class), new AccountPolicy());
+        var service = new UserService(users, families, babies, new BCryptPasswordEncoder(), mock(JwtUtil.class), mock(CommunityCache.class), new AccountPolicy());
         var dto = new SignupRequestDto(); dto.setEmail("newparent@example.test"); dto.setRole("ADMIN");
         assertThatThrownBy(() -> service.signup(dto)).isInstanceOf(IllegalArgumentException.class);
         verifyNoInteractions(users, families, babies);
@@ -29,7 +29,7 @@ class AccountPolicyTest {
     @Test void newParentCanSignupButCannotLoginBeforeEmailVerification() {
         var users = mock(UserRepository.class); var families = mock(FamilyRepository.class); var babies = mock(BabyRepository.class);
         var encoder = new BCryptPasswordEncoder();
-        var service = new UserService(users, families, babies, encoder, mock(JwtUtil.class), new AccountPolicy());
+        var service = new UserService(users, families, babies, encoder, mock(JwtUtil.class), mock(CommunityCache.class), new AccountPolicy());
         var dto = new SignupRequestDto(); dto.setEmail("newparent@example.test"); dto.setRole("MOM");
         dto.setPassword("test-only-long-password"); dto.setInviteCode("SAMPLE");
         when(families.findByInviteCode("SAMPLE")).thenReturn(java.util.Optional.of(new com.chatbot.parenting.domain.Family("SAMPLE")));
@@ -50,7 +50,7 @@ class AccountPolicyTest {
         verify(admins, never()).save(any());
     }
     @Test void aiLimitsRejectOversizeConcurrentAndExcessRequests() {
-        var guard = new AiRequestGuard(20, 32, 2);
+        var guard = new AiRequestGuard(20, 32, 2, new FakeRequestControl());
         assertThatThrownBy(() -> guard.acquire("a", "x".repeat(21))).hasMessageContaining("400");
         try (var permit = guard.acquire("a", "question")) {
             assertThatThrownBy(() -> guard.acquire("a", "question")).hasMessageContaining("429");

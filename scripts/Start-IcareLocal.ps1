@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'Read-IcareEnv.ps1')
 $values = Read-IcareEnv -Path $EnvFile
 $required = if ($Service -eq 'backend') {
-    @('ICARE_DB_URL','ICARE_DB_USER','ICARE_DB_PASSWORD','JWT_SECRET','ICARE_PROXY_SECRET','GEMINI_API_KEY','ICARE_UPLOAD_DIR')
+    @('ICARE_DB_URL','ICARE_DB_USER','ICARE_DB_PASSWORD','JWT_SECRET','ICARE_PROXY_SECRET','GEMINI_API_KEY','ICARE_UPLOAD_DIR','ICARE_REDIS_PASSWORD')
 } else { @('BACKEND_URL','ICARE_FRONTEND_ORIGIN','ICARE_PROXY_SECRET') }
 foreach ($name in $required) {
     if ([string]::IsNullOrWhiteSpace($values[$name])) { throw "Missing $name in env file" }

@@ -19,6 +19,7 @@ public class CommunityService {
     private final CommunityPostRepository postRepository;
     private final CommunityCommentRepository commentRepository;
     private final UserRepository userRepository;
+    private final CommunityCache cache;
 
     @Transactional(readOnly = true)
     public List<Board> getBoards(String type) {
@@ -29,20 +30,22 @@ public class CommunityService {
 
     @Transactional(readOnly = true)
     public Page<PostListResponseDto> getPosts(Long boardId, int page, int size) {
+        if (page < 0 || page > 1000 || size < 1 || size > 50) throw new IllegalArgumentException("페이지 범위를 확인해 주세요.");
         Board board = findBoard(boardId);
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return postRepository.findByBoardAndStatusOrderByCreatedAtDesc(board, 1, pageable)
+        return cache.posts(boardId, pageable, () -> postRepository.findByBoardAndStatusOrderByCreatedAtDesc(board, 1, pageable)
                 .map(p -> new PostListResponseDto(
                         p.getId(), p.getTitle(), p.getAuthor().getNickname(),
                         p.getCommentCount(), p.getViewCount(),
                         p.getCreatedAt().toString(),
-                        p.getBoard().getName(), p.getBoard().getId()));
+                        p.getBoard().getName(), p.getBoard().getId())));
     }
 
     @Transactional
     public PostDetailResponseDto getPost(Long postId) {
         CommunityPost post = findPost(postId);
         post.incrementViewCount();
+        cache.invalidateAfterCommit();
         List<PostDetailResponseDto.CommentDto> commentDtos = commentRepository
                 .findByPostOrderByCreatedAtAsc(post).stream()
                 .map(c -> new PostDetailResponseDto.CommentDto(
@@ -59,6 +62,7 @@ public class CommunityService {
         User user = findUser(email);
         Board board = findBoard(boardId);
         CommunityPost post = new CommunityPost(dto.getTitle(), dto.getContent(), dto.getImageUrls(), board, user);
+        cache.invalidateAfterCommit();
         return toDetailDto(postRepository.save(post), List.of());
     }
 
@@ -68,6 +72,7 @@ public class CommunityService {
         CommunityPost post = findPost(postId);
         checkAuthor(post.getAuthor().getEmail(), email, "수정");
         post.update(dto.getTitle(), dto.getContent(), dto.getImageUrls());
+        cache.invalidateAfterCommit();
     }
 
     @Transactional
@@ -75,6 +80,7 @@ public class CommunityService {
         CommunityPost post = findPost(postId);
         checkAuthor(post.getAuthor().getEmail(), email, "삭제");
         post.softDelete();
+        cache.invalidateAfterCommit();
     }
 
     @Transactional
@@ -86,6 +92,7 @@ public class CommunityService {
         CommunityComment comment = new CommunityComment(content.trim(), post, user);
         commentRepository.save(comment);
         post.incrementCommentCount();
+        cache.invalidateAfterCommit();
         return new PostDetailResponseDto.CommentDto(
                 comment.getId(), comment.getContent(),
                 user.getNickname(), user.getEmail(),
@@ -99,6 +106,7 @@ public class CommunityService {
         checkAuthor(comment.getAuthor().getEmail(), email, "삭제");
         comment.getPost().decrementCommentCount();
         commentRepository.delete(comment);
+        cache.invalidateAfterCommit();
     }
 
     private void validateContent(String title, String content) {
@@ -112,7 +120,7 @@ public class CommunityService {
     }
 
     private Board findBoard(Long id) {
-        return boardRepository.findById(id)
+        return boardRepository.findById(id).filter(Board::isActive)
                 .orElseThrow(() -> new IllegalArgumentException("게시판을 찾을 수 없습니다."));
     }
 

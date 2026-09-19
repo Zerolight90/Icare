@@ -29,6 +29,7 @@ public class UserService {
     private final BabyRepository babyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final CommunityCache communityCache;
     private final com.chatbot.parenting.config.AccountPolicy accountPolicy;
 
     @Transactional
@@ -161,6 +162,7 @@ public class UserService {
     // ==========================================
     @Transactional
     public void updateProfile(String email, UpdateProfileRequestDto dto) {
+        communityCache.invalidateAfterCommit();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         user.updateProfile(dto.getName(), dto.getNickname(), dto.getPhoneNumber(), dto.getAddress());

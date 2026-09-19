@@ -1,5 +1,13 @@
 # Home-PC runtime. Secrets arrive only through external environment variables.
 spring:
+  data:
+    redis:
+      host: ${ICARE_REDIS_HOST:127.0.0.1}
+      port: ${ICARE_REDIS_PORT:6379}
+      password: ${ICARE_REDIS_PASSWORD}
+      database: ${ICARE_REDIS_DATABASE:0}
+      timeout: 2s
+      connect-timeout: 2s
   datasource:
     url: ${ICARE_DB_URL}
     username: ${ICARE_DB_USER}
@@ -59,3 +67,6 @@ server:
     max-swallow-size: 4MB
 upload:
   dir: ${ICARE_UPLOAD_DIR:/app/uploads}
+icare:
+  redis:
+    prefix: ${ICARE_REDIS_PREFIX:icare:v1:}
