@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import Script from 'next/script';
+import AddressSearch from '../components/AddressSearch';
 import Link from 'next/link';
 import Image from 'next/image';
 import api from '../lib/axios';
@@ -61,27 +61,7 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [detailAddress, setDetailAddress] = useState('');
-  const [addressError, setAddressError] = useState('');
   const detailAddressInput = useRef<HTMLInputElement>(null);
-
-  const openAddressSearch = () => {
-    if (!window.daum?.Postcode) {
-      setAddressError('주소 검색을 불러오지 못했습니다. 잠시 후 다시 시도하거나 주소를 직접 입력해 주세요.');
-      return;
-    }
-    setAddressError('');
-    try {
-      new window.daum.Postcode({
-        oncomplete: data => {
-          setForm(prev => ({ ...prev, address: data.address }));
-          setDetailAddress('');
-          detailAddressInput.current?.focus();
-        },
-      }).open();
-    } catch {
-      setAddressError('주소 검색 창을 열지 못했습니다. 팝업 허용 여부를 확인하거나 주소를 직접 입력해 주세요.');
-    }
-  };
 
   const validatePassword = () => {
     if (form.password.length < 10 || new TextEncoder().encode(form.password).length > 72) {
@@ -189,9 +169,6 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-sky-50 flex items-center justify-center p-4 py-12">
-      <Script src="https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
-        strategy="afterInteractive"
-        onError={() => setAddressError('주소 검색 서비스를 불러오지 못했습니다. 새로고침하거나 주소를 직접 입력해 주세요.')} />
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8">
 
         {/* 헤더 */}
@@ -245,12 +222,14 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap gap-2 items-center justify-between">
                 <label htmlFor="signup-address" className="text-sm text-gray-500">주소</label>
-                <button type="button" onClick={openAddressSearch}
-                  className="px-4 py-2 rounded-xl bg-sky-100 text-sky-700 font-semibold hover:bg-sky-200">주소 검색</button>
+                <AddressSearch onSelect={address => {
+                  setForm(prev => ({ ...prev, address }));
+                  setDetailAddress('');
+                  detailAddressInput.current?.focus();
+                }} />
               </div>
-              {addressError && <p role="status" className="text-sm text-amber-700">{addressError}</p>}
               <input id="signup-address" type="text" placeholder="도로명 또는 지번 주소" required className={inputClass}
                 value={form.address} onChange={e => { set('address', e.target.value); setDetailAddress(''); }} />
               <input ref={detailAddressInput} type="text" aria-label="상세주소" placeholder="상세주소 (동·호수 등, 선택)" className={inputClass}

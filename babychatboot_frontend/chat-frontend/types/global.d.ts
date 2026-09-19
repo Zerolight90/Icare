@@ -10,6 +10,6 @@ interface Window {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   kakao: any;
   daum: {
-    Postcode: new (opts: { oncomplete: (d: DaumPostcodeResult) => void }) => { open: () => void };
+    Postcode: new (opts: { oncomplete: (d: DaumPostcodeResult) => void; width?: string; height?: number; minWidth?: number }) => { open: () => void; embed: (container: HTMLElement) => void };
   };
 }
