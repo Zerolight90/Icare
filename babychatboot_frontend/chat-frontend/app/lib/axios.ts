@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { clearAccessToken } from './auth-state';
 
 const api = axios.create({
   baseURL: '/', // Browser requests always use the same-origin server route.
@@ -27,10 +28,10 @@ api.interceptors.response.use(
         currentPath.startsWith('/community/') ||
         currentPath.startsWith('/admin/login');
       if (!isPublic) {
-        localStorage.removeItem('accessToken');
+        clearAccessToken();
         window.location.href = currentPath.startsWith('/admin') ? '/admin/login' : '/login';
       } else {
-        localStorage.removeItem('accessToken');
+        clearAccessToken();
       }
     }
     return Promise.reject(err);

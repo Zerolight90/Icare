@@ -16,6 +16,8 @@ public class SignupRequestDto {
     private LocalDate birthDate;
     private String phoneNumber;
     private String address;
+    private String postalCode;
+    private String detailAddress;
     // 아기 정보 (단태아/쌍둥이/세쌍둥이 지원)
     private int babyCount = 1;          // 1: 단태아, 2: 쌍둥이, 3: 세쌍둥이
     private List<String> babyNames;     // 아기 이름 목록

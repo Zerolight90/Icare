@@ -1,4 +1,5 @@
 interface DaumPostcodeResult {
+  zonecode: string;
   address: string;
   roadAddress: string;
   addressType: string;

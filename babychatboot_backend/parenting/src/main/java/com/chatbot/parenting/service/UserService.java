@@ -39,6 +39,7 @@ public class UserService {
             throw new IllegalArgumentException("부모 역할을 선택해 주세요.");
         }
         com.chatbot.parenting.config.AccountPolicy.requirePassword(requestDto.getPassword());
+        String fullAddress = com.chatbot.parenting.config.SignupValidation.validate(requestDto);
         if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
@@ -50,13 +51,6 @@ public class UserService {
             family = familyRepository.findByInviteCode(requestDto.getInviteCode())
                     .orElseThrow(() -> new IllegalArgumentException("잘못된 초대 코드입니다."));
         } else {
-            if (requestDto.getBabyCount() < 1 || requestDto.getBabyCount() > 3
-                    || requestDto.getBabyNames() == null || requestDto.getBabyGenders() == null
-                    || requestDto.getBabyNames().size() != requestDto.getBabyCount()
-                    || requestDto.getBabyGenders().size() != requestDto.getBabyCount()
-                    || requestDto.getBabyBirthDate() == null) {
-                throw new IllegalArgumentException("아기 정보를 확인해 주세요.");
-            }
             String newCode = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
             family = new Family(newCode);
             familyRepository.save(family);
@@ -82,7 +76,7 @@ public class UserService {
                 requestDto.getRole(),
                 requestDto.getBirthDate(),
                 requestDto.getPhoneNumber(),
-                requestDto.getAddress()
+                fullAddress
         );
         user.joinFamily(family);
         userRepository.save(user);
@@ -112,6 +106,9 @@ public class UserService {
     @Transactional(readOnly = true)
     public String login(LoginRequestDto loginRequestDto) {
         String email = accountPolicy.requireEmail(loginRequestDto.getEmail());
+        String password = loginRequestDto.getPassword();
+        if (password == null || password.isEmpty() || password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72)
+            throw new IllegalArgumentException("이메일 또는 비밀번호를 확인해 주세요.");
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 

@@ -24,6 +24,8 @@ try {
   await page.getByPlaceholder('전화번호 (010-0000-0000)').fill('010-0000-0000');
   await page.locator('input[type=date]').fill('1990-01-01');
   await page.getByLabel('주소', { exact: true }).fill('테스트 주소');
+  await page.getByLabel('우편번호').fill('04524');
+  await page.getByLabel('상세주소').fill('테스트 상세주소');
   const password = page.getByLabel('비밀번호', { exact: true });
   const confirmation = page.getByLabel('비밀번호 확인', { exact: true });
   const next = page.getByRole('button', { name: '다음 →', exact: true });
@@ -38,6 +40,14 @@ try {
   assert.match(await page.getByRole('alert').filter({ hasText: '비밀번호' }).innerText(), /72바이트/);
   passed('UTF-8 byte limit matches backend');
   await password.fill('abcdefghij'); await confirmation.fill('abcdefghij');
+  for (const [label, restore] of [['우편번호', '04524'], ['주소', '테스트 주소']]) {
+    await page.getByLabel(label, { exact: true }).fill('');
+    await next.click();
+    assert.ok(await next.isVisible()); assert.equal(requests.length, 0);
+    await page.getByLabel(label, { exact: true }).fill(restore);
+    await page.getByLabel('상세주소').fill('테스트 상세주소');
+  }
+  passed('missing postal code or base address blocks next step');
   await page.getByLabel('상세주소').fill('이전 상세주소');
   await page.getByRole('button', { name: '주소 검색', exact: true }).click();
   const search = page.frameLocator('iframe').frameLocator('iframe');
@@ -51,7 +61,13 @@ try {
   const selected = await page.getByLabel('주소', { exact: true }).inputValue();
   assert.match(selected, /세종대로 110/);
   assert.equal(await page.getByLabel('상세주소').inputValue(), '');
-  passed('live address search selects result and clears old detail');
+  assert.match(await page.getByLabel('우편번호').inputValue(), /^\d{5}$/);
+  await next.click();
+  assert.ok(await next.isVisible()); assert.equal(requests.length, 0);
+  await page.getByLabel('상세주소').fill('   '); await next.click();
+  assert.ok(await next.isVisible()); assert.equal(requests.length, 0);
+  assert.match(await page.getByRole('alert').filter({ hasText: '주소' }).innerText(), /모두 입력/);
+  passed('live search fills postal code and address; missing/blank detail blocks signup');
   await page.getByLabel('상세주소').fill('테스트 상세주소');
   await next.click();
   await page.getByPlaceholder('아기 이름', { exact: true }).waitFor();
@@ -66,10 +82,12 @@ try {
   await page.getByText('이메일 인증을 완료해 주세요', { exact: true }).waitFor();
   const signup = requests.find(request => request.path === '/api/users/signup');
   assert.ok(signup);
-  assert.equal(signup.data.address, `${selected} 테스트 상세주소`);
+  assert.equal(signup.data.address, selected);
+  assert.equal(signup.data.detailAddress, '테스트 상세주소');
+  assert.match(signup.data.postalCode, /^\d{5}$/);
   assert.equal(signup.data.password.length, 10);
   assert.equal('confirmPassword' in signup.data, false);
-  assert.equal('detailAddress' in signup.data, false);
+
   assert.equal(requests.filter(request => request.path === '/api/users/send-email').length, 1);
   passed('back navigation preserves address; mocked signup has correct payload and verification step');
   assert.deepEqual(errors, []);
@@ -98,6 +116,7 @@ try {
   await offline.goto(`${base}/signup`);
   await offline.getByRole('status').filter({ hasText: '주소 검색을 불러오지 못했습니다' }).waitFor();
   await offline.getByLabel('주소', { exact: true }).fill('직접 입력 테스트 주소');
+  await offline.getByLabel('우편번호').fill('04524');
   await offline.getByLabel('상세주소').fill('직접 입력 상세주소');
   assert.equal(await offline.getByLabel('주소', { exact: true }).inputValue(), '직접 입력 테스트 주소');
   passed('SDK failure displays recovery guidance and allows manual address');

@@ -2,13 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useHasAccessToken } from './lib/auth-state';
 import Header from './components/Header';
 
 export default function LandingPage() {
-  const [isLoggedIn] = useState<boolean>(() =>
-    typeof window !== 'undefined' && !!localStorage.getItem('accessToken')
-  );
+  const isLoggedIn = useHasAccessToken();
 
   return (
     <div className="min-h-screen bg-white flex flex-col">

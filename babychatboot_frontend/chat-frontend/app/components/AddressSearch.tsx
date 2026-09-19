@@ -3,19 +3,19 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import Script from 'next/script';
 
-export default function AddressSearch({ onSelect }: { onSelect: (address: string) => void }) {
+export default function AddressSearch({ onSelect }: { onSelect: (address: string, postalCode: string) => void }) {
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const container = useRef<HTMLDivElement>(null);
-  const selectAddress = useEffectEvent((address: string) => onSelect(address));
+  const selectAddress = useEffectEvent((address: string, postalCode: string) => onSelect(address, postalCode));
 
   useEffect(() => {
     if (!open || !ready || !container.current || !window.daum?.Postcode) return;
     const target = container.current;
     new window.daum.Postcode({
       width: '100%', height: 400, minWidth: 200,
-      oncomplete: data => { selectAddress(data.address); setOpen(false); },
+      oncomplete: data => { selectAddress(data.address, data.zonecode); setOpen(false); },
     }).embed(target);
 
     return () => { target.replaceChildren(); };
@@ -32,7 +32,7 @@ export default function AddressSearch({ onSelect }: { onSelect: (address: string
     </button>
     {error && <p role="status" className="text-sm text-amber-700">{error}</p>}
     <div id="signup-address-search" hidden={!open} className="w-full basis-full border border-gray-200 rounded-xl overflow-hidden">
-      {!ready && <p role="status" className="p-3 text-sm text-gray-500">주소 검색을 불러오는 중입니다.</p>}
+      {!ready && !error && <p role="status" className="p-3 text-sm text-gray-500">주소 검색을 불러오는 중입니다.</p>}
       <div ref={container} />
     </div>
   </>;

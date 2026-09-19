@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import api from '../lib/axios';
 import { isAxiosError } from 'axios';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -116,7 +114,7 @@ export default function LoginPage() {
         <div className="mt-8 text-center border-t border-gray-100 pt-6">
           <p className="text-sm text-gray-600">
             아직 iCare 회원이 아니신가요? <br/>
-            <Link href="/register" className="text-sky-500 font-bold hover:underline mt-1 inline-block">
+            <Link href="/signup" className="text-sky-500 font-bold hover:underline mt-1 inline-block">
               회원가입하고 무료 상담받기
             </Link>
           </p>

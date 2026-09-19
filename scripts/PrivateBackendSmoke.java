@@ -34,7 +34,7 @@ public class PrivateBackendSmoke {
             call("POST", "/api/users/signup", "{\"email\":\"parent@example.test\",\"role\":\"ADMIN\"}", null, true, 400);
             call("POST", "/api/users/signup", "{\"email\":\"outsider@example.test\",\"role\":\"MOM\"}", null, true, 400);
             for (String email : new String[]{"parent@example.test", "second@example.test"}) {
-                String body = "{\"email\":\"" + email + "\",\"password\":\"" + PASSWORD + "\",\"name\":\"Test\",\"nickname\":\"Test\",\"role\":\"MOM\",\"babyCount\":1,\"babyNames\":[\"Test baby\"],\"babyGenders\":[\"U\"],\"babyBirthDate\":\"2026-08-01\"}";
+                String body = "{\"email\":\"" + email + "\",\"password\":\"" + PASSWORD + "\",\"name\":\"Test\",\"nickname\":\"Test\",\"role\":\"MOM\",\"birthDate\":\"1990-01-01\",\"phoneNumber\":\"010-0000-0000\",\"postalCode\":\"04524\",\"address\":\"Test street\",\"detailAddress\":\"Unit 1\",\"babyCount\":1,\"babyNames\":[\"Test baby\"],\"babyGenders\":[\"U\"],\"babyBirthDate\":\"2026-08-01\"}";
                 call("POST", "/api/users/signup", body, null, true, 200);
             }
         } else {

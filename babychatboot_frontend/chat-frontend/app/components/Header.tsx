@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/axios';
+import { clearAccessToken } from '../lib/auth-state';
 
 function parseToken(token: string): { role: string | null; subject: string | null } {
   try {
@@ -20,8 +21,9 @@ export default function Header() {
   const handleLogout = useCallback(async () => {
     const response = await fetch('/api/session/logout', { method: 'POST' });
     if (!response.ok) { alert('로그아웃을 다시 시도해 주세요.'); return; }
-    localStorage.removeItem('accessToken');
+    clearAccessToken();
     setIsLoggedIn(false);
+    setIsAdmin(false);
     setUserName('');
     if (window.location.pathname !== '/') {
       window.location.href = '/';

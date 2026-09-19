@@ -21,6 +21,7 @@ interface FormData {
   birthDate: string;
   phoneNumber: string;
   address: string;
+  postalCode: string;
   babyCount: BabyCount;
   babyNames: string[];
   babyGenders: BabyGender[];
@@ -49,7 +50,7 @@ export default function SignupPage() {
   const [step, setStep] = useState<Step>('info');
   const [form, setForm] = useState<FormData>({
     name: '', nickname: '', email: '', password: '',
-    role: 'DAD', birthDate: '', phoneNumber: '', address: '',
+    role: 'DAD', birthDate: '', phoneNumber: '', address: '', postalCode: '',
     babyCount: 1,
     babyNames: ['', '', ''],
     babyGenders: ['U', 'U', 'U'],
@@ -80,6 +81,18 @@ export default function SignupPage() {
     setError('');
   };
 
+  const validateAddress = () => {
+    if (!/^\d{5}$/.test(form.postalCode) || !form.address.trim() || !detailAddress.trim()) {
+      setError('우편번호, 기본주소, 상세주소를 모두 입력해 주세요.');
+      return false;
+    }
+    if (`(${form.postalCode}) ${form.address.trim()} ${detailAddress.trim()}`.length > 255) {
+      setError('주소는 우편번호와 상세주소를 포함해 255자 이내로 입력해 주세요.');
+      return false;
+    }
+    return true;
+  };
+
   const setBabyCount = (count: BabyCount) => {
     setForm(prev => ({ ...prev, babyCount: count }));
     setError('');
@@ -105,21 +118,22 @@ export default function SignupPage() {
 
   const handleInfoNext = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validatePassword()) return;
+    if (!validatePassword() || !validateAddress()) return;
     setError('');
     setStep('baby');
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validatePassword()) { setStep('info'); return; }
+    if (!validatePassword() || !validateAddress()) { setStep('info'); return; }
     setIsLoading(true);
     setError('');
     let registered = false;
     try {
       const payload = {
         ...form,
-        address: [form.address.trim(), detailAddress.trim()].filter(Boolean).join(' '),
+        address: form.address.trim(),
+        detailAddress: detailAddress.trim(),
         babyNames: form.babyNames.slice(0, form.babyCount),
         babyGenders: form.babyGenders.slice(0, form.babyCount),
         inviteCode: form.inviteCode.trim() || undefined,
@@ -224,16 +238,20 @@ export default function SignupPage() {
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2 items-center justify-between">
                 <label htmlFor="signup-address" className="text-sm text-gray-500">주소</label>
-                <AddressSearch onSelect={address => {
-                  setForm(prev => ({ ...prev, address }));
+                <AddressSearch onSelect={(address, postalCode) => {
+                  setForm(prev => ({ ...prev, address, postalCode }));
                   setDetailAddress('');
+                  setError('');
                   detailAddressInput.current?.focus();
                 }} />
               </div>
+              <input type="text" aria-label="우편번호" placeholder="우편번호 5자리" inputMode="numeric" required pattern="[0-9]{5}" maxLength={5} className={inputClass}
+                value={form.postalCode} onChange={e => set('postalCode', e.target.value.replace(/\D/g, ''))} />
               <input id="signup-address" type="text" placeholder="도로명 또는 지번 주소" required className={inputClass}
                 value={form.address} onChange={e => { set('address', e.target.value); setDetailAddress(''); }} />
-              <input ref={detailAddressInput} type="text" aria-label="상세주소" placeholder="상세주소 (동·호수 등, 선택)" className={inputClass}
+              <input ref={detailAddressInput} type="text" aria-label="상세주소" placeholder="상세주소 (동·호수 등, 필수)" required maxLength={200} className={inputClass}
                 value={detailAddress} onChange={e => setDetailAddress(e.target.value)} />
+              <p className="text-xs text-gray-500">검색 결과를 선택한 후 상세주소를 입력해 주세요. 검색이 안 되면 우편번호와 주소를 직접 입력할 수 있습니다.</p>
             </div>
 
             {/* 역할 선택 */}

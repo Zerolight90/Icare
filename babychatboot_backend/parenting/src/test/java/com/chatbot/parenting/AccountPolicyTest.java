@@ -40,6 +40,8 @@ class AccountPolicyTest {
         var service = new UserService(users, families, babies, encoder, mock(JwtUtil.class), mock(CommunityCache.class), new AccountPolicy());
         var dto = new SignupRequestDto(); dto.setEmail("newparent@example.test"); dto.setRole("MOM");
         dto.setPassword("abcdefghij"); dto.setInviteCode("SAMPLE");
+        dto.setName("Test"); dto.setNickname("Test"); dto.setBirthDate(java.time.LocalDate.of(1990,1,1));
+        dto.setPhoneNumber("010-0000-0000"); dto.setAddress("Test street"); dto.setPostalCode("04524"); dto.setDetailAddress("Unit 1");
         when(families.findByInviteCode("SAMPLE")).thenReturn(java.util.Optional.of(new com.chatbot.parenting.domain.Family("SAMPLE")));
         service.signup(dto);
         var saved = org.mockito.ArgumentCaptor.forClass(com.chatbot.parenting.domain.User.class);
