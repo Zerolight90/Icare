@@ -30,6 +30,8 @@ class PrivateSecurityTest {
     @BeforeEach void setup() {
         context = new AnnotationConfigWebApplicationContext();
         context.setServletContext(new MockServletContext());
+        org.springframework.test.context.support.TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context,
+                "icare.security.cors-allowed-origins=https://frontend.example.test");
         context.register(TestConfig.class);
         context.refresh();
         mvc = MockMvcBuilders.webAppContextSetup(context)
@@ -74,7 +76,32 @@ class PrivateSecurityTest {
         mvc.perform(post("/api/users/login").header("X-Icare-Proxy-Secret", PROXY)).andExpect(status().isTooManyRequests()).andExpect(header().string("Retry-After", "60"));
     }
 
-    @Configuration @EnableWebMvc @Import(SecurityConfig.class)
+    @Test void corsAllowsOnlyConfiguredOriginAndDoesNotBypassServiceAuthentication() throws Exception {
+        mvc.perform(options("/api/probe").header("Origin", "https://frontend.example.test")
+                .header("Access-Control-Request-Method", "GET").header("Access-Control-Request-Headers", "Authorization"))
+                .andExpect(status().isOk()).andExpect(header().string("Access-Control-Allow-Origin", "https://frontend.example.test"));
+        mvc.perform(options("/api/probe").header("Origin", "https://evil.test")
+                .header("Access-Control-Request-Method", "GET")).andExpect(status().isForbidden());
+        mvc.perform(options("/api/probe").header("Origin", "https://frontend.example.test")
+                .header("Access-Control-Request-Method", "GET").header("Access-Control-Request-Headers", "X-Icare-Proxy-Secret"))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/probe").header("Origin", "https://frontend.example.test")
+                .header("Authorization", "Bearer " + jwt.createUserToken(EMAIL, "MOM"))).andExpect(status().isForbidden());
+        mvc.perform(get("/api/probe").header("Origin", "https://frontend.example.test")
+                .header("X-Icare-Proxy-Secret", PROXY).header("Authorization", "Bearer " + jwt.createUserToken(EMAIL, "MOM")))
+                .andExpect(status().isOk());
+    }
+
+    @Test void corsRejectsWildcardsAndEmptyConfigurationFailsClosed() throws Exception {
+        var factory = new PrivateCorsConfiguration();
+        for (String invalid : new String[]{"*", "https://*.example.test", "https://example.test/path", "https://u:p@example.test", "null", "https://example.test,"})
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> factory.corsSource(invalid));
+        var req = new org.springframework.mock.web.MockHttpServletRequest("GET", "/api/probe");
+        var config = factory.corsSource("").getCorsConfiguration(req);
+        org.junit.jupiter.api.Assertions.assertNull(config.checkOrigin("https://frontend.example.test"));
+    }
+
+    @Configuration @EnableWebMvc @Import({SecurityConfig.class, PrivateCorsConfiguration.class})
     static class TestConfig {
         @Bean JwtUtil jwtUtil() { return new JwtUtil("test-only-signing-key-32-characters-minimum"); }
         @Bean PrivateAccessPolicy policy() { return new PrivateAccessPolicy(EMAIL); }

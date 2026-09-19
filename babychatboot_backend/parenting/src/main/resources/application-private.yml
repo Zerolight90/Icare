@@ -33,8 +33,8 @@ spring:
         api-key: ${GEMINI_API_KEY}
         chat:
           options:
-            model: gemini-2.5-flash-lite
-            max-output-tokens: 1024
+            model: ${GEMINI_CHAT_MODEL:gemini-2.5-flash-lite}
+            max-output-tokens: ${ICARE_AI_MAX_OUTPUT_TOKENS:1024}
         embedding:
           api-key: ${GEMINI_API_KEY}
           options:
@@ -58,4 +58,4 @@ server:
     max-http-form-post-size: 4MB
     max-swallow-size: 4MB
 upload:
-  dir: /app/uploads
+  dir: ${ICARE_UPLOAD_DIR:/app/uploads}

@@ -5,12 +5,13 @@ services:
     image: icare-backend:private-test
     container_name: icare-backend
     env_file:
-      - ${ICARE_BACKEND_ENV_FILE:?Set the external private runtime env file}
+      - ${ICARE_BACKEND_ENV_FILE:-.env}
     environment:
       SPRING_PROFILES_ACTIVE: private
       ICARE_DB_URL: jdbc:postgresql://parenting-postgres:5432/parenting_db
       ICARE_BOOTSTRAP_ENABLED: "false"
       ICARE_KNOWLEDGE_LOAD_ON_STARTUP: "false"
+      ICARE_UPLOAD_DIR: /app/uploads
     ports:
       - "127.0.0.1:8080:8080"
     volumes:

@@ -1,5 +1,7 @@
 # 백엔드 분석
 
+환경설정 후속 변경은 [환경설정 작업서](ENVIRONMENT_RUNBOOK.md)를 따른다. private 프로파일은 .env 실행기를 사용하고 기존 secret 프로파일을 포함하지 않는다. CORS는 정확한 환경변수 목록으로 제한하며 서비스/JWT 인증은 유지한다.
+
 최신(2026-09-19): [대화 맥락 작업서](CHAT_CONTEXT_RUNBOOK.md)의 3단계는 main 병합/실제 V2 적용 완료다. ChatContextService의 현재 가족/아이 권한 확인 뒤 최근 대화와 선택 프로필을 요청에 포함한다. 4단계는 KnowledgeExtractor → KnowledgeService의 검토·중복·버전 관리와 KnowledgeSearchService의 현재 버전 검색/출처 저장을 추가했다. 상세는 [문서 검색 작업서](KNOWLEDGE_RUNBOOK.md)를 따른다. 사용자 승인 후 V3를 실제 DB에도 적용했고 전후 백업 복원·보존 검증을 완료했다.
 
 소스 기준 경로: `babychatboot_backend/parenting/src/main/java/com/chatbot/parenting`.

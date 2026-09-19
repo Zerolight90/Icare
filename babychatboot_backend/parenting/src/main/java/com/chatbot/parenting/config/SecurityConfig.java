@@ -23,9 +23,9 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, org.springframework.web.cors.UrlBasedCorsConfigurationSource corsSource) throws Exception {
         http.csrf(csrf -> csrf.disable()) // Only server proxy + explicit bearer authentication; no backend cookies.
-            .cors(cors -> cors.disable())
+            .cors(cors -> cors.configurationSource(corsSource))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/healthz").permitAll()
