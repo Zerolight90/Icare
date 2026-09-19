@@ -45,8 +45,8 @@ class AiRequestBoundaryTest {
         when(previousQuestion.getContent()).thenReturn("previous question");
         when(messages.findRecentForOwner(any(), eq("parent@example.test"), anyList(), any()))
                 .thenReturn(List.of(previousAnswer, previousQuestion));
-        doReturn("answer").when(call).content();
-        assertThat(ai.askToGemini("room", "question", "parent@example.test")).isEqualTo("answer");
+        doReturn("answer [자료 1]").when(call).content();
+        assertThat(ai.askToGemini("room", "question", "parent@example.test")).isEqualTo("answer [자료 1]");
         verify(request).messages(argThat((List<org.springframework.ai.chat.messages.Message> list) ->
                 list.size() == 4 && list.get(1) instanceof org.springframework.ai.chat.messages.UserMessage
                 && list.get(1).getText().equals("previous question")

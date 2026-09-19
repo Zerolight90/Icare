@@ -6,8 +6,9 @@ export default function RetrievalSources({ value }: { value?: string | null }) {
   return <details className="mt-3 border-t pt-2 text-xs text-gray-600">
     <summary className="cursor-pointer">AI에 전달한 참고자료 {sources.length}개</summary>
     <ul className="mt-2 space-y-3">{sources.map((source, index) => <li key={index}>
-      <a href={source.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sky-700 underline">{source.title}</a>
+      <a href={source.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sky-700 underline">[자료 {index + 1}] {source.title}</a>
       <p>{source.publisher} · 개정일 {source.revisedOn || '미확인'}{source.page > 0 ? ` · PDF ${source.page}쪽` : ''}</p>
+      <p>{({ KR: '국내', US: '미국', UK: '영국', GLOBAL: '국제', UNSPECIFIED: '적용 지역 미확인' } as Record<string, string>)[source.jurisdiction ?? 'UNSPECIFIED'] ?? '적용 지역 미확인'} · 대상 {source.minAgeMonths != null && source.maxAgeMonths != null ? `${source.minAgeMonths}~${source.maxAgeMonths}개월` : '월령 미확인'}</p>
       <p className="mt-1 whitespace-pre-wrap rounded bg-gray-50 p-2">{source.excerpt}</p>
     </li>)}</ul>
   </details>;

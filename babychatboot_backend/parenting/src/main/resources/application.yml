@@ -27,3 +27,6 @@ icare:
     enabled: false
   knowledge:
     load-on-startup: false
+    batch-enabled: false
+    min-similarity: ${ICARE_RAG_MIN_SIMILARITY:0.45}
+    daily-source-urls: ${ICARE_DAILYLOG_SOURCE_URLS:}

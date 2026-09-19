@@ -49,6 +49,15 @@ public class ChatContextService {
                 + "\nnull/미기록은 알 수 없음입니다. 측정일이 없어 키·체중이 현재 수치임을 보장하지 않습니다. 다른 아이로 바꾸려면 새 상담을 안내하세요.";
     }
 
+    public Integer ageMonths(ChatRoom room, String email) {
+        requireScope(room, email);
+        if (room.getContextBabyId() == null) return null;
+        Baby baby = familyAccess.requireBaby(email, room.getContextBabyId());
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        if (baby.getBirthDate() == null || baby.getBirthDate().isAfter(today)) return null;
+        return Math.toIntExact(Period.between(baby.getBirthDate(), today).toTotalMonths());
+    }
+
     public List<Message> recent(ChatRoom room, String email) {
         requireScope(room, email);
         List<ChatMessageRepository.RecentMessage> rows = messages.findRecentForOwner(room.getId(), email,

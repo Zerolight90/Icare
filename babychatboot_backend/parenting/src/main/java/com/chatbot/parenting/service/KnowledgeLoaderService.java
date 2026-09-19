@@ -45,7 +45,10 @@ public class KnowledgeLoaderService implements ApplicationRunner {
                         public void transferTo(java.io.File dest) { throw new UnsupportedOperationException(); }
                     };
                     var metadata = new KnowledgeService.Metadata(entry.path("title").asText(), entry.path("sourceUrl").asText(),
-                            entry.path("publisher").asText(), entry.path("revisedOn").asText());
+                            entry.path("publisher").asText(), entry.path("revisedOn").asText(),
+                            entry.hasNonNull("minAgeMonths") ? entry.get("minAgeMonths").asInt(-1) : null,
+                            entry.hasNonNull("maxAgeMonths") ? entry.get("maxAgeMonths").asInt(-1) : null,
+                            entry.path("jurisdiction").asText("UNSPECIFIED"));
                     knowledge.ingest(extractor.file(file), metadata, entry.path("reviewedHash").asText(),
                             entry.path("expectedVersion").asText(), entry.path("replaceApproved").asBoolean(false));
                 }

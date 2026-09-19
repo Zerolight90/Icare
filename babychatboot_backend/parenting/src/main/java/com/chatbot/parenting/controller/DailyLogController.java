@@ -1,11 +1,8 @@
 package com.chatbot.parenting.controller;
 
 import com.chatbot.parenting.domain.Baby;
-import com.chatbot.parenting.domain.User;
 import com.chatbot.parenting.dto.DailyLogRequestDto;
 import com.chatbot.parenting.dto.DailyLogResponseDto;
-import com.chatbot.parenting.repository.BabyRepository;
-import com.chatbot.parenting.repository.UserRepository;
 import com.chatbot.parenting.service.DailyLogService;
 import com.chatbot.parenting.service.GeminiService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,10 +19,7 @@ import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/logs")
@@ -121,39 +115,9 @@ public class DailyLogController {
         Baby baby = familyAccess.requireBaby(extractEmail(principal), babyId);
 
         List<DailyLogResponseDto> logs = dailyLogService.getLogs(extractEmail(principal), babyId, date);
-        if (logs.isEmpty()) return ResponseEntity.ok(Map.of("result", "해당 날짜에 기록된 일과가 없습니다."));
-
-        Period age = Period.between(baby.getBirthDate(), LocalDate.now());
-        String ageStr = age.getMonths() == 0 && age.getYears() == 0
-                ? age.getDays() + "일"
-                : age.getYears() > 0 ? age.getYears() + "년 " + age.getMonths() + "개월"
-                : age.getMonths() + "개월";
-
-        int totalFormula = logs.stream()
-                .filter(l -> l.getFormulaAmount() != null)
-                .mapToInt(DailyLogResponseDto::getFormulaAmount).sum();
-        long breastfeeds = logs.stream().filter(l -> Boolean.TRUE.equals(l.getBreastfed())).count();
-        long diaperWet = logs.stream().filter(l -> "WET".equals(l.getDiaperType()) || "BOTH".equals(l.getDiaperType())).count();
-        long diaperDirty = logs.stream().filter(l -> "DIRTY".equals(l.getDiaperType()) || "BOTH".equals(l.getDiaperType())).count();
-
-        StringBuilder prompt = new StringBuilder();
-        prompt.append("아이 이름: ").append(baby.getName()).append(", 나이: ").append(ageStr);
-        if (baby.getWeight() != null) prompt.append(", 체중: ").append(baby.getWeight()).append("kg");
-        if (baby.getHeight() != null) prompt.append(", 신장: ").append(baby.getHeight()).append("cm");
-        if (baby.getSpecialNotes() != null && !baby.getSpecialNotes().isBlank())
-            prompt.append(", 특이사항: ").append(baby.getSpecialNotes());
-        prompt.append("\n\n오늘(").append(date).append(") 일과 기록:\n");
-        prompt.append("- 분유 총량: ").append(totalFormula).append("ml (").append(logs.stream().filter(l -> l.getFormulaAmount() != null).count()).append("회)\n");
-        prompt.append("- 모유수유: ").append(breastfeeds).append("회\n");
-        prompt.append("- 소변 기저귀: ").append(diaperWet).append("회\n");
-        prompt.append("- 대변 기저귀: ").append(diaperDirty).append("회\n");
-        prompt.append("- 메모: ");
-        logs.stream().filter(l -> l.getMemo() != null && !l.getMemo().isBlank())
-                .forEach(l -> prompt.append(l.getMemo()).append(" / "));
-        prompt.append("\n\n위 데이터를 바탕으로 오늘 수유량과 배변이 적절한지, 주의할 점은 없는지 친절하게 문진해주세요.");
-
-        String result = geminiService.healthCheck(prompt.toString(), extractEmail(principal));
-        return ResponseEntity.ok(Map.of("result", result));
+        var input = com.chatbot.parenting.service.DailyLogAiInput.from(baby, date, logs);
+        if (logs.isEmpty()) return ResponseEntity.ok(new GeminiService.Analysis("해당 날짜에 기록된 일과가 없습니다. 미기록으로 건강 상태를 판단할 수 없습니다.", "[]", "no_records"));
+        return ResponseEntity.ok(geminiService.analyzeDailyLog(input.prompt(), input.query(), input.ageMonths(), extractEmail(principal)));
     }
 
     @PostMapping("/{babyId}")

@@ -21,7 +21,11 @@ public class KnowledgeService {
     private final VectorStore vectors;
     private final ObjectMapper json;
     private final AiRequestGuard guard;
-    public record Metadata(String title, String sourceUrl, String publisher, String revisedOn) {
+    public record Metadata(String title, String sourceUrl, String publisher, String revisedOn,
+            Integer minAgeMonths, Integer maxAgeMonths, String jurisdiction) {
+        public Metadata(String title, String sourceUrl, String publisher, String revisedOn) {
+            this(title, sourceUrl, publisher, revisedOn, null, null, "UNSPECIFIED");
+        }
         public Metadata {
             title = required(title, 200); publisher = required(publisher, 200);
             sourceUrl = required(sourceUrl, 2000);
@@ -32,6 +36,12 @@ public class KnowledgeService {
                 sourceUrl = new URI("https", null, uri.getHost().toLowerCase(Locale.ROOT), uri.getPort(), uri.getPath(), uri.getQuery(), null).toASCIIString();
             } catch (Exception e) { throw new IllegalArgumentException("출처는 유효한 HTTPS 원문 주소여야 합니다."); }
             revisedOn = revisedOn == null ? "" : revisedOn.strip();
+            if ((minAgeMonths == null) != (maxAgeMonths == null)
+                    || (minAgeMonths != null && (minAgeMonths < 0 || maxAgeMonths < minAgeMonths || maxAgeMonths > 216)))
+                throw new IllegalArgumentException("대상 월령은 최소·최대를 함께 0~216개월 범위로 입력하세요.");
+            jurisdiction = jurisdiction == null || jurisdiction.isBlank() ? "UNSPECIFIED" : jurisdiction;
+            if (!Set.of("KR", "GLOBAL", "US", "UK", "UNSPECIFIED").contains(jurisdiction))
+                throw new IllegalArgumentException("자료의 적용 지역을 확인해 주세요.");
             if (!revisedOn.isEmpty()) {
                 try { if (LocalDate.parse(revisedOn).isAfter(LocalDate.now(java.time.ZoneId.of("Asia/Seoul")))) throw new IllegalArgumentException(); }
                 catch (Exception e) { throw new IllegalArgumentException("개정일은 오늘 이전의 YYYY-MM-DD 또는 미확인으로 입력하세요."); }
@@ -100,6 +110,10 @@ public class KnowledgeService {
             values.put("icare_managed", true); values.put("icare_active", true); values.put("icare_version", version.toString());
             values.put("source", metadata.title()); values.put("source_url", metadata.sourceUrl());
             values.put("publisher", metadata.publisher()); values.put("revised_on", metadata.revisedOn()); values.put("page", part.page());
+            values.put("jurisdiction", metadata.jurisdiction());
+            if (metadata.minAgeMonths() != null) {
+                values.put("min_age_months", metadata.minAgeMonths()); values.put("max_age_months", metadata.maxAgeMonths());
+            }
             result.add(new Document(UUID.randomUUID().toString(), text, values));
             if (result.size() > 32) throw new IllegalArgumentException("문서가 32개 검색 조각을 넘습니다. 주제별로 나눠 주세요.");
             if (start + 1500 >= part.text().length()) break;

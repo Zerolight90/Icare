@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
+import RetrievalSources from '../components/RetrievalSources';
 import { useRouter } from 'next/navigation';
 import api from '../lib/axios';
 import Header from '../components/Header';
@@ -35,8 +37,8 @@ interface LogForm {
 }
 
 const defaultForm: LogForm = {
-  date: localDateStr(),
-  time: new Date().toTimeString().slice(0, 5),
+  date: '',
+  time: '',
   formulaAmount: '',
   breastfed: false,
   diaperType: 'NONE',
@@ -56,7 +58,7 @@ export default function DailyLogPage() {
   const router = useRouter();
   const [babies, setBabies] = useState<Baby[]>([]);
   const [selectedBaby, setSelectedBaby] = useState<Baby | null>(null);
-  const [viewDate, setViewDate] = useState(localDateStr());
+  const [viewDate, setViewDate] = useState('');
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -67,51 +69,73 @@ export default function DailyLogPage() {
 
   // 건강 문진
   const [healthResult, setHealthResult] = useState('');
+  const [healthSources, setHealthSources] = useState('[]');
+  const healthRequest = useRef(0);
+  const logsRequest = useRef(0);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [showHealthPanel, setShowHealthPanel] = useState(false);
 
   // 다운로드 날짜 범위
-  const [dlFrom, setDlFrom] = useState(localDateStr());
-  const [dlTo, setDlTo] = useState(localDateStr());
+  const [dlFrom, setDlFrom] = useState('');
+  const [dlTo, setDlTo] = useState('');
   const [showDlPanel, setShowDlPanel] = useState(false);
+
+  const invalidateAnalysis = () => {
+    healthRequest.current++;
+    setHealthResult(''); setHealthSources('[]');
+    setShowHealthPanel(false); setIsCheckingHealth(false);
+  };
+  const changeDate = (date: string) => {
+    logsRequest.current++; invalidateAnalysis(); setLogs([]); setShowForm(false); setViewDate(date);
+  };
+  const changeBaby = (baby: Baby) => {
+    logsRequest.current++; invalidateAnalysis(); setLogs([]); setShowForm(false); setSelectedBaby(baby);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (!token) { router.push('/login'); return; }
-    fetchBabies();
-  }, []);
-
-  useEffect(() => {
-    if (selectedBaby) fetchLogs();
-  }, [selectedBaby, viewDate]);
-
-  const fetchBabies = async () => {
+    let active = true;
+    const healthGeneration = healthRequest, logGeneration = logsRequest;
+    const fetchBabies = async () => {
     try {
       const res = await api.get('/api/users/profile');
+      if (!active) return;
       const list: Baby[] = res.data.babies ?? [];
       setBabies(list);
+      setViewDate(localDateStr()); setDlFrom(localDateStr()); setDlTo(localDateStr());
       if (list.length > 0) setSelectedBaby(list[0]);
     } catch {
-      router.push('/login');
+      if (active) router.push('/login');
     }
-  };
+    };
+    void fetchBabies();
+    return () => { active = false; healthGeneration.current++; logGeneration.current++; };
+  }, [router]);
 
-  const fetchLogs = async () => {
-    if (!selectedBaby) return;
+  const fetchLogs = useCallback(async () => {
+    if (!selectedBaby || !viewDate) return;
+    const request = ++logsRequest.current;
     setIsLoading(true);
     try {
       const res = await api.get(`/api/logs/${selectedBaby.id}?date=${viewDate}`);
-      setLogs(res.data);
+      if (request === logsRequest.current) setLogs(res.data);
     } catch {
-      setLogs([]);
+      if (request === logsRequest.current) setLogs([]);
     } finally {
-      setIsLoading(false);
+      if (request === logsRequest.current) setIsLoading(false);
     }
-  };
+  }, [selectedBaby, viewDate]);
+
+  useEffect(() => {
+    const generation = logsRequest;
+    void fetchLogs();
+    return () => { generation.current++; };
+  }, [fetchLogs]);
 
   const openAdd = () => {
     setEditId(null);
-    setForm({ ...defaultForm, date: viewDate });
+    setForm({ ...defaultForm, date: viewDate, time: new Date().toTimeString().slice(0, 5) });
     setFormMsg('');
     setShowForm(true);
   };
@@ -134,6 +158,8 @@ export default function DailyLogPage() {
   const handleSave = async () => {
     if (!selectedBaby) return;
     setSaving(true);
+    invalidateAnalysis();
+    const request = logsRequest.current;
     setFormMsg('');
     try {
       const recordTime = `${form.date}T${form.time}:00`;
@@ -149,8 +175,7 @@ export default function DailyLogPage() {
       } else {
         await api.post(`/api/logs/${selectedBaby.id}`, body);
       }
-      setShowForm(false);
-      fetchLogs();
+      if (request === logsRequest.current) { setShowForm(false); void fetchLogs(); }
     } catch (e: unknown) {
       const err = e as { response?: { data?: string } };
       setFormMsg(err.response?.data || '저장에 실패했습니다.');
@@ -161,18 +186,21 @@ export default function DailyLogPage() {
 
   const handleDelete = async (logId: number) => {
     if (!confirm('이 기록을 삭제하시겠어요?')) return;
+    setSaving(true);
+    invalidateAnalysis();
+    const request = logsRequest.current;
     try {
       await api.delete(`/api/logs/entry/${logId}`);
-      fetchLogs();
+      if (request === logsRequest.current) void fetchLogs();
     } catch {
       alert('삭제에 실패했습니다.');
-    }
+    } finally { setSaving(false); }
   };
 
   const shiftDate = (delta: number) => {
     const d = new Date(viewDate);
     d.setDate(d.getDate() + delta);
-    setViewDate(localDateStr(d));
+    changeDate(localDateStr(d));
   };
 
   // CSV 다운로드 - 백엔드에서 직접 생성
@@ -201,20 +229,24 @@ export default function DailyLogPage() {
   };
 
   const handleHealthCheck = async () => {
-    if (!selectedBaby || logs.length === 0) {
-      alert('건강 문진을 위해 오늘 기록이 필요합니다.');
+    if (!selectedBaby || logs.length === 0 || isLoading || saving) {
+      alert('선택한 날짜의 기록을 불러온 뒤 분석할 수 있습니다.');
       return;
     }
     setIsCheckingHealth(true);
+    const request = ++healthRequest.current;
     setHealthResult('');
+    setHealthSources('[]');
     setShowHealthPanel(true);
     try {
       const res = await api.post(`/api/logs/${selectedBaby.id}/health-check?date=${viewDate}`);
+      if (request !== healthRequest.current) return;
       setHealthResult(res.data.result);
+      setHealthSources(res.data.retrievalSources ?? '[]');
     } catch {
-      setHealthResult('AI 건강 문진 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      if (request === healthRequest.current) setHealthResult('AI 기록 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
-      setIsCheckingHealth(false);
+      if (request === healthRequest.current) setIsCheckingHealth(false);
     }
   };
 
@@ -241,10 +273,10 @@ export default function DailyLogPage() {
             {selectedBaby && logs.length > 0 && (
               <button
                 onClick={handleHealthCheck}
-                disabled={isCheckingHealth}
+                disabled={isCheckingHealth || isLoading || saving}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-blue-200 bg-blue-50 text-sm text-blue-600 hover:bg-blue-100 transition shadow-sm disabled:opacity-50"
               >
-                🩺 AI 건강 문진
+                AI 육아 기록 분석
               </button>
             )}
             <button
@@ -262,8 +294,8 @@ export default function DailyLogPage() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-lg">🩺</span>
-                <h3 className="font-semibold text-gray-800 text-sm">AI 건강 문진 결과</h3>
-                <span className="text-xs text-gray-400">({viewDate})</span>
+                <h3 className="font-semibold text-gray-800 text-sm">AI 육아 기록 분석</h3>
+                <span className="text-xs text-gray-400">{selectedBaby?.name} · {viewDate}</span>
               </div>
               <button onClick={() => setShowHealthPanel(false)} className="text-gray-400 hover:text-gray-600 transition">✕</button>
             </div>
@@ -271,31 +303,27 @@ export default function DailyLogPage() {
             {/* 일일 요약 */}
             <div className="grid grid-cols-4 gap-2 mb-4">
               <div className="bg-blue-50 rounded-xl p-3 text-center">
-                <p className="text-2xl font-bold text-blue-600">{totalFormula}</p>
-                <p className="text-xs text-blue-400 mt-0.5">분유(ml)</p>
+                <p className="text-2xl font-bold text-blue-600">{logs.some(l => l.formulaAmount != null) ? totalFormula : '미기록'}</p>
+                <p className="text-xs text-blue-400 mt-0.5">기록된 분유(ml)</p>
               </div>
               <div className="bg-rose-50 rounded-xl p-3 text-center">
-                <p className="text-2xl font-bold text-rose-500">{breastfeedCount}</p>
-                <p className="text-xs text-rose-400 mt-0.5">수유(회)</p>
-              </div>
-              <div className="bg-rose-50 rounded-xl p-3 text-center">
-                <p className="text-2xl font-bold text-rose-500">{breastfeedCount}</p>
-                <p className="text-xs text-rose-400 mt-0.5">이유식(회)</p>
+                <p className="text-2xl font-bold text-rose-500">{breastfeedCount || '미기록'}</p>
+                <p className="text-xs text-rose-400 mt-0.5">기록된 모유 수유</p>
               </div>
               <div className="bg-yellow-50 rounded-xl p-3 text-center">
-                <p className="text-2xl font-bold text-yellow-600">{diaperWet}</p>
-                <p className="text-xs text-yellow-500 mt-0.5">💧소변</p>
+                <p className="text-2xl font-bold text-yellow-600">{diaperWet || '미기록'}</p>
+                <p className="text-xs text-yellow-500 mt-0.5">기록된 소변 기저귀</p>
               </div>
               <div className="bg-amber-50 rounded-xl p-3 text-center">
-                <p className="text-2xl font-bold text-amber-600">{diaperDirty}</p>
-                <p className="text-xs text-amber-500 mt-0.5">💩대변</p>
+                <p className="text-2xl font-bold text-amber-600">{diaperDirty || '미기록'}</p>
+                <p className="text-xs text-amber-500 mt-0.5">기록된 대변 기저귀</p>
               </div>
             </div>
 
             {isCheckingHealth ? (
               <div className="flex items-center gap-3 py-4 text-gray-500 text-sm">
                 <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin flex-shrink-0" />
-                AI 닥터 의비스가 오늘 기록을 분석하고 있습니다...
+                선택한 날짜의 기록과 참고자료를 확인하고 있습니다...
               </div>
             ) : healthResult ? (
               <div className="prose prose-sm max-w-none text-gray-700 text-sm leading-7
@@ -303,9 +331,11 @@ export default function DailyLogPage() {
                 [&_ul]:pl-5 [&_ul]:space-y-1 [&_li]:text-gray-600
                 [&_strong]:text-gray-800 [&_strong]:font-semibold
                 [&_p]:my-2">
-                <div dangerouslySetInnerHTML={{ __html: healthResult.replace(/\n/g, '<br/>') }} />
+                <ReactMarkdown skipHtml components={{ a: ({ children }) => <span>{children}</span>, img: () => null }}>{healthResult}</ReactMarkdown>
               </div>
             ) : null}
+            {!isCheckingHealth && healthResult && <RetrievalSources value={healthSources} />}
+            <p className="mt-3 text-xs text-gray-500">부모가 입력한 일부 기록에 따른 정보 안내입니다. 미기록은 0회나 정상을 뜻하지 않으며, 의료진의 진료를 대신하지 않습니다.</p>
           </div>
         )}
 
@@ -352,7 +382,8 @@ export default function DailyLogPage() {
               {babies.map(baby => (
                 <button
                   key={baby.id}
-                  onClick={() => setSelectedBaby(baby)}
+                  onClick={() => changeBaby(baby)}
+                  disabled={selectedBaby?.id === baby.id}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition shadow-sm border ${
                     selectedBaby?.id === baby.id
                       ? 'bg-sky-500 text-white border-sky-500'
@@ -376,11 +407,11 @@ export default function DailyLogPage() {
                   type="date"
                   value={viewDate}
                   max={todayStr}
-                  onChange={e => setViewDate(e.target.value)}
+                  onChange={e => changeDate(e.target.value)}
                   className="text-center font-semibold text-gray-800 text-sm focus:outline-none cursor-pointer"
                 />
                 {!isToday && (
-                  <button onClick={() => setViewDate(todayStr)}
+                  <button onClick={() => changeDate(todayStr)}
                     className="text-xs px-2 py-1 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition">
                     오늘
                   </button>

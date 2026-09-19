@@ -14,8 +14,9 @@ public class KnowledgeController {
     private final KnowledgeExtractor extractor;
     private final KnowledgeService knowledge;
     public record TextRequest(String content, String title, String sourceUrl, String publisher, String revisedOn,
-            String reviewedHash, String expectedVersion, boolean replaceApproved) {
-        KnowledgeService.Metadata metadata() { return new KnowledgeService.Metadata(title, sourceUrl, publisher, revisedOn); }
+            String reviewedHash, String expectedVersion, boolean replaceApproved,
+            Integer minAgeMonths, Integer maxAgeMonths, String jurisdiction) {
+        KnowledgeService.Metadata metadata() { return new KnowledgeService.Metadata(title, sourceUrl, publisher, revisedOn, minAgeMonths, maxAgeMonths, jurisdiction); }
     }
     @GetMapping public Object versions() { return knowledge.versions(); }
     @PostMapping("/preview") public Object preview(@RequestBody TextRequest request) {
@@ -31,6 +32,12 @@ public class KnowledgeController {
         return knowledge.ingest(extractor.file(file), metadata(values), values.get("reviewedHash"), values.get("expectedVersion"), Boolean.parseBoolean(values.get("replaceApproved")));
     }
     private KnowledgeService.Metadata metadata(Map<String, String> values) {
-        return new KnowledgeService.Metadata(values.get("title"), values.get("sourceUrl"), values.get("publisher"), values.get("revisedOn"));
+        return new KnowledgeService.Metadata(values.get("title"), values.get("sourceUrl"), values.get("publisher"), values.get("revisedOn"),
+                month(values.get("minAgeMonths")), month(values.get("maxAgeMonths")), values.get("jurisdiction"));
+    }
+    private Integer month(String value) {
+        if (value == null || value.isBlank()) return null;
+        try { return Integer.valueOf(value); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("월령은 정수로 입력하세요."); }
     }
 }

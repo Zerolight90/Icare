@@ -190,7 +190,7 @@ class FlywayMigrationTest {
                 .withInitializer(context -> {
                     var loader = new YamlPropertySourceLoader();
                     // Explicit files only: never import application-secret.yml or launch the application.
-                    for (String file : List.of("application-dev.yml", "application.yml")) {
+                    for (String file : List.of("application-private.yml", "application.yml")) {
                         try {
                             for (var source : loader.load(file, new ClassPathResource(file))) {
                                 context.getEnvironment().getPropertySources().addLast(source);

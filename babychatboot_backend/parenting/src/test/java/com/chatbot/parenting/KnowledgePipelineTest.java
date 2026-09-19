@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 /** Real PostgreSQL and PgVectorStore; deterministic local embeddings, no Gemini calls. */
 @EnabledIfEnvironmentVariable(named="ICARE_TEST_JDBC_URL", matches=".+")
 class KnowledgePipelineTest {
+    com.zaxxer.hikari.HikariDataSource pool;
     JdbcTemplate jdbc; TransactionTemplate transaction; VectorStore vectors; KnowledgeService service;
     final ObjectMapper json = new ObjectMapper(); final KnowledgeExtractor extractor = new KnowledgeExtractor();
     final AtomicInteger embedded = new AtomicInteger();
@@ -31,7 +32,9 @@ class KnowledgePipelineTest {
         String name = "icare_validation_" + UUID.randomUUID().toString().replace("-", "");
         String username = Objects.requireNonNull(System.getenv("ICARE_TEST_DB_USER")), password = Objects.requireNonNull(System.getenv("ICARE_TEST_DB_PASSWORD"));
         new JdbcTemplate(new DriverManagerDataSource(admin, username, password)).execute("CREATE DATABASE " + name);
-        var ds = new DriverManagerDataSource(admin.substring(0, admin.lastIndexOf('/')+1) + name, username, password);
+        var ds = new com.zaxxer.hikari.HikariDataSource(); pool = ds;
+        ds.setJdbcUrl(admin.substring(0, admin.lastIndexOf('/')+1) + name); ds.setUsername(username); ds.setPassword(password);
+        ds.setMaximumPoolSize(3); ds.setMinimumIdle(0);
         jdbc = new JdbcTemplate(ds); transaction = new TransactionTemplate(new DataSourceTransactionManager(ds));
         var configuration = Flyway.configure().dataSource(ds).cleanDisabled(true).baselineOnMigrate(false)
                 .locations("classpath:db/migration").placeholders(Map.of("vectorDimensions", "3072"));
@@ -80,6 +83,51 @@ class KnowledgePipelineTest {
         assertThat(ingest(service,"original reviewed text",meta,replacement.get("version").toString(),true)).containsEntry("duplicate",true);
         assertThat(jdbc.queryForObject("SELECT active FROM knowledge_revision WHERE id=?::uuid",Boolean.class,first.get("version"))).isFalse();
     }
+    @Test void ageMetadataIsAppliedByRealPgVectorFilter() {
+        var young = new KnowledgeService.Metadata("Young", "https://example.test/young", "Fixture", "", 0, 5, "KR");
+        var older = new KnowledgeService.Metadata("Older", "https://example.test/older", "Fixture", "", 6, 12, "US");
+        ingest(service, "young infant feeding", young, "", false);
+        ingest(service, "older infant feeding", older, "", false);
+        ingest(service, "unknown age", meta, "", false);
+        var search = new KnowledgeSearchService(vectors, json);
+        assertThat(search.search("feeding", 5, 3).text()).contains("young infant").doesNotContain("older infant", "unknown age");
+        assertThat(search.search("feeding", 5, 8).text()).contains("older infant").doesNotContain("young infant", "unknown age");
+        assertThat(search.search("feeding", 5, 20).sourceCount()).isZero();
+        org.springframework.test.util.ReflectionTestUtils.setField(search, "dailySourceUrls", "https://example.test/young");
+        assertThat(search.searchDailyLog("feeding", 3).text()).contains("young infant").doesNotContain("older infant");
+        assertThat(search.searchDailyLog("feeding", 8).sourceCount()).isZero();
+    }
+    @org.junit.jupiter.api.AfterEach void closePool() { if (pool != null) pool.close(); }
+    @Test
+    @EnabledIfEnvironmentVariable(named="ICARE_RAG_DRAFT", matches=".+")
+    void externalDraftPreviewAndBatchImportUseTheSamePipeline(@org.junit.jupiter.api.io.TempDir java.nio.file.Path folder) throws Exception {
+        var input = java.nio.file.Path.of(System.getenv("ICARE_RAG_DRAFT"));
+        var previewFile = folder.resolve("preview.jsonl");
+        var proxy = new org.springframework.aop.framework.ProxyFactory(service); proxy.setProxyTargetClass(true);
+        proxy.addAdvice(new org.springframework.transaction.interceptor.TransactionInterceptor(
+                new DataSourceTransactionManager(jdbc.getDataSource()), new org.springframework.transaction.annotation.AnnotationTransactionAttributeSource()));
+        var bean = (KnowledgeService)proxy.getProxy();
+        new KnowledgeBatchRunner(bean, extractor, json, input.toString(), previewFile.toString(), false)
+                .run(new org.springframework.boot.DefaultApplicationArguments());
+        assertThat(embedded.get()).isZero();
+        var entries = json.readValue(java.nio.file.Files.readAllBytes(input), KnowledgeBatchRunner.Entry[].class);
+        var reviewed = new ArrayList<KnowledgeBatchRunner.Entry>();
+        for (var entry : entries) {
+            assertThat(entry.reviewed()).isFalse();
+            var preview = bean.preview(extractor.text(entry.content()), entry.metadata());
+            assertThat(preview.chunks()).isEqualTo(1);
+            reviewed.add(new KnowledgeBatchRunner.Entry(entry.content(), entry.metadata(), preview.hash(), preview.currentVersion(), false, true));
+        }
+        var prepared = folder.resolve("reviewed.json"); json.writeValue(prepared.toFile(), reviewed);
+        new KnowledgeBatchRunner(bean, extractor, json, prepared.toString(), folder.resolve("apply.jsonl").toString(), true)
+                .run(new org.springframework.boot.DefaultApplicationArguments());
+        assertThat(embedded.get()).isEqualTo(entries.length);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM knowledge_revision WHERE active", Integer.class)).isEqualTo(entries.length);
+        assertThat(new KnowledgeSearchService(vectors,json).search("영아 수유", 5, 3).sourceCount()).isEqualTo(entries.length);
+        String output = System.getenv("ICARE_RAG_PREVIEW_OUTPUT");
+        if (output != null) java.nio.file.Files.copy(previewFile, java.nio.file.Path.of(output));
+    }
+
     @Test void partialVectorFailureRollsBackAndKeepsOldVersionSearchable() {
         var first = ingest(service,"previous stable text",meta,"",false);
         var before = jdbc.queryForList("SELECT id,content,metadata::text FROM vector_store ORDER BY id");
