@@ -1,6 +1,6 @@
 # 실행·검증 안내
 
-2026-09-19 환경설정 후속 변경: 로컬 실행은 [환경설정 작업서](ENVIRONMENT_RUNBOOK.md)의 루트 .env와 Start-IcareLocal.ps1을 사용한다. 실제 Gemini 합성 REST 답변/임베딩 연결은 확인했으며 SMTP/실사용 전체 흐름은 아직 미검증이다. feat/env-config의 main 병합은 검수 대기다.
+2026-09-19 환경설정 후속 변경: 로컬 실행은 [환경설정 작업서](ENVIRONMENT_RUNBOOK.md)의 루트 .env와 Start-IcareLocal.ps1을 사용한다. 실제 Gemini 합성 REST 답변/임베딩 연결은 확인했으며 SMTP/실사용 전체 흐름은 아직 미검증이다. 사용자 승인 후 129b106의 main 병합을 완료했다. 남은 작업은 [현재 상태](CURRENT_STATUS.md)를 따른다.
 
 최신 검사/실행 제한은 [4단계 작업서](KNOWLEDGE_RUNBOOK.md)를 우선한다. 2026-09-19 JUnit 34개 통과/선택 테스트 1개 제외, Node 9개, Docker HTTP 48개, 최종 Docker/Next 빌드와 변경 파일 lint를 통과했다. 전체 frontend lint는 기존 오류 6개/경고 10개가 남았다. 실제 DB는 사용자 승인 후 V3 적용·검증을 완료했다. 실제 앱 실행 전 Gemini/SMTP 등 필수 설정을 확인하고 초기화·문서 적재는 기본 비활성을 유지한다. 아래 날짜별 수치는 당시 이력이다.
 

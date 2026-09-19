@@ -1,6 +1,6 @@
 # 로컬 .env 설정과 Gemini 연결
 
-2026-09-19, `feat/env-config`. 4단계 실제 V3 적용 이후의 환경설정 변경이다. main 병합은 검수 대기이며 실제 DB 변경/외부 배포/새 계정 생성은 하지 않는다.
+2026-09-19, 4단계 실제 V3 적용 이후의 환경설정 변경이다. 사용자 승인으로 `feat/env-config`의 `129b106`을 main에 fast-forward 병합했다. 이번 병합에서 실제 DB 변경/외부 배포/새 계정 생성은 하지 않았다. 최신 완료 범위는 [현재 상태](CURRENT_STATUS.md)를 따른다.
 
 ## 설정 위치
 
@@ -54,7 +54,7 @@ docker compose --env-file .env -f compose.backend.yml build
 docker compose --env-file .env -f compose.backend.yml up -d
 ```
 
-실제 환경에서는 `config` 출력 전체에 키가 포함되므로 반드시 `--quiet`를 사용한다. 이전 셸에 ICARE_BACKEND_ENV_FILE이 설정되어 있으면 그 파일이 우선하므로 루트 .env를 사용할 때는 해당 선택 변수를 비운다. `compose.backend.yml`은 컨테이너의 DB 주소를 parenting-postgres로, 업로드 경로를 /app/uploads로 맞춘다. 루트 docker-compose.yml 전체 실행은 이 절차가 아니다.
+실제 환경에서는 `config` 출력 전체에 키가 포함되므로 반드시 `--quiet`를 사용한다. 이전 셸에 ICARE_BACKEND_ENV_FILE이 설정되어 있으면 그 파일이 우선하므로 루트 .env를 사용할 때는 해당 선택 변수를 비운다. `compose.backend.yml`은 컨테이너의 DB 주소를 parenting-postgres로, 업로드 경로를 /app/uploads로 맞춘다. 루트 docker-compose.yml 전체 실행은 이 절차가 아니다. 브랜치 검수·병합은 완료했지만 실제 앱 시작은 아직 하지 않았다.
 
 Vercel은 로컬 .env를 자동으로 읽지 않는다. 배포 승인 시 서버용 변수만 Vercel 프로젝트의 환경변수에 설정해야 한다. 이번에 DNS/Vercel 설정을 변경하지 않았다.
 
@@ -85,4 +85,4 @@ Google 오류가 안내한 gemini-3.5-flash-lite의 [공식 무료 등급](https
 
 문제가 있으면 해당 로컬 앱/검증 백엔드만 중지하고 이전 main 코드와 C:의 변경 전 환경 파일로 복구한다. 환경 파일을 복구하기 전에 새로 입력한 값이 있는지 비교·보존한다. 기존 DB/마이그레이션은 되돌리지 않는다. JWT/DB 비밀번호를 임의 회전하지 않는다.
 
-남은 작업: 기능 브랜치 검수·병합, SMTP 설정과 실제 가입·상담·검색 전체 흐름 확인, Cloudflare/Vercel 연결 준비. 자동 관리자 생성/실제 지식 등록·교체/외부 배포는 기존 별도 승인 원칙을 유지한다.
+남은 작업: SMTP 설정과 실제 가입·상담·검색 전체 흐름 확인, Cloudflare/Vercel 연결 준비. 자동 관리자 생성/실제 지식 등록·교체/외부 배포는 기존 별도 승인 원칙을 유지한다.
