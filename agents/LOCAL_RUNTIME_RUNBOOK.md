@@ -10,7 +10,7 @@
 - 실제 Gemini/JWT/DB/프록시/SMTP/Kakao 값은 Git에서 제외한 루트 .env에서 관리한다. 구 YAML과 프론트 .env.local은 C:/Users/USER/.icare/local-runtime-20260919에 백업하고 소스 폴더에서 제거했다. 새 Gemini/JWT 값은 보존했다.
 - SMTP 비밀번호와 Kakao REST 키는 기존 설정을 옮겼으나 유효성은 미검증이다. SMTP_USERNAME이 비어 있다. 브라우저 지도 JavaScript 키는 .env에서 공급하더라도 브라우저에 공개되는 키다. 공급자 콘솔에서 허용 도메인을 제한한다.
 - 프론트 Docker 컨텍스트의 .env/빌드/의존성 제외를 추가했다. Dockerfile/배포 구성은 배포 브랜치에서 정리한다.
-- 종료된 과거 검증 앱 컨테이너 6개와 앱 이미지 5개를 삭제했다. 실제 DB 볼륨·원본 postgres_data·백업을 보존했다. 격리 DB는 현재 검증을 위해 임시 유지하며 완료 후 정리한다.
+- 종료된 과거 검증 앱 컨테이너 6개와 앱 이미지 5개를 삭제했다. 실제 DB 볼륨·원본 postgres_data·백업을 보존했다. 검증 후 격리 DB 컨테이너와 호스트 테스트 앱도 종료·제거했다. 합성 DB 파일은 Git 밖에 보존한다. 사용하지 않는 Java 이미지 2개와 빌드 캐시도 정리했으며 캐시 회수량은 4.648GB다. Docker에는 실제 PostgreSQL 컨테이너/이미지와 기존 볼륨만 남았다.
 
 ## 검증
 
@@ -19,13 +19,15 @@
 - .env 파서·프론트 전달 목록·실행기 사전 점검 통과. Compose DB 볼륨/로컬 포트 확인. 추적 소스의 실제 자격증명 문자열과 JAR secret 파일 포함 여부 검사 통과.
 - 실제 DB 변경 없음. 실제 사용자 이메일 가입/메일/지도/AI 전체 흐름은 미검증. Redis·배포 파이프라인은 아직 미구현.
 
+- 호스트 Next.js 검사 3개 통과: 가입 화면 200, 프록시 관리자 역할 주입 400, 외부 출처 403. 기본 Turbopack 최초 컴파일은 45초 시간 초과했으며 webpack 재검증은 정상 통과했다. 실행기에 -Webpack 옵션을 추가했다.
+
 ## 로컬 실행
 
 저장소 루트에서 별도 터미널마다 실행한다.
 
 ```powershell
 ./scripts/Start-IcareLocal.ps1 -Service backend
-./scripts/Start-IcareLocal.ps1 -Service frontend
+./scripts/Start-IcareLocal.ps1 -Service frontend -Webpack
 ```
 
 프론트 주소: http://127.0.0.1:3000. DB가 이미 실행 중이면 재생성할 필요가 없다. SMTP_USERNAME을 본인 SMTP 발신 계정으로 입력하고 기존 SMTP_PASSWORD의 유효성을 확인해야 실제 가입 인증을 완료할 수 있다. 비밀번호/API 키를 대화나 Git에 붙여 넣지 않는다.

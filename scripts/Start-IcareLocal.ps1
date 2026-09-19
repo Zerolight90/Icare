@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory = $true)][ValidateSet('backend','frontend')][string]$Service,
     [string]$EnvFile = (Join-Path $PSScriptRoot '../.env'),
-    [switch]$CheckOnly
+    [switch]$CheckOnly,
+    [switch]$Webpack
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'Read-IcareEnv.ps1')
@@ -30,7 +31,11 @@ try {
         try { & ./mvnw.cmd spring-boot:run } finally { Pop-Location }
     } else {
         Push-Location (Join-Path $PSScriptRoot '../babychatboot_frontend/chat-frontend')
-        try { & npm.cmd run dev -- --hostname 127.0.0.1 } finally { Pop-Location }
+        try {
+            $devArgs = @('run','dev','--','--hostname','127.0.0.1')
+            if ($Webpack) { $devArgs += '--webpack' }
+            & npm.cmd @devArgs
+        } finally { Pop-Location }
     }
     if ($LASTEXITCODE -ne 0) { throw "$Service stopped with exit code $LASTEXITCODE" }
 } finally {

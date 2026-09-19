@@ -157,3 +157,5 @@ Docker Desktop 시작을 권한 허용 후 요청했으나 완료 응답이 없�
 
 ## 2026-09-19 로컬 실행 후속 단계
 승인된 feat/local-runtime에서 이메일 제한 제거, 환경변수 통합, 구 Compose/검증 앱 정리를 구현했다. Maven 29개 통과/11개 선택 제외, 호스트 직접 JAR 실행의 HTTP 48개 통과. 실제 DB/외부 메일/AI 변경 없음. main 병합 검수 대기. [세부 기록](LOCAL_RUNTIME_RUNBOOK.md).
+
+후속 검증: 호스트 프론트 webpack 가입 페이지/서버 전달/외부 출처 차단 3개 통과. 기본 Turbopack 첫 컴파일은 시간 초과하여 실행기에 -Webpack 선택 옵션을 추가했다. 모든 테스트 프로세스와 검증 DB 컨테이너를 종료·제거했고 실제 PostgreSQL만 유지했다. Java 이미지/재생성 가능한 캐시 4.648GB도 정리했다.
