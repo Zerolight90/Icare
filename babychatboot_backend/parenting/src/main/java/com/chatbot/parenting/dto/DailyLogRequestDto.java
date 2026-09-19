@@ -11,4 +11,7 @@ public class DailyLogRequestDto {
     private Boolean breastfed;
     private String diaperType;   // "NONE" | "WET" | "DIRTY" | "BOTH"
     private String memo;
+    private String solidFoodName;
+    private Integer solidFoodAmount;
+    private String napEndTime;
 }

@@ -13,4 +13,12 @@ public class DailyLogResponseDto {
     private String diaperType;
     private String memo;
     private String writerNickname;
+    private String solidFoodName;
+    private Integer solidFoodAmount;
+    private String napEndTime;
+
+    public DailyLogResponseDto(Long id, String recordTime, Integer formulaAmount, Boolean breastfed,
+            String diaperType, String memo, String writerNickname) {
+        this(id, recordTime, formulaAmount, breastfed, diaperType, memo, writerNickname, null, null, null);
+    }
 }

@@ -28,29 +28,27 @@ function WritePageContent() {
 
   useEffect(() => {
     if (!localStorage.getItem('accessToken')) { router.push('/login'); return; }
-    fetchBoards();
-    if (isEdit) fetchPost();
-  }, []);
-
-  const fetchBoards = async () => {
-    try {
-      const res = await api.get('/api/community/boards');
-      setBoards(res.data);
-      if (!selectedBoardId && res.data.length > 0) setSelectedBoardId(String(res.data[0].id));
-    } catch (e) { console.error(e); }
-  };
-
-  const fetchPost = async () => {
-    try {
-      const res = await api.get(`/api/community/posts/${postId}`);
-      setTitle(res.data.title);
-      setContent(res.data.content);
-      setSelectedBoardId(String(res.data.boardId));
-      if (res.data.imageUrls) {
-        try { setImageUrls(JSON.parse(res.data.imageUrls)); } catch { /* ignore */ }
-      }
-    } catch { router.push('/community'); }
-  };
+    let active = true;
+    const load = async () => {
+      try {
+        const result = await api.get('/api/community/boards');
+        if (!active) return;
+        setBoards(result.data);
+        if (postId) {
+          const res = await api.get(`/api/community/posts/${postId}`);
+          if (!active) return;
+          setTitle(res.data.title); setContent(res.data.content);
+          setSelectedBoardId(String(res.data.boardId));
+          try { setImageUrls(res.data.imageUrls ? JSON.parse(res.data.imageUrls) : []); } catch { setImageUrls([]); }
+        } else {
+          setSelectedBoardId(boardIdParam ?? String(result.data[0]?.id ?? ''));
+          setTitle(''); setContent(''); setImageUrls([]);
+        }
+      } catch { if (active) router.push('/community'); }
+    };
+    void load();
+    return () => { active = false; };
+  }, [postId, boardIdParam, router]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);

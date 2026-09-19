@@ -5,7 +5,7 @@ import com.chatbot.parenting.domain.DailyLog;
 import com.chatbot.parenting.domain.User;
 import com.chatbot.parenting.dto.DailyLogRequestDto;
 import com.chatbot.parenting.dto.DailyLogResponseDto;
-import com.chatbot.parenting.repository.BabyRepository;
+
 import com.chatbot.parenting.repository.DailyLogRepository;
 import com.chatbot.parenting.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class DailyLogService {
     public DailyLogResponseDto addLog(String email, Long babyId, DailyLogRequestDto dto) {
         User user = findUser(email);
         Baby baby = familyAccess.requireBaby(email, babyId);
-        LocalDateTime recordTime = LocalDateTime.parse(dto.getRecordTime());
+        LocalDateTime recordTime = validate(dto);
         DailyLog log = new DailyLog(
                 recordTime,
                 dto.getFormulaAmount(),
@@ -62,6 +62,7 @@ public class DailyLogService {
                 dto.getMemo(),
                 baby, user
         );
+        log.updateActivities(foodName(dto), dto.getSolidFoodAmount(), napEnd(dto));
         return toDto(dailyLogRepository.save(log));
     }
 
@@ -71,13 +72,15 @@ public class DailyLogService {
         DailyLog log = dailyLogRepository.findById(logId)
                 .orElseThrow(() -> new IllegalArgumentException("기록을 찾을 수 없습니다."));
         familyAccess.requireBaby(email, log.getBaby().getId());
+        LocalDateTime recordTime = validate(dto);
         log.update(
-                LocalDateTime.parse(dto.getRecordTime()),
+                recordTime,
                 dto.getFormulaAmount(),
                 dto.getBreastfed(),
                 dto.getDiaperType() != null ? dto.getDiaperType() : "NONE",
                 dto.getMemo()
         );
+        log.updateActivities(foodName(dto), dto.getSolidFoodAmount(), napEnd(dto));
         return toDto(log);
     }
 
@@ -88,6 +91,37 @@ public class DailyLogService {
                 .orElseThrow(() -> new IllegalArgumentException("기록을 찾을 수 없습니다."));
         familyAccess.requireBaby(email, log.getBaby().getId());
         dailyLogRepository.delete(log);
+    }
+
+    private static String foodName(DailyLogRequestDto dto) {
+        return dto.getSolidFoodName() == null || dto.getSolidFoodName().isBlank() ? null : dto.getSolidFoodName().trim();
+    }
+    private static LocalDateTime parseTime(String value) {
+        try { return LocalDateTime.parse(value); }
+        catch (RuntimeException e) { throw new IllegalArgumentException("날짜와 시간을 확인해 주세요."); }
+    }
+    private static LocalDateTime napEnd(DailyLogRequestDto dto) {
+        return dto.getNapEndTime() == null || dto.getNapEndTime().isBlank() ? null : parseTime(dto.getNapEndTime());
+    }
+    private static LocalDateTime validate(DailyLogRequestDto dto) {
+        LocalDateTime start = parseTime(dto.getRecordTime());
+        if (dto.getFormulaAmount() != null && (dto.getFormulaAmount() < 0 || dto.getFormulaAmount() > 2000))
+            throw new IllegalArgumentException("분유량은 0~2000ml로 입력해 주세요.");
+        String food = foodName(dto);
+        if (food != null && food.length() > 100) throw new IllegalArgumentException("이유식 이름은 100자 이내로 입력해 주세요.");
+        if (dto.getSolidFoodAmount() != null && (food == null || dto.getSolidFoodAmount() < 1 || dto.getSolidFoodAmount() > 1000))
+            throw new IllegalArgumentException("이유식 이름과 섭취량(1~1000g)을 확인해 주세요.");
+        LocalDateTime end = napEnd(dto);
+        if (end != null && (!end.isAfter(start) || end.isAfter(start.plusHours(24))))
+            throw new IllegalArgumentException("낮잠 종료는 시작 이후 24시간 이내여야 합니다.");
+        if (dto.getMemo() != null && dto.getMemo().length() > 500) throw new IllegalArgumentException("메모는 500자 이내로 입력해 주세요.");
+        if (dto.getDiaperType() != null && !java.util.Set.of("NONE", "WET", "DIRTY", "BOTH").contains(dto.getDiaperType()))
+            throw new IllegalArgumentException("기저귀 종류를 확인해 주세요.");
+        if (dto.getFormulaAmount() == null && !Boolean.TRUE.equals(dto.getBreastfed()) && food == null && end == null
+                && (dto.getDiaperType() == null || "NONE".equals(dto.getDiaperType()))
+                && (dto.getMemo() == null || dto.getMemo().isBlank()))
+            throw new IllegalArgumentException("한 가지 이상의 일과나 메모를 입력해 주세요.");
+        return start;
     }
 
     private User findUser(String email) {
@@ -103,7 +137,9 @@ public class DailyLogService {
                 log.getBreastfed(),
                 log.getDiaperType(),
                 log.getMemo(),
-                log.getUser().getNickname()
+                log.getUser().getNickname(),
+                log.getSolidFoodName(), log.getSolidFoodAmount(),
+                log.getNapEndTime() == null ? null : log.getNapEndTime().toString()
         );
     }
 }

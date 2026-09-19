@@ -86,6 +86,7 @@ class FlywayMigrationTest {
         var result = snapshot(url);
         result.put("chat_room", jdbc(url).queryForObject("SELECT COALESCE(jsonb_agg(to_jsonb(t) - 'context_version' - 'context_family_id' - 'context_baby_id' ORDER BY id)::text, '[]') FROM chat_room t", String.class));
         result.put("chat_messages", jdbc(url).queryForObject("SELECT COALESCE(jsonb_agg(to_jsonb(t) - 'retrieval_sources' ORDER BY id)::text, '[]') FROM chat_messages t", String.class));
+        result.put("daily_logs", jdbc(url).queryForObject("SELECT COALESCE(jsonb_agg(to_jsonb(t) - 'solid_food_name' - 'solid_food_amount' - 'nap_end_time' ORDER BY id)::text, '[]') FROM daily_logs t", String.class));
         return result;
     }
 
@@ -215,7 +216,7 @@ class FlywayMigrationTest {
     @Test
     void emptyDatabaseMatchesIndependentHibernateSchema() {
         String fresh = database();
-        assertThat(flyway(fresh, 3072).migrate().migrationsExecuted).isEqualTo(3);
+        assertThat(flyway(fresh, 3072).migrate().migrationsExecuted).isEqualTo(4);
         hibernate(fresh, "validate");
         validateVector(fresh, 3072);
         String legacy = database();
@@ -236,6 +237,7 @@ class FlywayMigrationTest {
         legacySchema(legacy, 3072);
         jdbc(legacy).execute("ALTER TABLE chat_room DROP COLUMN context_version, DROP COLUMN context_family_id, DROP COLUMN context_baby_id");
         jdbc(legacy).execute("ALTER TABLE chat_messages DROP COLUMN retrieval_sources");
+        jdbc(legacy).execute("ALTER TABLE daily_logs DROP COLUMN solid_food_name, DROP COLUMN solid_food_amount, DROP COLUMN nap_end_time");
         seed(legacy, 3072);
         var before = v1Snapshot(legacy);
         assertThatThrownBy(() -> flyway(legacy, 3072).migrate()).isInstanceOf(FlywayException.class);
@@ -243,7 +245,7 @@ class FlywayMigrationTest {
         assertThatThrownBy(() -> hibernate(legacy, "validate")).isInstanceOf(Exception.class);
         validateVector(legacy, 3072);
         flyway(legacy, 3072).baseline();
-        assertThat(flyway(legacy, 3072).migrate().migrationsExecuted).isEqualTo(2);
+        assertThat(flyway(legacy, 3072).migrate().migrationsExecuted).isEqualTo(3);
         hibernate(legacy, "validate");
         assertThat(v1Snapshot(legacy)).isEqualTo(before);
         assertThat(jdbc(legacy).queryForObject("SELECT type FROM flyway_schema_history WHERE version='1'", String.class))
@@ -259,7 +261,7 @@ class FlywayMigrationTest {
         assertThat(v1.migrate().migrationsExecuted).isEqualTo(1);
         seed(url, 3072);
         var before = v1Snapshot(url);
-        assertThat(flyway(url, 3072).migrate().migrationsExecuted).isEqualTo(2);
+        assertThat(flyway(url, 3072).migrate().migrationsExecuted).isEqualTo(3);
         assertThat(v1Snapshot(url)).isEqualTo(before);
         assertThat(jdbc(url).queryForObject("SELECT context_version FROM chat_room WHERE id='fixture-room'", Integer.class)).isZero();
         assertThat(jdbc(url).queryForObject("SELECT context_family_id IS NULL AND context_baby_id IS NULL FROM chat_room WHERE id='fixture-room'", Boolean.class)).isTrue();
@@ -280,6 +282,29 @@ class FlywayMigrationTest {
             assertThat(recent).noneMatch(row -> row.getRole() == ChatMessage.RoleType.SYSTEM);
             assertThat(repository.findRecentForOwner("fixture-room", "outsider@example.invalid", roles, page)).isEmpty();
             assertThat(repository.findRecentForOwner("other-room", "fixture@example.invalid", roles, page)).isEmpty();
+        }
+    }
+
+    @Test
+    void v3UpgradePreservesRecordsAndPersistsFoodAndOvernightNap() {
+        String url = database();
+        Flyway.configure().configuration(flyway(url, 3072).getConfiguration()).target("3").load().migrate();
+        seed(url, 3072);
+        var before = v1Snapshot(url);
+        assertThat(flyway(url, 3072).migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(v1Snapshot(url)).isEqualTo(before);
+        assertThat(jdbc(url).queryForObject("SELECT solid_food_name IS NULL AND solid_food_amount IS NULL AND nap_end_time IS NULL FROM daily_logs WHERE id=1", Boolean.class)).isTrue();
+        try (var factory = sessionFactory(url, "validate"); var session = factory.openSession()) {
+            session.beginTransaction();
+            var log = session.find(DailyLog.class, 1L);
+            log.updateActivities("채소죽", 80, java.time.LocalDateTime.parse("2026-01-02T01:30:00"));
+            session.getTransaction().commit();
+            session.clear();
+            var reread = session.find(DailyLog.class, 1L);
+            assertThat(reread.getSolidFoodName()).isEqualTo("채소죽");
+            assertThat(reread.getSolidFoodAmount()).isEqualTo(80);
+            assertThat(java.time.Duration.between(reread.getRecordTime(), reread.getNapEndTime()).toMinutes()).isEqualTo(90);
+            assertThat(reread.getMemo()).isEqualTo("fixture");
         }
     }
 

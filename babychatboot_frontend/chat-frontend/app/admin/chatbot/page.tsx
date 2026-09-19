@@ -142,7 +142,7 @@ export default function AdminChatbotPage() {
     }
   };
 
-  const toggleRoom = async (roomId: string, nickname: string) => {
+  const toggleRoom = async (roomId: string) => {
     if (expandedRoom === roomId) { setExpandedRoom(null); return; }
     if (roomMessages[roomId]) { setExpandedRoom(roomId); return; }
     setLoadingMessages(roomId);
@@ -448,7 +448,7 @@ export default function AdminChatbotPage() {
                           </div>
                         </div>
                         <button
-                          onClick={() => toggleRoom(room.id, room.userNickname)}
+                          onClick={() => toggleRoom(room.id)}
                           disabled={loadingMessages === room.id}
                           className="ml-4 px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-600 hover:bg-gray-50 transition flex items-center gap-1.5 flex-shrink-0"
                         >

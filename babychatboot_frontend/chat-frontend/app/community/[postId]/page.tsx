@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import api from '../../lib/axios';
 import Header from '../../components/Header';
+import { useHasAccessToken } from '../../lib/auth-state';
 
 interface Comment {
   id: number;
@@ -42,17 +43,7 @@ export default function PostDetailPage() {
   const [commentSaving, setCommentSaving] = useState(false);
   const [commentMsg, setCommentMsg] = useState('');
 
-  useEffect(() => {
-    fetchPost();
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      api.get('/api/users/me').then(res => setMyEmail(res.data.email ?? '')).catch(() => {});
-      // me 엔드포인트가 email을 안 반환하면 profile로 대체
-      api.get('/api/users/profile').then(res => setMyEmail(res.data.email ?? '')).catch(() => {});
-    }
-  }, [postId]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await api.get(`/api/community/posts/${postId}`);
@@ -62,7 +53,17 @@ export default function PostDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [postId, router]);
+
+  useEffect(() => {
+    fetchPost();
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      api.get('/api/users/me').then(res => setMyEmail(res.data.email ?? '')).catch(() => {});
+      // me 엔드포인트가 email을 안 반환하면 profile로 대체
+      api.get('/api/users/profile').then(res => setMyEmail(res.data.email ?? '')).catch(() => {});
+    }
+  }, [fetchPost]);
 
   const handleDelete = async () => {
     if (!confirm('이 게시글을 삭제하시겠어요?')) return;
@@ -107,7 +108,7 @@ export default function PostDetailPage() {
       hour: '2-digit', minute: '2-digit',
     });
 
-  const isLoggedIn = !!localStorage?.getItem?.('accessToken');
+  const isLoggedIn = useHasAccessToken();
   const isAuthor = myEmail && post?.authorEmail === myEmail;
 
   if (isLoading) {

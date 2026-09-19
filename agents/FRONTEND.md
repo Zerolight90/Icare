@@ -1,5 +1,7 @@
 # 프론트엔드 분석
 
+이유식·낮잠 후속: `/dailylog`는 항목별 빠른 입력, native dialog, 시간순 카드/기록 요약을 제공한다. LogEditor.tsx와 lib/daily-log.ts에 입력창과 항목 타입/검증을 분리했다. 프론트 기존 경고 6개를 수정했고 전체 ESLint 오류/경고 0. [검수 상세](DAILYLOG_ACTIVITIES_RUNBOOK.md).
+
 최신 로컬 실행·일반 가입·Redis·배포 준비 상태는 [현재 상태](CURRENT_STATUS.md), [Redis](REDIS_RUNBOOK.md), [배포 작업서](DEPLOYMENT_RUNBOOK.md)를 우선한다. 아래 과거 날짜의 구성과 검증 수치는 이력이다.
 
 2026-09-19 최신: 관리자 문서는 출처·개정일 입력과 전체 추출 미리보기, 등록/교체 확인을 거친다. 채팅 답변에 실제 AI 입력으로 전달한 참고자료를 표시한다. Next 서버의 `ICARE_FRONTEND_ORIGIN`으로 브라우저의 정확한 공개 origin을 지정할 수 있다. 내부 요청 주소가 달라도 정상 요청을 허용하되 외부 origin/교차 사이트 요청은 거부한다. [문서 검색 작업서](KNOWLEDGE_RUNBOOK.md)를 우선한다.

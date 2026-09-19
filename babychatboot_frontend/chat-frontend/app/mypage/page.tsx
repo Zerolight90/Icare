@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../lib/axios';
 import Header from '../components/Header';
@@ -23,7 +23,6 @@ interface Profile {
   inviteCode: string;
   babies: BabyDto[];
 }
-
 
 type TabType = 'profile' | 'security' | 'family';
 
@@ -50,24 +49,7 @@ export default function MyPage() {
 
   const scriptLoaded = useRef(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) { router.push('/login'); return; }
-    fetchProfile();
-    loadDaumScript();
-  }, []);
-
-  const loadDaumScript = () => {
-    if (scriptLoaded.current || document.getElementById('daum-postcode')) return;
-    const script = document.createElement('script');
-    script.id = 'daum-postcode';
-    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
-    script.async = true;
-    document.head.appendChild(script);
-    scriptLoaded.current = true;
-  };
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await api.get<Profile>('/api/users/profile');
@@ -88,7 +70,23 @@ export default function MyPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) { router.push('/login'); return; }
+    fetchProfile();
+    const loadDaumScript = () => {
+      if (scriptLoaded.current || document.getElementById('daum-postcode')) return;
+      const script = document.createElement('script');
+      script.id = 'daum-postcode';
+      script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+      script.async = true;
+      document.head.appendChild(script);
+      scriptLoaded.current = true;
+    };
+    loadDaumScript();
+  }, [fetchProfile, router]);
 
   const openAddressSearch = () => {
     if (!window.daum?.Postcode) { alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.'); return; }

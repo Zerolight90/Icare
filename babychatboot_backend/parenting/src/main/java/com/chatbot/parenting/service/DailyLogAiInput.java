@@ -28,10 +28,19 @@ public record DailyLogAiInput(String prompt, String query, int ageMonths) {
                 .append("기록된 소변 기저귀: ").append(count(wet)).append('\n')
                 .append("기록된 대변 기저귀: ").append(count(dirty)).append('\n');
         // Current profile measurements have no measurement date; do not treat them as historic observations.
-        prompt.append("체중·키 변화나 성장 평가는 이 자료로 할 수 없습니다. 수면·이유식 섭취량도 이 기록 항목에 없습니다.\n");
+        prompt.append("체중·키 변화나 성장 평가는 이 자료로 할 수 없습니다. 이유식·낮잠은 부모 입력 사실만 요약하고, 적정량·적정 수면시간은 판단하지 마세요.\n");
         prompt.append("부모가 입력한 현재 특이사항(당시 상태와 다를 수 있음): ").append(limit(baby.getSpecialNotes(), 400)).append('\n');
+        long meals = logs.stream().filter(l -> l.getSolidFoodName() != null).count();
+        long naps = logs.stream().filter(l -> l.getNapEndTime() != null).count();
+        long napMinutes = logs.stream().filter(l -> l.getNapEndTime() != null).mapToLong(l ->
+                java.time.Duration.between(java.time.LocalDateTime.parse(l.getRecordTime()), java.time.LocalDateTime.parse(l.getNapEndTime())).toMinutes()).sum();
+        prompt.append("기록된 이유식: ").append(count(meals)).append(". 섭취량을 비운 항목은 미기록입니다.\n");
+        prompt.append("기록된 낮잠: ").append(count(naps)).append(naps == 0 ? "" : " / 합계 " + napMinutes + "분").append(". 시작 날짜 기준이며 하루 전체 수면이 아닙니다.\n");
         var notes = new StringBuilder();
         for (var log : logs) {
+            if (log.getSolidFoodName() != null && notes.length() < 1500)
+                notes.append("이유식: ").append(limit(log.getSolidFoodName(), 100)).append(" / ")
+                        .append(log.getSolidFoodAmount() == null ? "섭취량 미기록" : log.getSolidFoodAmount() + "g").append('\n');
             if (log.getMemo() != null && !log.getMemo().isBlank() && notes.length() < 1800)
                 notes.append(limit(log.getMemo(), Math.min(300, 1800 - notes.length()))).append('\n');
         }

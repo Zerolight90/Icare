@@ -1,5 +1,7 @@
 # iCare 프로젝트 분석 문서
 
+2026-09-19 이유식·낮잠 기능과 프론트 경고 수정은 [일과표 작업서](DAILYLOG_ACTIVITIES_RUNBOOK.md)를 따른다. 코드는 검수 완료이며 실제 V4 적용/병합 상태는 해당 작업서에 구분한다.
+
 2026-09-19 최신 검색·문서 등록·일과표 검수는 [RAG 서비스 작업서](RAG_SERVICE_RUNBOOK.md)를 우선한다. 회원가입 `881d163`은 main 병합 완료이며 실제 승인 자료 5개 등록·Gemini 합성 검수를 수행했다.
 
 최신 로컬 실행·일반 가입·Redis·배포 준비 상태는 [현재 상태](CURRENT_STATUS.md), [Redis](REDIS_RUNBOOK.md), [배포 작업서](DEPLOYMENT_RUNBOOK.md)를 우선한다. 아래 과거 날짜의 구성과 검증 수치는 이력이다.

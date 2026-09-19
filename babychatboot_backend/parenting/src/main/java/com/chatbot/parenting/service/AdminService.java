@@ -399,6 +399,9 @@ public class AdminService {
             m.put("userName", l.getUser().getNickname());
             m.put("recordTime", l.getRecordTime());
             m.put("formulaAmount", l.getFormulaAmount());
+            m.put("solidFoodName", l.getSolidFoodName());
+            m.put("solidFoodAmount", l.getSolidFoodAmount());
+            m.put("napEndTime", l.getNapEndTime());
             m.put("breastfed", l.getBreastfed());
             m.put("diaperType", l.getDiaperType());
             m.put("memo", l.getMemo());

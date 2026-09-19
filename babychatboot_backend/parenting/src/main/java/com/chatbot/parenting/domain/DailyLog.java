@@ -20,6 +20,17 @@ public class DailyLog {
 
     private Integer formulaAmount; // 분유량 (ml), null = 미기록
 
+    @Column(length = 100)
+    private String solidFoodName;
+    private Integer solidFoodAmount; // grams; null = amount not recorded
+    private LocalDateTime napEndTime; // recordTime is the nap start
+
+    public void updateActivities(String solidFoodName, Integer solidFoodAmount, LocalDateTime napEndTime) {
+        this.solidFoodName = solidFoodName;
+        this.solidFoodAmount = solidFoodAmount;
+        this.napEndTime = napEndTime;
+    }
+
     private Boolean breastfed; // 수유 여부
 
     // "NONE"(없음), "WET"(소변), "DIRTY"(대변), "BOTH"(소변+대변)
