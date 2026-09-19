@@ -1,6 +1,6 @@
 # 실행·검증 안내
 
-3단계의 최신 검사 결과와 V2 적용 전 실행 제한은 [대화 맥락 작업서](CHAT_CONTEXT_RUNBOOK.md)를 우선한다. 일반 JUnit 20개, PostgreSQL 통합 6개, Node 7개, Docker HTTP 16+19개를 통과했다. 실제 DB V2 적용 승인이 없으면 현재 소스를 서비스 DB에 연결하여 시작하지 않는다.
+최신 검사/실행 제한은 [4단계 작업서](KNOWLEDGE_RUNBOOK.md)를 우선한다. 2026-09-19 JUnit 34개 통과/선택 테스트 1개 제외, Node 9개, Docker HTTP 48개, 최종 Docker/Next 빌드와 변경 파일 lint를 통과했다. 전체 frontend lint는 기존 오류 6개/경고 10개가 남았다. 실제 DB는 V2이며 V3 승인 전 현재 소스로 실제 DB에 연결해 시작하지 않는다. 아래 날짜별 수치는 당시 이력이다.
 
 ## 2026-09-08 비공개 백엔드 변경 이후
 

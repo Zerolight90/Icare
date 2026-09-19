@@ -90,11 +90,9 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
-        <p className="text-sm text-amber-700 font-medium">기본 관리자 계정</p>
+        <p className="text-sm text-amber-700 font-medium">관리자 계정 안내</p>
         <p className="text-xs text-amber-600 mt-1">
-          아이디: <code className="bg-amber-100 px-1 rounded">admin</code> &nbsp;
-          비밀번호: <code className="bg-amber-100 px-1 rounded">admin1234!</code>
-          &nbsp;— 운영 환경에서는 반드시 변경하세요.
+          초기 설정에서 지정한 관리자 계정을 사용합니다. 공통 기본 비밀번호는 제공하지 않습니다.
         </p>
       </div>
     </div>

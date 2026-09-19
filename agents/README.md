@@ -1,6 +1,6 @@
 # iCare 프로젝트 분석 문서
 
-분석일: 2026-09-06. 현재 작업 트리의 소스와 설정을 기준으로 작성했다.
+최신 상태(2026-09-19): 3단계 main 병합/실제 V2 적용 완료. 4단계 구현·격리 검증 완료, main 병합/실제 V3 적용은 승인 대기다. 아래 분석 결론과 비교표는 2026-09-06의 이력이며 현재 구현은 단계별 작업서를 우선한다.
 
 ## 읽는 순서
 
@@ -14,6 +14,7 @@
 | [FLYWAY_RUNBOOK.md](FLYWAY_RUNBOOK.md) | 최신 Flyway 구현·격리 검증 결과와 실제 DB 적용 검수안 |
 | [PRIVATE_BACKEND_RUNBOOK.md](PRIVATE_BACKEND_RUNBOOK.md) | 2단계 인증·권한·Docker·서버 프록시 변경, 실행 설정과 검증/미검증 |
 | [CHAT_CONTEXT_RUNBOOK.md](CHAT_CONTEXT_RUNBOOK.md) | 3단계 최근 대화·아이 선택, V2 격리 검증과 실제 DB 적용 검수안 |
+| [KNOWLEDGE_RUNBOOK.md](KNOWLEDGE_RUNBOOK.md) | 4단계 문서 추출·버전·출처, 최종 검증, 실제 V3 적용 검수와 복구 절차 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 경계, 기술 구성, 핵심 요청 흐름과 데이터 관계 |
 | [BACKEND.md](BACKEND.md) | API 영역, 서비스 책임, 인증·RAG·영속성 구조 |
 | [FRONTEND.md](FRONTEND.md) | 페이지 구성, 상태 관리, HTTP와 인증 흐름 |

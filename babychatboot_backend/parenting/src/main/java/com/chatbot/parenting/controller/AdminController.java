@@ -220,26 +220,6 @@ public class AdminController {
     // 문서/임베딩 관리
     // ==========================================
 
-    @PostMapping("/knowledge")
-    public ResponseEntity<Map<String, Object>> addKnowledge(@RequestBody Map<String, String> body) {
-        String content = body.get("content");
-        String source = body.getOrDefault("source", "admin_manual");
-        adminService.addKnowledge(content, source);
-        return ResponseEntity.ok(Map.of("message", "지식이 벡터스토어에 추가되었습니다.", "source", source));
-    }
-
-    @PostMapping("/knowledge/upload")
-    public ResponseEntity<?> uploadKnowledge(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "source", required = false) String source) {
-        try {
-            Map<String, Object> result = adminService.uploadKnowledgeFile(file, source);
-            return ResponseEntity.ok(result);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
     // ==========================================
     // 채팅 내역 관리
     // ==========================================

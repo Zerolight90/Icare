@@ -85,6 +85,7 @@ class FlywayMigrationTest {
     private static Map<String, Object> v1Snapshot(String url) {
         var result = snapshot(url);
         result.put("chat_room", jdbc(url).queryForObject("SELECT COALESCE(jsonb_agg(to_jsonb(t) - 'context_version' - 'context_family_id' - 'context_baby_id' ORDER BY id)::text, '[]') FROM chat_room t", String.class));
+        result.put("chat_messages", jdbc(url).queryForObject("SELECT COALESCE(jsonb_agg(to_jsonb(t) - 'retrieval_sources' ORDER BY id)::text, '[]') FROM chat_messages t", String.class));
         return result;
     }
 
@@ -137,7 +138,7 @@ class FlywayMigrationTest {
     }
 
     private static List<Map<String, Object>> roleCheckResults(String url) {
-        var checks = constraints(url).stream().filter(c -> "c".equals(c.get("contype"))).toList();
+        var checks = constraints(url).stream().filter(c -> "c".equals(c.get("contype")) && "chat_messages".equals(c.get("relname"))).toList();
         assertThat(checks).extracting(c -> c.get("relname")).containsExactly("chat_messages");
         String expression = jdbc(url).queryForObject("""
             SELECT pg_get_expr(conbin, conrelid) FROM pg_constraint
@@ -214,13 +215,14 @@ class FlywayMigrationTest {
     @Test
     void emptyDatabaseMatchesIndependentHibernateSchema() {
         String fresh = database();
-        assertThat(flyway(fresh, 3072).migrate().migrationsExecuted).isEqualTo(2);
+        assertThat(flyway(fresh, 3072).migrate().migrationsExecuted).isEqualTo(3);
         hibernate(fresh, "validate");
         validateVector(fresh, 3072);
         String legacy = database();
         legacySchema(legacy, 3072);
-        assertThat(columns(fresh)).isEqualTo(columns(legacy));
-        assertThat(constraints(fresh)).isEqualTo(constraints(legacy));
+        // knowledge_revision is JDBC-managed and verified by KnowledgePipelineTest; compare all JPA tables independently.
+        assertThat(columns(fresh).stream().filter(c -> !"knowledge_revision".equals(c.get("table_name"))).toList()).isEqualTo(columns(legacy));
+        assertThat(constraints(fresh).stream().filter(c -> !"knowledge_revision".equals(c.get("relname"))).toList()).isEqualTo(constraints(legacy));
         seed(fresh, 3072);
         var before = snapshot(fresh);
         assertThat(flyway(fresh, 3072).migrate().migrationsExecuted).isZero();
@@ -233,6 +235,7 @@ class FlywayMigrationTest {
         String legacy = database();
         legacySchema(legacy, 3072);
         jdbc(legacy).execute("ALTER TABLE chat_room DROP COLUMN context_version, DROP COLUMN context_family_id, DROP COLUMN context_baby_id");
+        jdbc(legacy).execute("ALTER TABLE chat_messages DROP COLUMN retrieval_sources");
         seed(legacy, 3072);
         var before = v1Snapshot(legacy);
         assertThatThrownBy(() -> flyway(legacy, 3072).migrate()).isInstanceOf(FlywayException.class);
@@ -240,7 +243,7 @@ class FlywayMigrationTest {
         assertThatThrownBy(() -> hibernate(legacy, "validate")).isInstanceOf(Exception.class);
         validateVector(legacy, 3072);
         flyway(legacy, 3072).baseline();
-        assertThat(flyway(legacy, 3072).migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(flyway(legacy, 3072).migrate().migrationsExecuted).isEqualTo(2);
         hibernate(legacy, "validate");
         assertThat(v1Snapshot(legacy)).isEqualTo(before);
         assertThat(jdbc(legacy).queryForObject("SELECT type FROM flyway_schema_history WHERE version='1'", String.class))
@@ -256,7 +259,7 @@ class FlywayMigrationTest {
         assertThat(v1.migrate().migrationsExecuted).isEqualTo(1);
         seed(url, 3072);
         var before = v1Snapshot(url);
-        assertThat(flyway(url, 3072).migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(flyway(url, 3072).migrate().migrationsExecuted).isEqualTo(2);
         assertThat(v1Snapshot(url)).isEqualTo(before);
         assertThat(jdbc(url).queryForObject("SELECT context_version FROM chat_room WHERE id='fixture-room'", Integer.class)).isZero();
         assertThat(jdbc(url).queryForObject("SELECT context_family_id IS NULL AND context_baby_id IS NULL FROM chat_room WHERE id='fixture-room'", Boolean.class)).isTrue();

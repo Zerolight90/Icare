@@ -36,9 +36,20 @@ export async function forwardApi(request: Request, path: string[], env: Environm
   const incoming = new URL(request.url);
   const production = env.NODE_ENV === 'production';
   const method = request.method;
+  // Next.js may reconstruct an internal localhost URL behind a proxy. Pin the public origin explicitly.
+  let frontendOrigin = incoming.origin;
+  if (env.ICARE_FRONTEND_ORIGIN) {
+    try {
+      const configured = new URL(env.ICARE_FRONTEND_ORIGIN);
+      const local = !production && ['localhost', '127.0.0.1'].includes(configured.hostname);
+      if ((!local && configured.protocol !== 'https:') || !['http:', 'https:'].includes(configured.protocol) ||
+          configured.username || configured.password || configured.pathname !== '/' || configured.search || configured.hash) throw new Error();
+      frontendOrigin = configured.origin;
+    } catch { return reply(503, '프론트 주소 설정을 확인해 주세요.'); }
+  }
   // Reject browser cross-site use, including login CSRF. Bearer API clients may omit Origin.
   if (request.headers.get('sec-fetch-site') === 'cross-site' ||
-      (request.headers.has('origin') && request.headers.get('origin') !== incoming.origin))
+      (request.headers.has('origin') && request.headers.get('origin') !== frontendOrigin))
     return reply(403, '요청 출처가 허용되지 않습니다.');
   if (!path.length || path.some(p => !/^[A-Za-z0-9_.-]+$/.test(p) || p === '.' || p === '..'))
     return reply(400, '잘못된 API 경로입니다.');

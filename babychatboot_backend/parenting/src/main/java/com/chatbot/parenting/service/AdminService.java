@@ -3,12 +3,8 @@ package com.chatbot.parenting.service;
 import com.chatbot.parenting.domain.*;
 import com.chatbot.parenting.repository.*;
 import com.chatbot.parenting.util.JwtUtil;
-import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.transformer.splitter.TokenTextSplitter;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,9 +33,7 @@ public class AdminService {
     private final DailyLogRepository dailyLogRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
-    private final VectorStore vectorStore;
     private final JwtUtil jwtUtil;
-    private final AiRequestGuard aiGuard;
     private final com.chatbot.parenting.config.PrivateAccessPolicy privateAccess;
 
     // ==========================================
@@ -311,49 +305,6 @@ public class AdminService {
     // ==========================================
     // 문서/임베딩 관리
     // ==========================================
-
-    @Transactional
-    public void addKnowledge(String content, String source) {
-        if (content == null || content.length() > 4000) throw new IllegalArgumentException("한 번에 최대 4000자까지 등록할 수 있습니다.");
-        Document doc = new Document(content, Map.of("source", source));
-        List<Document> chunks = buildSplitter().apply(List.of(doc));
-        try (var permit = aiGuard.acquire("admin-knowledge", content)) { vectorStore.add(chunks); }
-        log.info("[Admin RAG] 지식 추가: {} → {}개 청크", source, chunks.size());
-    }
-
-    @Transactional
-    public Map<String, Object> uploadKnowledgeFile(MultipartFile file, String source) {
-        try {
-            if (file.getSize() > 16000) throw new IllegalArgumentException("이번 비공개 테스트의 문서는 최대 16KB입니다.");
-            String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "upload";
-            String src = (source != null && !source.isBlank()) ? source : fileName;
-            String content = new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            if (content.isBlank()) throw new IllegalArgumentException("파일 내용이 비어 있습니다.");
-            Document doc = new Document(content, Map.of("source", src));
-            List<Document> chunks = buildSplitter().apply(List.of(doc));
-            try (var permit = aiGuard.acquire("admin-knowledge", content)) { vectorStore.add(chunks); }
-            log.info("[Admin RAG] 파일 업로드: {} → {}개 청크", src, chunks.size());
-            return Map.of("message", "파일이 임베딩되었습니다.", "source", src, "chunks", chunks.size());
-        } catch (java.io.IOException e) {
-            throw new RuntimeException("파일 읽기 실패: " + e.getMessage());
-        }
-    }
-
-    private TokenTextSplitter buildSplitter() {
-        int chunkSize = Math.max(256, Math.min(1024, getConfigInt("rag_chunk_size", 512)));
-        int overlap = Math.max(0, Math.min(128, getConfigInt("rag_chunk_overlap", 64)));
-        return new TokenTextSplitter(chunkSize, overlap, 5, 10000, true,
-                List.of('.', ',', '!', '?', ';', ':'));
-    }
-
-    private int getConfigInt(String key, int defaultValue) {
-        return chatbotConfigRepository.findByConfigKey(key)
-                .map(c -> {
-                    try { return Integer.parseInt(c.getConfigValue()); }
-                    catch (NumberFormatException e) { return defaultValue; }
-                })
-                .orElse(defaultValue);
-    }
 
     // ==========================================
     // 채팅 내역 관리

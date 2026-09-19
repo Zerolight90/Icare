@@ -46,6 +46,17 @@ test('redirects are blocked and service errors do not expose upstream bodies', a
   assert.equal(error.status, 502); assert.doesNotMatch(await error.text(), /secret/);
 });
 
+test('explicit public origin accepts a reverse-proxy internal URL and still rejects foreign origins', async () => {
+  const configured = { ...env, ICARE_FRONTEND_ORIGIN: 'https://frontend.example.test' };
+  const send = async () => new Response('ok');
+  for (const [origin, status] of [['https://frontend.example.test', 200], ['https://evil.test', 403], ['http://localhost:3005', 403]]) {
+    const request = new Request('http://localhost:3005/api/x', { headers: { origin } });
+    assert.equal((await forwardApi(request, ['x'], configured, send)).status, status);
+  }
+  assert.equal((await forwardApi(new Request('http://localhost/api/x'), ['x'], { ...configured, ICARE_FRONTEND_ORIGIN: 'http://frontend.example.test' }, send)).status, 503);
+  assert.equal((await forwardApi(new Request('http://localhost/api/x', { headers: { origin: 'https://frontend.example.test', 'sec-fetch-site': 'cross-site' } }), ['x'], configured, send)).status, 403);
+});
+
 test('body size bounds apply with and without content-length', async () => {
   let calls = 0;
   const send = async () => { calls++; return new Response('ok'); };

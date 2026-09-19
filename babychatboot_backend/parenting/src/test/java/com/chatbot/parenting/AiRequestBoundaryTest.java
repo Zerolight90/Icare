@@ -26,11 +26,11 @@ class AiRequestBoundaryTest {
         when(room.getContextFamilyId()).thenReturn(null);
         when(room.getContextBabyId()).thenReturn(null);
         when(configs.findByConfigKey("system_prompt")).thenReturn(Optional.of(new ChatbotConfig("system_prompt", "당신은 소아과 전문의입니다.", "old fixture")));
-        var ai = new GeminiService(client, vector, messages, rooms, users, configs, new AiRequestGuard(4000, 1024, 5), new ChatContextService(messages, mock(FamilyAccessService.class)));
+        var ai = new GeminiService(client, new KnowledgeSearchService(vector, new com.fasterxml.jackson.databind.ObjectMapper()), messages, rooms, users, configs, new AiRequestGuard(4000, 1024, 5), new ChatContextService(messages, mock(FamilyAccessService.class)));
         assertThatThrownBy(() -> ai.askToGemini("room", "x".repeat(4001), "parent@example.test")).hasMessageContaining("400");
         verifyNoInteractions(client, vector, messages);
 
-        when(vector.similaritySearch(any(org.springframework.ai.vectorstore.SearchRequest.class))).thenReturn(List.of(new Document("x".repeat(20000))));
+        when(vector.similaritySearch(any(org.springframework.ai.vectorstore.SearchRequest.class))).thenReturn(List.of(new Document("x".repeat(20000), java.util.Map.of("icare_managed", true, "icare_active", true, "source_url", "https://example.test/guidance", "source", "test", "icare_version", "00000000-0000-0000-0000-000000000001"))));
         var request = mock(ChatClient.ChatClientRequestSpec.class, RETURNS_SELF);
         var call = mock(ChatClient.CallResponseSpec.class);
         when(client.prompt()).thenReturn(request); when(request.call()).thenReturn(call);
@@ -57,5 +57,7 @@ class AiRequestBoundaryTest {
                 list.get(0).getText().contains("의료인이 아닙니다") && !list.get(0).getText().contains("당신은 소아과 전문의입니다")));
         verify(request, times(2)).options(argThat((GoogleGenAiChatOptions options) -> options.getMaxOutputTokens() == 1024));
         verify(messages, times(2)).save(any(ChatMessage.class));
+        verify(messages).save(argThat(message -> message.getRole() == ChatMessage.RoleType.ASSISTANT
+                && message.getRetrievalSources().contains("https://example.test/guidance")));
     }
 }

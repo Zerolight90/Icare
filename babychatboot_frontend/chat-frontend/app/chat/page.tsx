@@ -7,6 +7,7 @@ import api from '../lib/axios';
 import ReactMarkdown from 'react-markdown';
 import { isAxiosError } from 'axios';
 import { RoomRequests } from '../lib/room-requests';
+import RetrievalSources from '../components/RetrievalSources';
 
 const NAV_LINKS = [
   { href: '/',          icon: '🏠', label: '메인' },
@@ -23,6 +24,7 @@ interface ChatMessage {
   id: number;
   role: 'USER' | 'ASSISTANT' | 'SYSTEM';
   content: string;
+  retrievalSources?: string | null;
   createdAt: string;
 }
 interface Category { id: number; name: string; icon: string; }
@@ -378,7 +380,7 @@ export default function ChatPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">iCare에 오신 걸 환영해요</h2>
                 <p className="text-sm text-gray-500 mb-8 max-w-sm leading-relaxed">
-                  iCare 육아 안내가 육아 고민을<br/>RAG 기반 최신 지식으로 도와드립니다
+                  iCare 육아 안내와 함께<br/>육아에 필요한 정보를 확인해 보세요
                 </p>
                 {categories.length > 0 && (
                   <div className="flex flex-wrap gap-2 justify-center mb-8 max-w-sm">
@@ -463,6 +465,7 @@ export default function ChatPage() {
                           [&_th]:bg-sky-50 [&_th]:border [&_th]:border-gray-200 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:text-gray-700
                           [&_td]:border [&_td]:border-gray-100 [&_td]:px-3 [&_td]:py-2 [&_td]:text-sm">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          <RetrievalSources value={msg.retrievalSources} />
                         </div>
                       )}
                       <span className={`text-[10px] text-gray-400 mt-1 block ${isUser ? 'text-right' : ''}`}>

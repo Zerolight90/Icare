@@ -1,6 +1,6 @@
 # 3단계: 대화 맥락 검수와 실행
 
-2026-09-08: 사용자 승인으로 2단계 52245b7을 main에 병합하고 `feat/chat-context`를 생성했다. 이 문서의 3단계 구현은 검수용이며 main 병합과 실제 DB V2 적용은 아직 하지 않았다.
+최신(2026-09-19): 사용자 재검수·진행 요청에 따라 9월 13일 3단계 adf45c8을 main에 병합하고 실제 V2를 적용했다. 적용 전후 백업을 격리 복원해 보존/스키마 검사를 통과했다. 아래 9월 8일 검수안과 백업은 당시 이력이다. 현재 4단계의 V3 실행 제한은 [문서 검색 작업서](KNOWLEDGE_RUNBOOK.md)를 따른다.
 
 ## 변경된 동작
 
@@ -27,7 +27,7 @@ ALTER TABLE chat_room ADD COLUMN context_baby_id bigint;
 
 기존 행의 context_version은 0, 두 ID는 NULL이다. 기존 대화는 읽을 수 있지만 이어서 AI 상담을 하려면 새 방을 만들어야 한다(409 응답). 이전 기록에 가족·아이를 자동 지정하지 않는다. ID는 생성 당시 범위의 식별값으로 저장하며 삭제 연쇄 외래키를 만들지 않는다. V1 checksum 691030920을 유지했고 V2 checksum은 -1248664708이다. 테이블/기록/벡터를 삭제하거나 재임베딩하지 않는다.
 
-**V2 승인 전에는 이 브랜치로 실제 DB에 연결한 애플리케이션이나 Flyway migrate를 실행하지 않는다. 시작 시 Flyway가 V2를 적용하기 때문이다.** Hibernate validate, 벡터 3072 검증, 자동 스키마 생성 끔, clean 비활성은 유지한다.
+V2는 9월 13일 승인 후 실제 적용했다. Hibernate validate, 벡터 3072 검증, 자동 스키마 생성 끔, clean 비활성은 유지한다. 현재 기능 브랜치의 미승인 V3를 서비스 DB에 자동 적용하지 않도록 주의한다.
 
 ## 수행한 검증
 
@@ -49,7 +49,7 @@ Docker 검증 이미지: `icare-backend:chat-context-validation`, ID `sha256:b8a
 
 ## 실제 DB 백업과 적용 검수안
 
-서비스 DB는 `parenting-postgres/parenting_db`의 기존 볼륨 그대로 실행 중이다. 마지막 읽기 전용 확인 결과 V1만 적용되어 있고 public 테이블 16개, 업무/벡터 테이블 15개의 데이터는 0행, vector(3072)였다.
+아래는 9월 8일의 적용 전 기록이다. 서비스 DB는 `parenting-postgres/parenting_db`의 기존 볼륨 그대로 실행 중이며 당시 V1/public 테이블 16개/업무·벡터 0행/vector(3072)이었다. 최신 서비스 이력은 V2다.
 
 적용 전 백업: `C:\Users\USER\.icare\backups\20260908-before-v2\database.dump`, 33,298바이트, SHA-256 `B640DD26E2656313C7C46ABC1BD0A0551AAFDAA799DDBEA0FF1E5C09B0CAC68A`.
 
@@ -70,4 +70,4 @@ Docker 검증 이미지: `icare-backend:chat-context-validation`, ID `sha256:b8a
 
 검증 전용 DB와 새 백엔드를 시작한 뒤 `scripts/Test-PrivateBackend.ps1 -Mode context -Container icare-chat-context-validation` 및 `-Mode verify`로 HTTP를 검사한다. 스크립트는 검증 라벨·DB 이름·외부 차단 네트워크를 검사한다. context 검사는 합성 계정/아기와 `legacy-context-smoke` 방 fixture가 필요하고 새 테스트 방을 추가한다. 서비스 DB에 fixture를 만들지 않는다.
 
-4단계 문서 형식/버전/출처 개선은 미착수이며 `feat/knowledge-ingestion` 브랜치 제안도 아직 승인받지 않았다.
+4단계는 9월 13일 승인된 `feat/knowledge-ingestion`에서 진행했다. 구현·격리 검증과 미완료 항목은 [4단계 작업서](KNOWLEDGE_RUNBOOK.md)에 있다. 실제 V3 적용과 4단계 병합은 별도 승인 대상이다.

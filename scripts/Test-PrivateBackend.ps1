@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('signup', 'verify', 'context')][string]$Mode = 'verify',
+    [ValidateSet('signup', 'verify', 'context', 'knowledge')][string]$Mode = 'verify',
     [string]$Container = 'icare-backend-validation'
 )
 $ErrorActionPreference = 'Stop'

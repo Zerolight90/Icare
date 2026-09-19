@@ -40,6 +40,34 @@ public class PrivateBackendSmoke {
         } else {
             String login = "{\"email\":\"parent@example.test\",\"password\":\"" + PASSWORD + "\"}";
             String token = call("POST", "/api/users/login", login, null, true, 200).body();
+            if (args[0].equals("knowledge")) {
+                call("GET", "/api/admin/knowledge", null, token, true, 403);
+                String body = "{\"title\":\"Synthetic guideline\",\"sourceUrl\":\"https://example.test/http-fixture\",\"publisher\":\"Test publisher\",\"revisedOn\":\"2026-01-01\",\"content\":\"Synthetic preview text\"}";
+                call("POST", "/api/admin/knowledge/preview", body, token, true, 403);
+                String adminJson = call("POST", "/api/admin/auth/login", "{\"username\":\"parent@example.test\",\"password\":\"" + PASSWORD + "\"}", null, true, 200).body();
+                var match = java.util.regex.Pattern.compile("\"token\":\"([^\"]+)\"").matcher(adminJson);
+                if (!match.find()) throw new IllegalStateException("Synthetic admin login failed");
+                String admin = match.group(1);
+                call("GET", "/api/admin/knowledge", null, admin, true, 200);
+                String preview = call("POST", "/api/admin/knowledge/preview", body, admin, true, 200).body();
+                if (!preview.contains("Synthetic preview text") || !preview.contains("\"hash\"") || !preview.contains("https://example.test/http-fixture")) throw new IllegalStateException("Knowledge preview missing evidence");
+                checks++;
+                call("POST", "/api/admin/knowledge", body, admin, true, 400);
+                call("POST", "/api/admin/knowledge/preview", body.replace("https://example.test/http-fixture", "javascript:alert(1)"), admin, true, 400);
+                String boundary = "icare-synthetic-boundary";
+                StringBuilder multipart = new StringBuilder();
+                for (String[] field : new String[][]{{"title","Test file"},{"sourceUrl","https://example.test/upload"},{"publisher","Test publisher"},{"revisedOn","2026-01-01"}}) {
+                    multipart.append("--").append(boundary).append("\r\nContent-Disposition: form-data; name=\"").append(field[0]).append("\"\r\n\r\n").append(field[1]).append("\r\n");
+                }
+                multipart.append("--").append(boundary).append("\r\nContent-Disposition: form-data; name=\"file\"; filename=\"test.txt\"\r\nContent-Type: text/plain\r\n\r\nSynthetic uploaded text\r\n--").append(boundary).append("--\r\n");
+                var result = client.send(HttpRequest.newBuilder(URI.create(BASE + "/api/admin/knowledge/upload/preview"))
+                    .timeout(Duration.ofSeconds(10)).header("X-Icare-Proxy-Secret",PROXY).header("Authorization","Bearer " + admin)
+                    .header("Content-Type","multipart/form-data; boundary=" + boundary).POST(HttpRequest.BodyPublishers.ofString(multipart.toString())).build(),HttpResponse.BodyHandlers.ofString());
+                if(result.statusCode()!=200 || !result.body().contains("Synthetic uploaded text")) throw new IllegalStateException("Multipart extraction preview failed: " + result.statusCode());
+                checks++;
+                System.out.println("Offline knowledge HTTP checks passed: " + checks);
+                return;
+            }
             if (args[0].equals("context")) {
                 String general = call("POST", "/api/chat/rooms?title=general", null, token, true, 200).body();
                 if (!general.contains("\"contextVersion\":1") || !general.contains("\"contextBabyId\":null")

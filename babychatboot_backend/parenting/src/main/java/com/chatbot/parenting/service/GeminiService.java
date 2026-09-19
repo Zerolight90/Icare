@@ -28,7 +28,7 @@ import java.util.List;
 public class GeminiService {
 
     private final ChatClient chatClient;
-    private final VectorStore vectorStore;
+    private final KnowledgeSearchService knowledge;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
@@ -140,16 +140,9 @@ public class GeminiService {
                 systemPrompt = DEFAULT_SYSTEM_PROMPT;
             }
             int topK = Math.max(1, Math.min(5, getConfigInt("rag_top_k", 5)));
-            // Bound retrieved text as well as the user's input before the model request.
-            StringBuilder reference = new StringBuilder();
-            var documents = vectorStore.similaritySearch(SearchRequest.builder().query(prompt).topK(topK).build());
-            if (documents != null) for (var document : documents) {
-                String text = document.getText();
-                int remaining = 4000 - reference.length();
-                if (text != null && remaining > 1) reference.append(text, 0, Math.min(text.length(), remaining - 1)).append('\n');
-            }
+            var reference = knowledge.search(prompt, topK);
             var requestMessages = new java.util.ArrayList<org.springframework.ai.chat.messages.Message>();
-            requestMessages.add(new SystemMessage(ROLE_RULES + "\n운영 설정:\n" + systemPrompt + "\n" + profile + "\n참고 자료:\n" + reference));
+            requestMessages.add(new SystemMessage(ROLE_RULES + "\n운영 설정:\n" + systemPrompt + "\n" + profile + "\n참고 자료:\n" + reference.text()));
             requestMessages.addAll(history);
             requestMessages.add(new UserMessage(prompt));
             if (requestMessages.stream().mapToInt(m -> m.getText().length()).sum() > 24000)
@@ -160,7 +153,9 @@ public class GeminiService {
                 .call().content());
             // A failed AI request must not leave an unmatched question committed.
             chatMessageRepository.save(new ChatMessage(room, ChatMessage.RoleType.USER, prompt));
-            chatMessageRepository.save(new ChatMessage(room, ChatMessage.RoleType.ASSISTANT, response));
+            var answer = new ChatMessage(room, ChatMessage.RoleType.ASSISTANT, response);
+            answer.attachSources(reference.sourcesJson());
+            chatMessageRepository.save(answer);
             return response;
         }
     }

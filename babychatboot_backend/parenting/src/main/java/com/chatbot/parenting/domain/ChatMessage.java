@@ -30,6 +30,11 @@ public class ChatMessage {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content; 
 
+    @Column(columnDefinition = "TEXT")
+    private String retrievalSources;
+
+    public void attachSources(String json) { this.retrievalSources = json; }
+
     private int tokenCount = 0;
 
     @Column(name = "created_at", updatable = false)
