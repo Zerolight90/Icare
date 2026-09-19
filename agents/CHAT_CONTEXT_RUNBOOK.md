@@ -27,7 +27,7 @@ ALTER TABLE chat_room ADD COLUMN context_baby_id bigint;
 
 기존 행의 context_version은 0, 두 ID는 NULL이다. 기존 대화는 읽을 수 있지만 이어서 AI 상담을 하려면 새 방을 만들어야 한다(409 응답). 이전 기록에 가족·아이를 자동 지정하지 않는다. ID는 생성 당시 범위의 식별값으로 저장하며 삭제 연쇄 외래키를 만들지 않는다. V1 checksum 691030920을 유지했고 V2 checksum은 -1248664708이다. 테이블/기록/벡터를 삭제하거나 재임베딩하지 않는다.
 
-V2는 9월 13일 승인 후 실제 적용했다. Hibernate validate, 벡터 3072 검증, 자동 스키마 생성 끔, clean 비활성은 유지한다. 현재 기능 브랜치의 미승인 V3를 서비스 DB에 자동 적용하지 않도록 주의한다.
+V2는 9월 13일 승인 후 실제 적용했다. Hibernate validate, 벡터 3072 검증, 자동 스키마 생성 끔, clean 비활성은 유지한다. V3도 9월 19일 별도 승인 후 실제 적용을 완료했다.
 
 ## 수행한 검증
 
@@ -49,7 +49,7 @@ Docker 검증 이미지: `icare-backend:chat-context-validation`, ID `sha256:b8a
 
 ## 실제 DB 백업과 적용 검수안
 
-아래는 9월 8일의 적용 전 기록이다. 서비스 DB는 `parenting-postgres/parenting_db`의 기존 볼륨 그대로 실행 중이며 당시 V1/public 테이블 16개/업무·벡터 0행/vector(3072)이었다. 최신 서비스 이력은 V2다.
+아래는 9월 8일의 적용 전 기록이다. 서비스 DB는 `parenting-postgres/parenting_db`의 기존 볼륨 그대로 실행 중이며 당시 V1/public 테이블 16개/업무·벡터 0행/vector(3072)이었다. 최신 서비스 이력은 V3다.
 
 적용 전 백업: `C:\Users\USER\.icare\backups\20260908-before-v2\database.dump`, 33,298바이트, SHA-256 `B640DD26E2656313C7C46ABC1BD0A0551AAFDAA799DDBEA0FF1E5C09B0CAC68A`.
 
@@ -70,4 +70,4 @@ Docker 검증 이미지: `icare-backend:chat-context-validation`, ID `sha256:b8a
 
 검증 전용 DB와 새 백엔드를 시작한 뒤 `scripts/Test-PrivateBackend.ps1 -Mode context -Container icare-chat-context-validation` 및 `-Mode verify`로 HTTP를 검사한다. 스크립트는 검증 라벨·DB 이름·외부 차단 네트워크를 검사한다. context 검사는 합성 계정/아기와 `legacy-context-smoke` 방 fixture가 필요하고 새 테스트 방을 추가한다. 서비스 DB에 fixture를 만들지 않는다.
 
-4단계는 9월 13일 승인된 `feat/knowledge-ingestion`에서 진행했다. 구현·격리 검증과 미완료 항목은 [4단계 작업서](KNOWLEDGE_RUNBOOK.md)에 있다. 실제 V3 적용과 4단계 병합은 별도 승인 대상이다.
+4단계는 9월 13일 승인된 `feat/knowledge-ingestion`에서 진행했다. 구현·격리 검증과 미완료 항목은 [4단계 작업서](KNOWLEDGE_RUNBOOK.md)에 있다. 9월 19일 별도 사용자 승인 후 4단계 main 병합과 실제 V3 적용·백업 복원 검증을 완료했다.

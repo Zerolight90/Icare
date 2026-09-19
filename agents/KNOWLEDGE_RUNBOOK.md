@@ -1,6 +1,16 @@
 # 4단계: 문서 검색 검수·실행 안내
 
-2026-09-19. `feat/knowledge-ingestion`의 구현과 격리 검증을 마쳤다. main은 3단계 `adf45c8`, 실제 서비스 DB는 V2다. **4단계 main 병합과 실제 V3 적용은 승인 대기**이며 실제 문서 등록·교체, Gemini/SMTP 호출, DNS/Vercel 변경은 하지 않았다.
+2026-09-19 사용자 승인 후 4단계 `edffb57`을 main에 fast-forward 병합하고 실제 서비스 DB에 V3를 적용했다. 적용 전후 새 백업을 각각 격리 복원해 보존 검증을 마쳤다. 실제 문서 등록·교체, Gemini/SMTP 호출, DNS/Vercel 변경은 하지 않았다.
+
+## 실제 적용 완료 기록
+
+- 대상은 기존 `parenting-postgres/parenting_db`와 기존 볼륨이다. 적용 전 다른 DB 접속이 없고 서비스 백엔드는 중지 상태임을 확인했다. 원격 push는 하지 않았다.
+- Flyway migrate/validate 성공: V1 `691030920`, V2 `-1248664708` 불변, V3 `-1282563757` 성공. public 테이블 17개, 추가 출처 컬럼/text와 현재 버전 유일 인덱스를 확인했다.
+- 기존 업무/벡터 15개 테이블의 0행 상태, 모든 시퀀스의 last_value/is_called, vector(3072)를 보존했다. 새 knowledge_revision도 0행이다.
+- 적용 전 백업: `C:\Users\USER\.icare\backups\20260919-approved-before-v3\database.dump`, 33,512바이트, SHA-256 `C30618317C7F446BC2F0C1257E3E481F999895729989074BA608F606789A900A`.
+- 적용 후 백업: `C:\Users\USER\.icare\backups\20260919-approved-after-v3\database.dump`, 35,769바이트, SHA-256 `3AF29F27BC4B7F4AAE0479B316DB39AE2746182E3DC14B8891B24A09CC90AB07`.
+- 각각 새 격리 DB `icare_validation_20260919_approved_pre_v3` / `icare_validation_20260919_approved_post_v3`에 복원하여 모든 테이블 행 수·시퀀스·이력·벡터 차원·출처 컬럼을 원본과 비교했다. 해당 백업 폴더의 backup-summary.json/verified-snapshot.json에 결과를 보존했다.
+- 검증 서버는 중지하고 데이터/컨테이너/백업은 유지했다. 실제 DB만 healthy로 실행 중이다. 애플리케이션 실제 실행 및 외부 서비스 연결은 다음 작업이다.
 
 ## 변경한 동작
 
@@ -29,7 +39,7 @@ PDFBox로 PDF 텍스트를, Apache POI로 DOCX 본문·표 텍스트를 추출�
 
 새 `knowledge_revision` 테이블/출처별 현재 버전 유일 인덱스와 `chat_messages.retrieval_sources text` 컬럼만 추가한다. 기존 문서·벡터를 갱신/삭제하는 SQL은 없다. 버전 테이블은 JdbcTemplate으로 관리하며 JPA 엔티티가 아니다. 격리 검증 checksum은 V1 `691030920`, V2 `-1248664708`, V3 `-1282563757`이다.
 
-실제 `parenting-postgres/parenting_db`는 기존 볼륨을 유지한다. 9월 19일 확인 시 V2, public 테이블 16개, 업무/벡터 15개 테이블 0행, vector(3072)였다. 원래 D: PostgreSQL 파일의 CRC 오류가 복구되었다는 뜻은 아니다.
+실제 `parenting-postgres/parenting_db`는 기존 볼륨을 유지한다. 아래는 9월 19일 승인 전 V2 검수 이력이며 최신 실제 DB는 위 완료 기록의 V3다. 원래 D: PostgreSQL 파일의 CRC 오류가 복구되었다는 뜻은 아니다.
 
 승인 전 백업: `C:\Users\USER\.icare\backups\20260919-before-v3\database.dump`, 33,512바이트. SHA-256:
 
@@ -37,9 +47,11 @@ PDFBox로 PDF 텍스트를, Apache POI로 DOCX 본문·표 텍스트를 추출�
 
 이를 `icare_validation_20260919_before_v3`에 복원하고 **복원본에만** V3 migrate/validate를 수행했다. 17개 테이블, 새 컬럼, 기존 행/벡터 차원/이력 보존을 확인했다. 백업과 복원 기록은 Git 밖에 보관한다. 같은 PC의 C: 사본은 외부 재해 복구 백업을 대신하지 않는다.
 
-**현재 소스를 실제 DB에 연결해 시작하지 않는다. 시작 시 Flyway가 미승인 V3를 적용하기 때문이다.**
+V3 승인을 받아 실제 적용을 마쳤다. 문서 자동 적재/관리자 bootstrap은 계속 비활성이며 실제 실행은 Gemini·SMTP 등 필수 설정을 확인한 후 진행한다. 향후 추가 마이그레이션은 새 검수·승인이 필요하다.
 
-## 승인 후 적용·복구
+## 적용 절차와 복구
+
+아래 1~3은 9월 19일 완료했다. 이후 새 기록이 생기면 기존 백업으로 덮어쓰지 않으며 최신 백업과 보존 절차부터 다시 확인한다.
 
 1. 검수된 기능 커밋을 main에 병합한다. 실제 DB 대상·볼륨·V1/V2 checksum·쓰기 발생 여부를 다시 확인하고 백엔드 쓰기를 중지한다. 상태가 달라졌으면 최신 백업과 격리 복원 검증을 새로 한다.
 2. Git 밖 DB 설정으로 `ICARE_DB_URL`, `ICARE_DB_USER`, `ICARE_DB_PASSWORD`를 공급한다. `scripts/db/Invoke-Flyway.ps1 -Action migrate -VectorDimensions 3072`, 이어서 `-Action validate`를 실행한다. baseline을 다시 실행하지 않는다.

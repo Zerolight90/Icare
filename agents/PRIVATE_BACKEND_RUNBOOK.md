@@ -1,6 +1,6 @@
 # 2단계: 비공개 백엔드 검수·실행 안내
 
-최신(2026-09-19): 2·3단계 main 병합, 실제 V2 적용은 완료했다. 현재 기능 브랜치의 V3는 실제 적용 승인 대기다. [4단계 작업서](KNOWLEDGE_RUNBOOK.md)의 실행 제한/검증 결과를 우선한다. Next 서버의 `ICARE_FRONTEND_ORIGIN`에는 실제 브라우저 origin을 설정하며 예제는 config/vercel-server.env.example에 있다. 실제 Cloudflare/Vercel 연결·배포는 미수행이다.
+최신(2026-09-19): 2~4단계 main 병합과 실제 V3 적용, 적용 전후 백업 복원 검증을 완료했다. [4단계 작업서](KNOWLEDGE_RUNBOOK.md)의 실행 제한/검증 결과를 우선한다. Next 서버의 `ICARE_FRONTEND_ORIGIN`에는 실제 브라우저 origin을 설정하며 예제는 config/vercel-server.env.example에 있다. 실제 Cloudflare/Vercel 연결·배포는 미수행이다.
 
 2026-09-08, `feat/private-backend`. 코드와 격리 검증 결과이며 실제 Cloudflare/Vercel 연결 완료 보고가 아니다. 1단계 DB 적용 결과는 [Flyway 작업서](FLYWAY_RUNBOOK.md)에 있다.
 
