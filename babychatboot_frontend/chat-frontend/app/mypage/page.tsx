@@ -132,8 +132,8 @@ export default function MyPage() {
       setPwMsg('새 비밀번호가 일치하지 않습니다.');
       return;
     }
-    if (pwForm.newPassword.length < 6) {
-      setPwMsg('비밀번호는 6자 이상이어야 합니다.');
+    if (pwForm.newPassword.length < 10 || new TextEncoder().encode(pwForm.newPassword).length > 72) {
+      setPwMsg('비밀번호는 10자 이상, UTF-8 기준 72바이트 이하여야 합니다.');
       return;
     }
     setPwSaving(true);
@@ -330,7 +330,7 @@ export default function MyPage() {
                     value={pwForm.newPassword}
                     onChange={e => setPwForm(p => ({ ...p, newPassword: e.target.value }))}
                     className={inputCls}
-                    placeholder="새 비밀번호 (6자 이상)"
+                    placeholder="새 비밀번호 (10자 이상)"
                   />
                 </Field>
 

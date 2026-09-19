@@ -12,6 +12,14 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AccountPolicyTest {
+    @Test void passwordAcceptsTenCharactersAndRetainsBcryptByteLimit() {
+        assertThatCode(() -> AccountPolicy.requirePassword("a".repeat(10))).doesNotThrowAnyException();
+        assertThatCode(() -> AccountPolicy.requirePassword("a".repeat(72))).doesNotThrowAnyException();
+        assertThatCode(() -> AccountPolicy.requirePassword("가".repeat(24))).doesNotThrowAnyException();
+        for (String invalid : new String[]{null, "", "a".repeat(9), "a".repeat(73), "가".repeat(25)}) {
+            assertThatThrownBy(() -> AccountPolicy.requirePassword(invalid)).isInstanceOf(IllegalArgumentException.class);
+        }
+    }
     @Test void acceptsAnyValidEmailAndRejectsMalformedAddresses() {
         var policy = new AccountPolicy();
         assertThat(policy.requireEmail(" NewParent@EXAMPLE.test ")).isEqualTo("newparent@example.test");
@@ -31,7 +39,7 @@ class AccountPolicyTest {
         var encoder = new BCryptPasswordEncoder();
         var service = new UserService(users, families, babies, encoder, mock(JwtUtil.class), mock(CommunityCache.class), new AccountPolicy());
         var dto = new SignupRequestDto(); dto.setEmail("newparent@example.test"); dto.setRole("MOM");
-        dto.setPassword("test-only-long-password"); dto.setInviteCode("SAMPLE");
+        dto.setPassword("abcdefghij"); dto.setInviteCode("SAMPLE");
         when(families.findByInviteCode("SAMPLE")).thenReturn(java.util.Optional.of(new com.chatbot.parenting.domain.Family("SAMPLE")));
         service.signup(dto);
         var saved = org.mockito.ArgumentCaptor.forClass(com.chatbot.parenting.domain.User.class);

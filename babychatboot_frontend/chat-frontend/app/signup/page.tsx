@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import Script from 'next/script';
 import Link from 'next/link';
 import Image from 'next/image';
 import api from '../lib/axios';
@@ -58,6 +59,41 @@ export default function SignupPage() {
   const [verifyCode, setVerifyCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [detailAddress, setDetailAddress] = useState('');
+  const [addressError, setAddressError] = useState('');
+  const detailAddressInput = useRef<HTMLInputElement>(null);
+
+  const openAddressSearch = () => {
+    if (!window.daum?.Postcode) {
+      setAddressError('주소 검색을 불러오지 못했습니다. 잠시 후 다시 시도하거나 주소를 직접 입력해 주세요.');
+      return;
+    }
+    setAddressError('');
+    try {
+      new window.daum.Postcode({
+        oncomplete: data => {
+          setForm(prev => ({ ...prev, address: data.address }));
+          setDetailAddress('');
+          detailAddressInput.current?.focus();
+        },
+      }).open();
+    } catch {
+      setAddressError('주소 검색 창을 열지 못했습니다. 팝업 허용 여부를 확인하거나 주소를 직접 입력해 주세요.');
+    }
+  };
+
+  const validatePassword = () => {
+    if (form.password.length < 10 || new TextEncoder().encode(form.password).length > 72) {
+      setError('비밀번호는 10자 이상, UTF-8 기준 72바이트 이하여야 합니다.');
+      return false;
+    }
+    if (form.password !== confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다. 다시 확인해 주세요.');
+      return false;
+    }
+    return true;
+  };
 
   const set = (field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -89,17 +125,21 @@ export default function SignupPage() {
 
   const handleInfoNext = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validatePassword()) return;
+    setError('');
     setStep('baby');
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validatePassword()) { setStep('info'); return; }
     setIsLoading(true);
     setError('');
     let registered = false;
     try {
       const payload = {
         ...form,
+        address: [form.address.trim(), detailAddress.trim()].filter(Boolean).join(' '),
         babyNames: form.babyNames.slice(0, form.babyCount),
         babyGenders: form.babyGenders.slice(0, form.babyCount),
         inviteCode: form.inviteCode.trim() || undefined,
@@ -149,6 +189,9 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-sky-50 flex items-center justify-center p-4 py-12">
+      <Script src="https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
+        strategy="afterInteractive"
+        onError={() => setAddressError('주소 검색 서비스를 불러오지 못했습니다. 새로고침하거나 주소를 직접 입력해 주세요.')} />
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8">
 
         {/* 헤더 */}
@@ -188,8 +231,10 @@ export default function SignupPage() {
               value={form.nickname} onChange={e => set('nickname', e.target.value)} />
             <input type="email" placeholder="이메일" required className={inputClass}
               value={form.email} onChange={e => set('email', e.target.value)} />
-            <input type="password" placeholder="비밀번호 (12자 이상)" required minLength={12} className={inputClass}
+            <input type="password" aria-label="비밀번호" autoComplete="new-password" placeholder="비밀번호 (10자 이상)" required minLength={10} className={inputClass}
               value={form.password} onChange={e => set('password', e.target.value)} />
+            <input type="password" aria-label="비밀번호 확인" autoComplete="new-password" placeholder="비밀번호를 한 번 더 입력해 주세요" required minLength={10} className={inputClass}
+              value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setError(''); }} />
             <input type="tel" placeholder="전화번호 (010-0000-0000)" required className={inputClass}
               value={form.phoneNumber} onChange={e => set('phoneNumber', e.target.value)} />
 
@@ -199,8 +244,18 @@ export default function SignupPage() {
                 value={form.birthDate} onChange={e => set('birthDate', e.target.value)} />
             </div>
 
-            <input type="text" placeholder="주소" required className={inputClass}
-              value={form.address} onChange={e => set('address', e.target.value)} />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="signup-address" className="text-sm text-gray-500">주소</label>
+                <button type="button" onClick={openAddressSearch}
+                  className="px-4 py-2 rounded-xl bg-sky-100 text-sky-700 font-semibold hover:bg-sky-200">주소 검색</button>
+              </div>
+              {addressError && <p role="status" className="text-sm text-amber-700">{addressError}</p>}
+              <input id="signup-address" type="text" placeholder="도로명 또는 지번 주소" required className={inputClass}
+                value={form.address} onChange={e => { set('address', e.target.value); setDetailAddress(''); }} />
+              <input ref={detailAddressInput} type="text" aria-label="상세주소" placeholder="상세주소 (동·호수 등, 선택)" className={inputClass}
+                value={detailAddress} onChange={e => setDetailAddress(e.target.value)} />
+            </div>
 
             {/* 역할 선택 */}
             <div className="flex gap-3 p-2 bg-gray-50 rounded-xl">
@@ -215,6 +270,8 @@ export default function SignupPage() {
                 </label>
               ))}
             </div>
+
+            {error && <p role="alert" className="text-red-500 text-sm text-center bg-red-50 rounded-xl py-2 px-3">{error}</p>}
 
             <button type="submit"
               className="w-full py-4 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 mt-2">
