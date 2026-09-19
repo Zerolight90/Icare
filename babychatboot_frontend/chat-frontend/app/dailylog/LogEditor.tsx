@@ -7,9 +7,9 @@ const input = 'mt-1 min-h-11 w-full rounded-xl border border-slate-300 bg-white 
 const label = 'block text-sm font-semibold text-slate-700';
 const button = 'min-h-11 rounded-xl px-4 py-2 font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 disabled:opacity-50';
 
-export default function LogEditor({ log, date, initialActivity, babyName, saving, error, onClose, onSave }: {
+export default function LogEditor({ log, date, initialActivity, babyName, supportsActivities, saving, error, onClose, onSave }: {
   log: DailyLog | null; date: string; initialActivity: Activity; babyName: string;
-  saving: boolean; error: string; onClose: () => void; onSave: (body: LogBody) => Promise<void>;
+  supportsActivities: boolean; saving: boolean; error: string; onClose: () => void; onSave: (body: LogBody) => Promise<void>;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [selected, setSelected] = useState<Activity[]>(() => log ? [
@@ -57,7 +57,7 @@ export default function LogEditor({ log, date, initialActivity, babyName, saving
       <fieldset disabled={saving} className="space-y-5 p-5">
         <p id="log-editor-help" className="text-sm text-slate-600">기록할 항목을 선택하세요. 같은 시각의 일과는 여러 개 선택할 수 있어요.</p>
         <div className="flex flex-wrap gap-2" role="group" aria-label="기록 항목">
-          {activities.map(activity => <button type="button" key={activity.id} aria-pressed={has(activity.id)}
+          {activities.filter(activity => supportsActivities || (activity.id !== 'food' && activity.id !== 'nap')).map(activity => <button type="button" key={activity.id} aria-pressed={has(activity.id)}
             onClick={() => setSelected(previous => has(activity.id) ? previous.filter(value => value !== activity.id) : [...previous, activity.id])}
             className={`${button} border ${has(activity.id) ? 'border-sky-700 bg-sky-50 text-sky-900' : 'border-slate-300 text-slate-700'}`}>
             <span aria-hidden="true">{activity.icon} </span>{activity.label}

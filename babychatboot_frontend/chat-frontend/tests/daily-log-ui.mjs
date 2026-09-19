@@ -13,10 +13,11 @@ try {
   const token = `test.${Buffer.from(JSON.stringify({role:'MOM',sub:'fixture@example.test'})).toString('base64url')}.test`;
   await page.addInitScript(value => localStorage.setItem('accessToken', value), token);
   const records = [];
-  let writes = 0, failSave = false;
+  let writes = 0, failSave = false, supportsActivities = true;
   const send = (route, data, status = 200) => route.fulfill({ status, contentType:'application/json', body:JSON.stringify(data) });
   await page.route(`${base}/api/**`, route => {
     const request = route.request(), url = new URL(request.url());
+    if (url.pathname === '/api/logs/capabilities') return supportsActivities ? send(route,{foodAndNaps:true}) : send(route,{},404);
     if (url.pathname === '/api/users/me') return send(route, {nickname:'검수'});
     if (url.pathname === '/api/users/profile') return send(route, {babies:[{id:101,name:'검수아이',gender:'U',birthDate:'2026-01-01'}]});
     if (url.pathname === '/api/logs/101' && request.method() === 'GET') return send(route, records.filter(log => log.recordTime.startsWith(url.searchParams.get('date'))));
@@ -89,6 +90,11 @@ try {
   await page.getByRole('button',{name:'23:30 기록 삭제',exact:true}).click();
   await page.getByRole('article',{name:'23:30 기록',exact:true}).waitFor({state:'detached'});
   assert.equal(records.length,1);
+  supportsActivities = false;
+  await page.reload();
+  await page.getByText('이유식·낮잠 기록은 아직 준비 중이에요. 이용 가능해지면 새로고침해 주세요.',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'이유식 기록'}).isDisabled(),true);
+  assert.equal(await page.getByRole('button',{name:'낮잠 기록'}).isDisabled(),true);
   assert.deepEqual(errors,[]);
   console.log('PASS food create/edit/reload/unknown amount, failed-save retention, overnight nap, invalid duration, delete, 320/375px overflow, keyboard focus trap/Escape/return, no JS errors; synthetic APIs only.');
 } finally { await browser.close(); }

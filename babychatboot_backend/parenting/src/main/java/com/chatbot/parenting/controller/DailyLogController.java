@@ -31,6 +31,13 @@ public class DailyLogController {
     private final com.chatbot.parenting.service.FamilyAccessService familyAccess;
 
 
+    // Prevent a newer browser from sending fields an older backend would silently ignore.
+    @GetMapping("/capabilities")
+    public ResponseEntity<?> capabilities(@AuthenticationPrincipal Object principal) {
+        if (extractEmail(principal) == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.ok(java.util.Map.of("foodAndNaps", true));
+    }
+
     @GetMapping("/{babyId}")
     public ResponseEntity<?> getLogs(
             @PathVariable Long babyId,

@@ -30,6 +30,7 @@ export default function DailyLogPage() {
   const [editLog, setEditLog] = useState<DailyLog | null>(null);
   const [initialActivity, setInitialActivity] = useState<Activity>('feeding');
   const [loadError, setLoadError] = useState('');
+  const [supportsActivities, setSupportsActivities] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [formMsg, setFormMsg] = useState('');
   const [saving, setSaving] = useState(false);
@@ -66,8 +67,9 @@ export default function DailyLogPage() {
     const healthGeneration = healthRequest, logGeneration = logsRequest;
     const fetchBabies = async () => {
     try {
-      const res = await api.get('/api/users/profile');
+      const [res, capabilities] = await Promise.all([api.get('/api/users/profile'), api.get('/api/logs/capabilities').catch(() => null)]);
       if (!active) return;
+      setSupportsActivities(capabilities?.data?.foodAndNaps === true);
       const list: Baby[] = res.data.babies ?? [];
       setBabies(list);
       setViewDate(localDateStr()); setDlFrom(localDateStr()); setDlTo(localDateStr());
@@ -368,9 +370,10 @@ export default function DailyLogPage() {
 
             <section aria-label="일과 빠른 기록" className="mb-5">
               <h2 className="mb-2 text-sm font-semibold text-slate-700">무엇을 기록할까요?</h2>
+              {!supportsActivities && <p role="status" className="mb-3 text-sm text-slate-600">이유식·낮잠 기록은 아직 준비 중이에요. 이용 가능해지면 새로고침해 주세요.</p>}
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                {activities.map(activity => <button key={activity.id} onClick={() => openAdd(activity.id)} disabled={saving || !viewDate}
-                  className="min-h-14 rounded-xl border border-slate-300 bg-white px-3 py-3 font-semibold text-slate-800 hover:bg-sky-50 focus-visible:outline-2 focus-visible:outline-sky-700">
+                {activities.map(activity => <button key={activity.id} onClick={() => openAdd(activity.id)} disabled={saving || !viewDate || (!supportsActivities && (activity.id === 'food' || activity.id === 'nap'))}
+                  className="disabled:opacity-50 min-h-14 rounded-xl border border-slate-300 bg-white px-3 py-3 font-semibold text-slate-800 hover:bg-sky-50 focus-visible:outline-2 focus-visible:outline-sky-700">
                   <span aria-hidden="true">{activity.icon} </span>{activity.label} 기록
                 </button>)}
               </div>
@@ -419,7 +422,7 @@ export default function DailyLogPage() {
         )}
 
         {showForm && selectedBaby && <LogEditor log={editLog} date={viewDate} initialActivity={initialActivity}
-          babyName={selectedBaby.name} saving={saving} error={formMsg} onClose={() => setShowForm(false)} onSave={handleSave} />}
+          babyName={selectedBaby.name} supportsActivities={supportsActivities} saving={saving} error={formMsg} onClose={() => setShowForm(false)} onSave={handleSave} />}
       </div>
     </div>
   );
