@@ -8,6 +8,18 @@ function reply(status: number, message: string) {
   return Response.json({ error: message }, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
+function matchesFrontendOrigin(origin: string, expected: string, production: boolean) {
+  if (origin === expected) return true;
+  if (production) return false;
+  try {
+    const actual = new URL(origin), configured = new URL(expected);
+    const loopback = ['localhost', '127.0.0.1'];
+    // Only the two local development aliases, with the exact same scheme and port.
+    return origin === actual.origin && loopback.includes(actual.hostname) && loopback.includes(configured.hostname)
+      && actual.protocol === configured.protocol && actual.port === configured.port;
+  } catch { return false; }
+}
+
 async function readBounded(stream: ReadableStream<Uint8Array> | null) {
   if (!stream) return new Uint8Array();
   const reader = stream.getReader();
@@ -49,7 +61,7 @@ export async function forwardApi(request: Request, path: string[], env: Environm
   }
   // Reject browser cross-site use, including login CSRF. Bearer API clients may omit Origin.
   if (request.headers.get('sec-fetch-site') === 'cross-site' ||
-      (request.headers.has('origin') && request.headers.get('origin') !== frontendOrigin))
+      (request.headers.has('origin') && !matchesFrontendOrigin(request.headers.get('origin')!, frontendOrigin, production)))
     return reply(403, '요청 출처가 허용되지 않습니다.');
   if (!path.length || path.some(p => !/^[A-Za-z0-9_.-]+$/.test(p) || p === '.' || p === '..'))
     return reply(400, '잘못된 API 경로입니다.');

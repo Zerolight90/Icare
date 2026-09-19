@@ -8,6 +8,27 @@ const env = { NODE_ENV: 'production', BACKEND_URL: 'https://backend.example.test
 const request = (path, init) => new Request('https://frontend.example.test/api/' + path, init);
 const token = 'test.payload.signature';
 
+test('development allows only same-port loopback aliases; production and cross-site rules stay strict', async () => {
+  const local = { NODE_ENV:'development', BACKEND_URL:'http://127.0.0.1:8080',
+    ICARE_PROXY_SECRET:env.ICARE_PROXY_SECRET, ICARE_FRONTEND_ORIGIN:'http://127.0.0.1:3000' };
+  for (const configured of ['http://127.0.0.1:3000','http://localhost:3000']) {
+    for (const origin of ['http://127.0.0.1:3000','http://localhost:3000']) {
+      const req = new Request('http://localhost:3000/api/users/login',{method:'POST',headers:{origin,'sec-fetch-site':'same-origin'}});
+      const response = await forwardApi(req,['users','login'],{...local,ICARE_FRONTEND_ORIGIN:configured},async () => new Response('bad credentials',{status:400}));
+      assert.equal(response.status,400);
+    }
+  }
+  for (const origin of ['http://localhost:3001','https://localhost:3000','http://localhost.evil.test:3000','http://192.168.0.1:3000','null','http://localhost:3000/path']) {
+    const req = new Request('http://127.0.0.1:3000/api/x',{headers:{origin}});
+    assert.equal((await forwardApi(req,['x'],local,async()=>{throw Error('must not forward')})).status,403);
+  }
+  const crossSite = new Request('http://127.0.0.1:3000/api/x',{headers:{origin:'http://localhost:3000','sec-fetch-site':'cross-site'}});
+  assert.equal((await forwardApi(crossSite,['x'],local)).status,403);
+  const production = {...env,ICARE_FRONTEND_ORIGIN:'https://127.0.0.1:3000'};
+  const req = new Request('https://127.0.0.1:3000/api/x',{headers:{origin:'https://localhost:3000'}});
+  assert.equal((await forwardApi(req,['x'],production)).status,403);
+});
+
 test('Docker transport permits only explicitly configured named internal backends', async () => {
   const local = {NODE_ENV:'production', ICARE_BACKEND_TRANSPORT:'docker', ICARE_PROXY_SECRET:env.ICARE_PROXY_SECRET};
   for (const [url,status] of [['http://icare-blue-backend:8080',200],['http://icare-green-backend:8080',200],
