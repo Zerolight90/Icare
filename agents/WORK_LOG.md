@@ -167,3 +167,5 @@ Docker Desktop 시작을 권한 허용 후 요청했으나 완료 응답이 없�
 남은 작업 계속 요청에 따라 feat/blue-green-deploy를 Redis 커밋 위에서 진행했다. 두 기능의 main 병합은 별도 검수 상태로 유지한다. readiness/종료 유예/프론트 standalone/전용 Docker 내부 프록시/blue-green Compose/수동 CI 배포·복구를 추가했다. 실제 DB 변경·앱 Docker 실행·외부 배포는 하지 않았다. 검증은 [배포 작업서](DEPLOYMENT_RUNBOOK.md)와 [현재 상태](CURRENT_STATUS.md)를 따른다. 주간 사용률은 이번 재개 18→21%이며 과거 관찰 하한 20%포인트에 도달한 시점에 중간 보고했다.
 
 최종 기동 확인: 실제 .env를 읽는 로컬 호스트 프론트/백엔드를 시작해 readiness/가입 화면/인증 경계 3개를 확인하고 테스트용으로 유지했다. 외부 메일/AI 호출이나 사용자 데이터 입력은 없었다. 실행 로그/PID는 Git 밖 .icare/local-run, 종료는 Stop-IcareLocal.ps1. Docker는 실제 PostgreSQL/Redis 두 개만 healthy다.
+
+최종 검수 커밋: Redis 9876cad, 배포 구현 45ccf16. 두 단계의 main 병합은 승인 대기이며 로컬 검수 앱은 해당 변경으로 실행 중이다. 최종 사용량 조회는 동일 주간 창 22%, 이번 재개 18→22%(계정 전체 기준 +4%포인트)였다. 이전 누락 구간을 포함한 정확한 누적 프로젝트 사용량은 추정하지 않는다.
