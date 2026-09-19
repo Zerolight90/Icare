@@ -24,7 +24,7 @@
 ./scripts/Start-IcareLocal.ps1 -Service frontend -Webpack
 ```
 
-현재 실제 .env로 프론트·백엔드를 이미 호스트에서 실행 중이다. readiness/가입 화면/인증 경계 검사도 통과했다. 주소: http://127.0.0.1:3000. 현재 SMTP_USERNAME이 비어 있으므로 실제 가입 인증메일을 쓰려면 루트 .env에 발신 계정을 넣고 SMTP_PASSWORD의 유효성을 확인해야 한다. 지도 REST 키도 기존 설정을 이전했으므로 실제 호출 확인이 남아 있다. 실제 관리자 초기 생성은 별도 설정/검수 후 진행한다.
+현재 실제 .env로 프론트·백엔드를 이미 호스트에서 실행 중이다. readiness/가입 화면/인증 경계 검사도 통과했다. 주소: http://127.0.0.1:3000. 사용자가 SMTP 설정을 입력한 뒤 Gmail TLS 연결·로그인 성공을 확인하고 백엔드를 재시작했다. 재시작 후 readiness/가입 화면은 200이다. 메일은 보내지 않았으므로 실제 가입 인증메일 수신·인증 완료는 여전히 미검증이다. 지도 REST 키도 기존 설정을 이전했으므로 실제 호출 확인이 남아 있다. 실제 관리자 초기 생성은 별도 설정/검수 후 진행한다.
 
 상세 변경·복구: [로컬 실행](LOCAL_RUNTIME_RUNBOOK.md), [Redis](REDIS_RUNBOOK.md), [배포 준비](DEPLOYMENT_RUNBOOK.md). 실제 DB 복구는 [Flyway](FLYWAY_RUNBOOK.md), 지식 데이터 등록·교체는 [문서 검색](KNOWLEDGE_RUNBOOK.md)의 별도 승인 절차를 따른다. 공식 의료 문헌 수집·DOCX 작성은 여전히 별도 작업이다.
 
