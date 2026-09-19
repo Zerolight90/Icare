@@ -1,5 +1,7 @@
 # Home-PC runtime. Secrets arrive only through external environment variables.
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 130s
   data:
     redis:
       host: ${ICARE_REDIS_HOST:127.0.0.1}
@@ -59,6 +61,7 @@ jwt:
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:}
 server:
+  shutdown: graceful
   error:
     include-message: never
     include-stacktrace: never

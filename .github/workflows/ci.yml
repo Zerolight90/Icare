@@ -1,0 +1,48 @@
+name: Verify iCare
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis@sha256:520775a41a63e77e06c73e35d2fd9cc15921a609516818796b4ecbb813078bc7
+        ports: ['6379:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: babychatboot_backend/parenting/pom.xml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: babychatboot_frontend/chat-frontend/package-lock.json
+      - name: Backend tests and build
+        working-directory: babychatboot_backend/parenting
+        env:
+          ICARE_TEST_REDIS: 'true'
+          ICARE_TEST_REDIS_PASSWORD: ''
+        run: bash mvnw -B verify
+      - name: Frontend tests and build
+        working-directory: babychatboot_frontend/chat-frontend
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          NEXT_DEPLOYMENT_ID: ${{ github.sha }}
+        run: |
+          npm ci
+          npm run lint
+          node --experimental-strip-types --test tests/*.test.mjs
+          npm run build -- --webpack
+      - name: Gateway switch and rollback
+        shell: pwsh
+        run: ./scripts/deploy/Test-Gateway.ps1

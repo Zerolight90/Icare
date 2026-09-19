@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import api from '../../lib/axios';
 
 interface Post {
@@ -27,25 +27,25 @@ export default function AdminPostsPage() {
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
-  const load = (p = page) => {
-    setLoading(true);
+  const load = useCallback((p: number) => {
+
     api.get(`/api/admin/posts?page=${p}&size=20`)
       .then(res => setPageData(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
-  };
+  }, []);
 
-  useEffect(() => { load(); }, [page]);
+  useEffect(() => { load(page); }, [page, load]);
 
   const handleDelete = async (postId: number) => {
     await api.delete(`/api/admin/posts/${postId}`);
     setConfirmDelete(null);
-    load();
+    setLoading(true); load(page);
   };
 
   const handleRestore = async (postId: number) => {
     await api.patch(`/api/admin/posts/${postId}/restore`);
-    load();
+    setLoading(true); load(page);
   };
 
   const fmtDate = (iso: string) =>
@@ -137,7 +137,7 @@ export default function AdminPostsPage() {
             {pageData && pageData.totalPages > 1 && (
               <div className="flex items-center justify-center gap-1 py-4 border-t border-gray-100">
                 <button
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  onClick={() => { setLoading(true); setPage(p => Math.max(0, p - 1)); }}
                   disabled={page === 0}
                   className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30"
                 >
@@ -146,14 +146,14 @@ export default function AdminPostsPage() {
                 {Array.from({ length: Math.min(pageData.totalPages, 10) }, (_, i) => (
                   <button
                     key={i}
-                    onClick={() => setPage(i)}
+                    onClick={() => { if (i !== page) setLoading(true); setPage(i); }}
                     className={`w-8 h-8 rounded-lg text-sm ${page === i ? 'bg-sky-500 text-white font-semibold' : 'text-gray-500 hover:bg-gray-100'}`}
                   >
                     {i + 1}
                   </button>
                 ))}
                 <button
-                  onClick={() => setPage(p => Math.min(pageData.totalPages - 1, p + 1))}
+                  onClick={() => { setLoading(true); setPage(p => Math.min(pageData.totalPages - 1, p + 1)); }}
                   disabled={page === pageData.totalPages - 1}
                   className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30"
                 >

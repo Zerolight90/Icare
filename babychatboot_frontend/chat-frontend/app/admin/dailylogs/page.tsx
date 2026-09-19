@@ -49,7 +49,7 @@ const SEARCH_TYPE_OPTIONS = [
 export default function AdminDailyLogsPage() {
   const [pageData, setPageData] = useState<PageData | null>(null);
   const [page, setPage] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // 기간
   const [startDate, setStartDate] = useState('');
@@ -70,7 +70,7 @@ export default function AdminDailyLogsPage() {
   });
 
   const load = useCallback((p: number, params: typeof applied) => {
-    setLoading(true);
+
     const q = new URLSearchParams({ page: String(p), size: '20' });
     if (params.keyword)   { q.set('searchType', params.searchType); q.set('keyword', params.keyword); }
     if (params.diaperType) q.set('diaperType', params.diaperType);
@@ -86,12 +86,14 @@ export default function AdminDailyLogsPage() {
   useEffect(() => { load(page, applied); }, [page, applied, load]);
 
   const handleSearch = () => {
+    setLoading(true);
     const next = { startDate, endDate, searchType, keyword, diaperType, breastfed };
     setPage(0);
     setApplied(next);
   };
 
   const handleReset = () => {
+    setLoading(true);
     setStartDate(''); setEndDate('');
     setSearchType('babyName'); setKeyword('');
     setDiaperType(''); setBreastfed('ALL');
@@ -252,15 +254,15 @@ export default function AdminDailyLogsPage() {
 
             {pageData.totalPages > 1 && (
               <div className="flex items-center justify-center gap-1 py-4 border-t border-gray-100">
-                <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                <button onClick={() => { setLoading(true); setPage(p => Math.max(0, p - 1)); }} disabled={page === 0}
                   className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30">‹</button>
                 {Array.from({ length: Math.min(pageData.totalPages, 10) }, (_, i) => (
-                  <button key={i} onClick={() => setPage(i)}
+                  <button key={i} onClick={() => { if (i !== page) setLoading(true); setPage(i); }}
                     className={`w-8 h-8 rounded-lg text-sm ${page === i ? 'bg-sky-500 text-white font-semibold' : 'text-gray-500 hover:bg-gray-100'}`}>
                     {i + 1}
                   </button>
                 ))}
-                <button onClick={() => setPage(p => Math.min(pageData.totalPages - 1, p + 1))}
+                <button onClick={() => { setLoading(true); setPage(p => Math.min(pageData.totalPages - 1, p + 1)); }}
                   disabled={page === pageData.totalPages - 1}
                   className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30">›</button>
               </div>

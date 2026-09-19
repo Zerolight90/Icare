@@ -31,7 +31,7 @@ public class ProxyAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws IOException, ServletException {
-        if (req.getRequestURI().equals("/healthz") && req.getMethod().equals("GET")) {
+        if (Set.of("/healthz", "/readyz").contains(req.getRequestURI()) && req.getMethod().equals("GET")) {
             chain.doFilter(req, res);
             return;
         }

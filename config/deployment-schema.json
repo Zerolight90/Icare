@@ -1,0 +1,21 @@
+{
+  "applied": [
+    "1:691030920:true",
+    "2:-1248664708:true",
+    "3:-1282563757:true"
+  ],
+  "files": [
+    {
+      "name": "V1__initial_schema.sql",
+      "sha256": "C3AA5523121BCB321779827421161753C1456DE2AE3C1622A7A40828F7F801A9"
+    },
+    {
+      "name": "V2__chat_context_scope.sql",
+      "sha256": "F469D2D284DB0E2DA066094105C40345A807176906C0DD7AA8E115919C19EF26"
+    },
+    {
+      "name": "V3__knowledge_revisions_and_sources.sql",
+      "sha256": "1D552F90488929940771B699269CCD9B703F0F4C57C3A1699AD5A46B2AEC1127"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # 시스템 아키텍처
 
+최신 로컬 실행·일반 가입·Redis·배포 준비 상태는 [현재 상태](CURRENT_STATUS.md), [Redis](REDIS_RUNBOOK.md), [배포 작업서](DEPLOYMENT_RUNBOOK.md)를 우선한다. 아래 과거 날짜의 구성과 검증 수치는 이력이다.
+
 2026-09-19 최신: 3단계 main 병합과 실제 DB V2 적용을 완료했다. `ChatContextService`가 상담방의 생성 당시 가족/선택 아이 범위와 현재 권한을 확인하고 제한된 최근 질문·답변을 GeminiService에 공급한다. [3단계 작업서](CHAT_CONTEXT_RUNBOOK.md)를 따른다. 4단계에서는 관리자 미리보기 → 승인된 문서의 트랜잭션 적재 → 현재 버전만 검색 → 실제 전달 자료를 답변과 저장하는 경로를 추가했다. 같은 PostgreSQL에 JDBC 버전 테이블과 기존 pgvector를 사용한다. [4단계 작업서](KNOWLEDGE_RUNBOOK.md)의 V3는 사용자 승인 후 main 병합/실제 적용 및 전후 백업 복원 검증을 완료했다.
 
 2026-09-08 변경: DB 스키마 생성은 Flyway V1로 전환하고 Hibernate/별도 벡터 검증으로 확인한다. 관리자·설정·지식의 시작 자동 적재는 기본 비활성화했다. 초기화/실행 상세와 기존 데이터 전환 조건은 [Flyway 작업서](FLYWAY_RUNBOOK.md)를 따른다. 아래 기술·요청 흐름 분석과 실제 배포 상태는 구분한다.

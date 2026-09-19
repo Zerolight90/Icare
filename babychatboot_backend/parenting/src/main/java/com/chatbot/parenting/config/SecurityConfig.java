@@ -28,7 +28,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsSource))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/healthz").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/healthz", "/readyz").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users/login", "/api/users/signup",
                     "/api/users/verify", "/api/users/send-email", "/api/admin/auth/login").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

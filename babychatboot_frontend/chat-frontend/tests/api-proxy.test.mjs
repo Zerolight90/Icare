@@ -8,6 +8,20 @@ const env = { NODE_ENV: 'production', BACKEND_URL: 'https://backend.example.test
 const request = (path, init) => new Request('https://frontend.example.test/api/' + path, init);
 const token = 'test.payload.signature';
 
+test('Docker transport permits only explicitly configured named internal backends', async () => {
+  const local = {NODE_ENV:'production', ICARE_BACKEND_TRANSPORT:'docker', ICARE_PROXY_SECRET:env.ICARE_PROXY_SECRET};
+  for (const [url,status] of [['http://icare-blue-backend:8080',200],['http://icare-green-backend:8080',200],
+    ['http://evil.test:8080',503],['http://169.254.169.254:8080',503],['http://icare-blue-backend:9090',503]]) {
+    let calls=0;
+    const result=await forwardApi(request('users/me'),['users','me'],{...local,BACKEND_URL:url},async (_url,init)=>{
+      calls++; assert.equal(init.headers.get('X-Icare-Proxy-Secret'),env.ICARE_PROXY_SECRET);
+      assert.equal(init.headers.get('CF-Access-Client-Secret'),null); return new Response('ok');
+    });
+    assert.equal(result.status,status); assert.equal(calls,status===200?1:0);
+  }
+  assert.equal((await forwardApi(request('x'),['x'],{...local,ICARE_BACKEND_TRANSPORT:undefined,BACKEND_URL:'http://icare-blue-backend:8080'})).status,503);
+});
+
 test('forged service headers are replaced and only bearer + safe headers are forwarded', async () => {
   let calls = 0;
   const result = await forwardApi(request('users/profile?mode=view', { headers: {

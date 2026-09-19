@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '../../lib/axios';
+import { isAxiosError } from 'axios';
 
 interface AdminItem {
   id: number;
@@ -51,8 +52,9 @@ export default function AdminAccountsPage() {
       setShowForm(false);
       setForm(EMPTY_FORM);
       load();
-    } catch (err: any) {
-      setFormError(err.response?.data?.error ?? '관리자 계정 생성에 실패했습니다.');
+    } catch (err: unknown) {
+      const data = isAxiosError(err) ? err.response?.data : null;
+      setFormError(typeof data?.error === 'string' ? data.error : '관리자 계정 생성에 실패했습니다.');
     } finally {
       setSaving(false);
     }

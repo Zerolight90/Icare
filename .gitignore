@@ -6,6 +6,7 @@ babychatboot_backend/parenting/build/
 babychatboot_backend/parenting/.mvn/wrapper/maven-wrapper.jar
 
 # IDE
+.idea/
 babychatboot_backend/parenting/.idea/
 babychatboot_backend/parenting/.vscode/
 babychatboot_backend/parenting/*.iws

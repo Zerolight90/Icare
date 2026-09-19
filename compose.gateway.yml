@@ -1,0 +1,17 @@
+services:
+  gateway:
+    image: nginx@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    container_name: icare-gateway
+    ports:
+      - "127.0.0.1:${ICARE_GATEWAY_PORT:-18000}:8080"
+    volumes:
+      - ${ICARE_DEPLOY_STATE_DIR:?Use a directory outside Git}/nginx:/etc/nginx:ro
+    read_only: true
+    tmpfs: [/var/cache/nginx, /var/run, /tmp]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    networks: [existing]
+networks:
+  existing:
+    external: true
+    name: ${ICARE_DB_NETWORK:-icare-local-db_default}

@@ -24,7 +24,7 @@ function Read-IcareEnv {
 function Get-IcareFrontendEnv {
     param([hashtable]$Values)
     $selected = @{}
-    foreach ($name in @('BACKEND_URL','ICARE_FRONTEND_ORIGIN','ICARE_PROXY_SECRET',
+    foreach ($name in @('BACKEND_URL','ICARE_FRONTEND_ORIGIN','ICARE_PROXY_SECRET','ICARE_BACKEND_TRANSPORT',
             'CF_ACCESS_CLIENT_ID','CF_ACCESS_CLIENT_SECRET','NEXT_PUBLIC_KAKAO_MAP_KEY')) {
         if ($Values.ContainsKey($name)) { $selected[$name] = $Values[$name] }
     }

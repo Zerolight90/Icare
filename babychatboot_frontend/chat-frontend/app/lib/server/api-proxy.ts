@@ -62,10 +62,13 @@ export async function forwardApi(request: Request, path: string[], env: Environm
   try {
     upstream = new URL(env.BACKEND_URL || '');
     const local = !production && ['localhost', '127.0.0.1'].includes(upstream.hostname);
-    if ((!local && upstream.protocol !== 'https:') || upstream.username || upstream.password ||
+    // Explicit home-PC Docker mode; only our two named backends may use private HTTP.
+    const docker = env.ICARE_BACKEND_TRANSPORT === 'docker' &&
+      /^icare-(blue|green)-backend$/.test(upstream.hostname) && upstream.port === '8080' && upstream.protocol === 'http:';
+    if ((!local && !docker && upstream.protocol !== 'https:') || upstream.username || upstream.password ||
         upstream.pathname !== '/' || upstream.search || upstream.hash) throw new Error();
     if (!env.ICARE_PROXY_SECRET || env.ICARE_PROXY_SECRET.length < 32) throw new Error();
-    if (!local && (!env.CF_ACCESS_CLIENT_ID || !env.CF_ACCESS_CLIENT_SECRET)) throw new Error();
+    if (!local && !docker && (!env.CF_ACCESS_CLIENT_ID || !env.CF_ACCESS_CLIENT_SECRET)) throw new Error();
     upstream.pathname = '/api/' + endpoint;
     upstream.search = incoming.search;
   } catch { return reply(503, '서버 연결 설정이 필요합니다.'); }

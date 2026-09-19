@@ -1,0 +1,37 @@
+name: Deploy reviewed iCare release
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [deploy, rollback]
+        default: deploy
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: icare-home-deploy
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main' && inputs.action == 'deploy'
+    uses: ./.github/workflows/ci.yml
+  deploy:
+    needs: verify
+    if: always() && github.ref == 'refs/heads/main' && (inputs.action == 'rollback' || needs.verify.result == 'success')
+    environment: home-pc
+    runs-on: [self-hosted, Windows, X64, icare-deploy]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Switch or restore release
+        shell: pwsh
+        env:
+          DEPLOY_ACTION: ${{ inputs.action }}
+          DEPLOY_RELEASE: ${{ github.sha }}
+          # Configure a path only. The secret file stays on the home PC, outside checkout.
+          ICARE_DEPLOY_ENV_FILE: ${{ vars.ICARE_DEPLOY_ENV_FILE }}
+        run: |
+          if (!$env:ICARE_DEPLOY_ENV_FILE) { throw 'Configure ICARE_DEPLOY_ENV_FILE in the home-pc environment.' }
+          ./scripts/deploy/Deploy-Icare.ps1 -EnvFile $env:ICARE_DEPLOY_ENV_FILE -Action $env:DEPLOY_ACTION -Release $env:DEPLOY_RELEASE

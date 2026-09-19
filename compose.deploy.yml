@@ -1,0 +1,65 @@
+# Future home-PC deployment only. Does not create databases, Redis, or volumes.
+services:
+  backend:
+    image: icare-backend:${ICARE_RELEASE:?Set a reviewed release tag}
+    container_name: icare-${ICARE_SLOT:?Set blue or green}-backend
+    build:
+      context: ./babychatboot_backend/parenting
+    environment:
+      SPRING_PROFILES_ACTIVE: private
+      ICARE_DB_URL: jdbc:postgresql://parenting-postgres:5432/parenting_db
+      ICARE_DB_USER: ${ICARE_DB_USER:?}
+      ICARE_DB_PASSWORD: ${ICARE_DB_PASSWORD:?}
+      ICARE_REDIS_HOST: icare-redis
+      ICARE_REDIS_PORT: 6379
+      ICARE_REDIS_PASSWORD: ${ICARE_REDIS_PASSWORD:?}
+      ICARE_REDIS_DATABASE: 0
+      ICARE_REDIS_PREFIX: "icare:v1:"
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?}
+      GEMINI_CHAT_MODEL: ${GEMINI_CHAT_MODEL:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      ICARE_PROXY_SECRET: ${ICARE_PROXY_SECRET:?}
+      ICARE_CORS_ALLOWED_ORIGINS: ${ICARE_CORS_ALLOWED_ORIGINS:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
+      ICARE_UPLOAD_DIR: /app/uploads
+      ICARE_AI_MAX_INPUT_CHARS: ${ICARE_AI_MAX_INPUT_CHARS:-4000}
+      ICARE_AI_MAX_OUTPUT_TOKENS: ${ICARE_AI_MAX_OUTPUT_TOKENS:-1024}
+      ICARE_AI_CALLS_PER_MINUTE: ${ICARE_AI_CALLS_PER_MINUTE:-5}
+    volumes:
+      - ${ICARE_UPLOAD_DIR:?Set shared uploads directory}:/app/uploads
+    stop_grace_period: 140s
+    read_only: true
+    tmpfs: ["/tmp:size=128m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    networks: [existing]
+  frontend:
+    image: icare-frontend:${ICARE_RELEASE:?}
+    container_name: icare-${ICARE_SLOT:?}-frontend
+    build:
+      context: ./babychatboot_frontend/chat-frontend
+      args:
+        NEXT_PUBLIC_KAKAO_MAP_KEY: ${NEXT_PUBLIC_KAKAO_MAP_KEY:-}
+        NEXT_DEPLOYMENT_ID: ${ICARE_RELEASE:?}
+    environment:
+      BACKEND_URL: http://icare-${ICARE_SLOT:?}-backend:8080
+      ICARE_BACKEND_TRANSPORT: docker
+      ICARE_FRONTEND_ORIGIN: ${ICARE_FRONTEND_ORIGIN:?Set HTTPS public origin}
+      ICARE_PROXY_SECRET: ${ICARE_PROXY_SECRET:?}
+    depends_on:
+      backend:
+        condition: service_healthy
+    stop_grace_period: 140s
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    networks: [existing]
+networks:
+  existing:
+    external: true
+    name: ${ICARE_DB_NETWORK:-icare-local-db_default}

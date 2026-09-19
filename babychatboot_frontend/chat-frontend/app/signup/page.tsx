@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import api from '../lib/axios';
+import { isAxiosError } from 'axios';
 
 type Step = 'info' | 'baby' | 'verify';
 type Role = 'DAD' | 'MOM';
@@ -95,6 +96,7 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    let registered = false;
     try {
       const payload = {
         ...form,
@@ -103,11 +105,14 @@ export default function SignupPage() {
         inviteCode: form.inviteCode.trim() || undefined,
       };
       await api.post('/api/users/signup', payload);
-      await api.post(`/api/users/send-email?email=${encodeURIComponent(form.email)}`);
+      registered = true;
       setStep('verify');
-    } catch (err: any) {
-      const data = err.response?.data;
-      setError(typeof data === 'string' ? data : data?.message ?? '회원가입에 실패했습니다.');
+      // Signup is committed already; a mail failure must allow resend, not another signup.
+      await api.post(`/api/users/send-email?email=${encodeURIComponent(form.email)}`);
+    } catch (err: unknown) {
+      const data = isAxiosError(err) ? err.response?.data : null;
+      setError(registered ? '가입은 완료됐지만 인증메일을 보내지 못했습니다. 아래에서 재발송해 주세요.'
+        : typeof data === 'string' ? data : typeof data?.message === 'string' ? data.message : '회원가입에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -183,7 +188,7 @@ export default function SignupPage() {
               value={form.nickname} onChange={e => set('nickname', e.target.value)} />
             <input type="email" placeholder="이메일" required className={inputClass}
               value={form.email} onChange={e => set('email', e.target.value)} />
-            <input type="password" placeholder="비밀번호" required minLength={6} className={inputClass}
+            <input type="password" placeholder="비밀번호 (12자 이상)" required minLength={12} className={inputClass}
               value={form.password} onChange={e => set('password', e.target.value)} />
             <input type="tel" placeholder="전화번호 (010-0000-0000)" required className={inputClass}
               value={form.phoneNumber} onChange={e => set('phoneNumber', e.target.value)} />
@@ -319,10 +324,10 @@ export default function SignupPage() {
           <form onSubmit={handleVerify} className="space-y-5">
             <div className="text-center py-4 bg-sky-50 rounded-2xl px-4">
               <span className="text-5xl block mb-3">📧</span>
-              <p className="text-gray-800 font-semibold">인증 메일을 발송했습니다</p>
+              <p className="text-gray-800 font-semibold">이메일 인증을 완료해 주세요</p>
               <p className="text-sm text-gray-500 mt-2">
                 <span className="text-sky-500 font-bold break-all">{form.email}</span>
-                <br />으로 인증번호 6자리를 보내드렸습니다.
+                <br />으로 받은 인증번호 6자리를 입력해 주세요. 메일이 도착하지 않으면 아래에서 재발송할 수 있습니다.
               </p>
               <p className="text-xs text-amber-500 mt-2 font-medium">⏱ 유효시간: 3분</p>
             </div>

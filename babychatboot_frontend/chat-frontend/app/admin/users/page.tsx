@@ -21,29 +21,24 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
-  const [filtered, setFiltered] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const load = () => {
-    setLoading(true);
+
     api.get('/api/admin/users')
-      .then(res => { setUsers(res.data); setFiltered(res.data); })
+      .then(res => setUsers(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
 
-  useEffect(() => {
-    const q = search.toLowerCase();
-    setFiltered(users.filter(u =>
-      u.email.toLowerCase().includes(q) ||
+  const q = search.toLowerCase();
+  const filtered = users.filter(u => u.email.toLowerCase().includes(q) ||
       u.name.toLowerCase().includes(q) ||
-      u.nickname.toLowerCase().includes(q)
-    ));
-  }, [search, users]);
+      u.nickname.toLowerCase().includes(q));
 
   const handleDelete = async (userId: number) => {
     await api.delete(`/api/admin/users/${userId}`);
