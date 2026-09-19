@@ -4,7 +4,7 @@ import java.time.Duration;
 
 /** Runs inside the offline validation network, never against the service database. */
 public class PrivateBackendSmoke {
-    static final String BASE = "http://127.0.0.1:8080";
+    static final String BASE = "http://127.0.0.1:" + Integer.getInteger("icare.test.port", 8080);
     static final String PROXY = "test-proxy-secret-with-at-least-32-characters";
     static final String PASSWORD = "test-only-long-password";
     static HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
@@ -32,7 +32,7 @@ public class PrivateBackendSmoke {
         call("GET", "/api/users/profile", null, null, true, 401);
         if (args[0].equals("signup")) {
             call("POST", "/api/users/signup", "{\"email\":\"parent@example.test\",\"role\":\"ADMIN\"}", null, true, 400);
-            call("POST", "/api/users/signup", "{\"email\":\"outsider@example.test\",\"role\":\"MOM\"}", null, true, 403);
+            call("POST", "/api/users/signup", "{\"email\":\"outsider@example.test\",\"role\":\"MOM\"}", null, true, 400);
             for (String email : new String[]{"parent@example.test", "second@example.test"}) {
                 String body = "{\"email\":\"" + email + "\",\"password\":\"" + PASSWORD + "\",\"name\":\"Test\",\"nickname\":\"Test\",\"role\":\"MOM\",\"babyCount\":1,\"babyNames\":[\"Test baby\"],\"babyGenders\":[\"U\"],\"babyBirthDate\":\"2026-08-01\"}";
                 call("POST", "/api/users/signup", body, null, true, 200);
@@ -102,8 +102,8 @@ public class PrivateBackendSmoke {
             call("DELETE", "/api/logs/entry/3", null, token, true, 403);
             call("PUT", "/api/babies/2", "{}", token, true, 403);
             call("DELETE", "/api/babies/2", null, token, true, 403);
-            call("POST", "/api/users/login", "{\"email\":\"outsider@example.test\",\"password\":\"bad\"}", null, true, 403);
-            call("POST", "/api/users/send-email?email=outsider@example.test", null, null, true, 403);
+            call("POST", "/api/users/login", "{\"email\":\"outsider@example.test\",\"password\":\"bad\"}", null, true, 400);
+            call("POST", "/api/users/send-email?email=outsider@example.test", null, null, true, 400);
         }
         System.out.println("Offline backend HTTP checks passed: " + checks);
     }

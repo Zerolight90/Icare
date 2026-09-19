@@ -29,15 +29,15 @@ public class UserService {
     private final BabyRepository babyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final com.chatbot.parenting.config.PrivateAccessPolicy privateAccess;
+    private final com.chatbot.parenting.config.AccountPolicy accountPolicy;
 
     @Transactional
     public String signup(SignupRequestDto requestDto) {
-        String email = privateAccess.requireAllowed(requestDto.getEmail());
+        String email = accountPolicy.requireEmail(requestDto.getEmail());
         if (!"MOM".equals(requestDto.getRole()) && !"DAD".equals(requestDto.getRole())) {
             throw new IllegalArgumentException("부모 역할을 선택해 주세요.");
         }
-        com.chatbot.parenting.config.PrivateAccessPolicy.requirePassword(requestDto.getPassword());
+        com.chatbot.parenting.config.AccountPolicy.requirePassword(requestDto.getPassword());
         if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
@@ -91,7 +91,7 @@ public class UserService {
 
     @Transactional
     public boolean verifyEmail(String email, String code) {
-        email = privateAccess.requireAllowed(email);
+        email = accountPolicy.requireEmail(email);
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 사용자가 없습니다."));
 
@@ -110,7 +110,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public String login(LoginRequestDto loginRequestDto) {
-        String email = privateAccess.requireAllowed(loginRequestDto.getEmail());
+        String email = accountPolicy.requireEmail(loginRequestDto.getEmail());
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
@@ -182,7 +182,7 @@ public class UserService {
             throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
         }
 
-        com.chatbot.parenting.config.PrivateAccessPolicy.requirePassword(dto.getNewPassword());
+        com.chatbot.parenting.config.AccountPolicy.requirePassword(dto.getNewPassword());
         user.changePassword(passwordEncoder.encode(dto.getNewPassword()));
     }
 

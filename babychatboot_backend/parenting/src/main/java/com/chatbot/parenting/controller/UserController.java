@@ -20,7 +20,7 @@ public class UserController {
     private final UserService userService;
     private final EmailService emailService;
     private final UserRepository userRepository;
-    private final com.chatbot.parenting.config.PrivateAccessPolicy privateAccess;
+    private final com.chatbot.parenting.config.AccountPolicy accountPolicy;
 
     // 회원가입
     @PostMapping("/signup")
@@ -35,7 +35,7 @@ public class UserController {
     // 이메일 인증번호 발송
     @PostMapping("/send-email")
     public ResponseEntity<String> sendVerificationEmail(@RequestParam String email) {
-        email = privateAccess.requireAllowed(email);
+        email = accountPolicy.requireEmail(email);
         try {
             User user = userRepository.findByEmailIgnoreCase(email)
                     .orElseThrow(() -> new IllegalArgumentException("가입된 이메일이 아닙니다."));

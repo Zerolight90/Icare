@@ -64,7 +64,18 @@ class PrivateSecurityTest {
         admin.setActive(false);
         mvc.perform(get("/api/admin/probe").header("X-Icare-Proxy-Secret", PROXY).header("Authorization", "Bearer " + token)).andExpect(status().isUnauthorized());
     }
-    @Test void removedOrUnlistedUsersLoseTokenAccess() throws Exception {
+    @Test void anyRegisteredVerifiedUserCanAuthenticate() throws Exception {
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("newparent@example.test");
+        when(user.isEmailVerified()).thenReturn(true);
+        when(users.findByEmail("newparent@example.test")).thenReturn(Optional.of(user));
+        mvc.perform(get("/api/probe").header("X-Icare-Proxy-Secret", PROXY)
+            .header("Authorization", "Bearer " + jwt.createUserToken("newparent@example.test", "MOM"))).andExpect(status().isOk());
+        when(user.isEmailVerified()).thenReturn(false);
+        mvc.perform(get("/api/probe").header("X-Icare-Proxy-Secret", PROXY)
+            .header("Authorization", "Bearer " + jwt.createUserToken("newparent@example.test", "MOM"))).andExpect(status().isUnauthorized());
+    }
+    @Test void removedOrUnknownUsersLoseTokenAccess() throws Exception {
         when(users.findByEmail(EMAIL)).thenReturn(Optional.empty());
         for (String email : new String[]{EMAIL, "outsider@example.test"})
             mvc.perform(get("/api/probe").header("X-Icare-Proxy-Secret", PROXY)
@@ -104,10 +115,10 @@ class PrivateSecurityTest {
     @Configuration @EnableWebMvc @Import({SecurityConfig.class, PrivateCorsConfiguration.class})
     static class TestConfig {
         @Bean JwtUtil jwtUtil() { return new JwtUtil("test-only-signing-key-32-characters-minimum"); }
-        @Bean PrivateAccessPolicy policy() { return new PrivateAccessPolicy(EMAIL); }
+        @Bean AccountPolicy policy() { return new AccountPolicy(); }
         @Bean UserRepository users() { return mock(UserRepository.class); }
         @Bean AdminRepository admins() { return mock(AdminRepository.class); }
-        @Bean JwtAuthenticationFilter jwtFilter(JwtUtil jwt, PrivateAccessPolicy policy, UserRepository users, AdminRepository admins) {
+        @Bean JwtAuthenticationFilter jwtFilter(JwtUtil jwt, AccountPolicy policy, UserRepository users, AdminRepository admins) {
             return new JwtAuthenticationFilter(jwt, policy, users, admins);
         }
         @Bean ProxyAuthenticationFilter proxy() { return new ProxyAuthenticationFilter(PROXY); }

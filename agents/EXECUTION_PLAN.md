@@ -2,6 +2,10 @@
 
 결정 기준: 2026-09-08 사용자 지시. 이 문서는 작업 범위와 승인 기준이며 구현 완료 보고가 아니다.
 
+## 2026-09-19 로컬 테스트 후속 요청 (이전 정책보다 우선)
+
+사용자가 feat/local-runtime → feat/redis → feat/blue-green-deploy 구성을 승인했다. 이메일 허용 목록을 제거하고 일반 가입·이메일 인증을 유지한다. 로컬 프론트/백엔드는 호스트에서 직접 실행하고 Docker는 기존 PostgreSQL과 Redis에 사용한다. Redis는 게시판 캐시/채팅 호출 제어에 사용하며 원본은 PostgreSQL에 둔다. 이후 집 PC Docker 배포를 위한 전환/복구 파이프라인을 준비하되 실제 도메인·DNS·외부 배포는 하지 않는다. 민감값은 루트 .env로 통합한다. 각 병합의 별도 검수, DB 변경 승인, 단일 에이전트 원칙은 유지한다. 다음 기능은 승인된 병합에서 분기한다. 상세는 [로컬 실행 작업서](LOCAL_RUNTIME_RUNBOOK.md)를 따른다.
+
 ## 목표와 범위
 
 부부 두 명이 육아 챗봇과 육아 일지를 비공개 테스트한다. 기존 Next.js + Spring Boot + Spring AI + Gemini와 집 PC Docker PostgreSQL/pgvector 데이터를 유지한다. 집 PC의 실제 상태는 작업 시 재확인한다.

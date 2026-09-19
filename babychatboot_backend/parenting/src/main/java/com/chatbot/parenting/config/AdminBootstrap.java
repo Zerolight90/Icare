@@ -19,13 +19,13 @@ public class AdminBootstrap implements ApplicationRunner {
     private final String email;
     private final String password;
 
-    public AdminBootstrap(AdminRepository admins, PasswordEncoder encoder, PrivateAccessPolicy access,
+    public AdminBootstrap(AdminRepository admins, PasswordEncoder encoder, AccountPolicy access,
             @Value("${icare.admin.bootstrap.email:}") String email,
             @Value("${icare.admin.bootstrap.password:}") String password) {
         this.admins = admins;
         this.encoder = encoder;
-        this.email = access.requireAllowed(email);
-        PrivateAccessPolicy.requirePassword(password);
+        this.email = access.requireEmail(email);
+        AccountPolicy.requirePassword(password);
         this.password = password;
     }
 

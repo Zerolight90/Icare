@@ -65,6 +65,16 @@ backups/
 .env
 .env.local
 
+# Credentials at any depth; only empty examples belong in source control.
+**/.env*
+!**/.env.example
+!**/*.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+**/application-secret.*
+
 # ===============================================
 # OS 시스템 파일
 # ===============================================

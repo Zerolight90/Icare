@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
-    private final PrivateAccessPolicy privateAccess;
+    private final AccountPolicy accountPolicy;
     private final UserRepository users;
     private final AdminRepository admins;
 
@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 var claims = jwtUtil.getClaims(header.substring(7));
                 String subject = claims.getSubject();
-                privateAccess.requireAllowed(subject);
+                accountPolicy.requireEmail(subject);
                 String kind = claims.get("kind", String.class);
                 if ("USER".equals(kind)) {
                     users.findByEmail(subject).filter(u -> u.isEmailVerified()).ifPresent(u -> authenticate(u.getEmail(), "USER"));

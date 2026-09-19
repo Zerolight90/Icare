@@ -1,43 +1,12 @@
+# Local dependencies only. Frontend/backend run on the host with Start-IcareLocal.ps1.
+# Reuses the reviewed existing database volume; never use down --volumes.
+name: icare-local-db
 services:
-  # 1. 데이터베이스 (PostgreSQL + pgvector 확장)
   db:
-    image: pgvector/pgvector:pg16
-    container_name: parenting-postgres
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: root1234
-      POSTGRES_USER: root
-      POSTGRES_DB: parenting_db
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d parenting_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
-  # 2. 백엔드
-  backend:
-    build: ./babychatboot_backend/parenting
-    container_name: icare-backend
-    ports:
-      - "8080:8080"
-    environment:
-      DB_HOST: db
-      JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      db:
-        condition: service_healthy
-
-  # 3. 프론트엔드
-  frontend:
-    build:
-      context: ./babychatboot_frontend/chat-frontend
-      args:
-        BACKEND_URL: http://backend:8080
-    container_name: icare-frontend
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
+    extends:
+      file: compose.database.yml
+      service: db
+volumes:
+  existing-db:
+    external: true
+    name: ${ICARE_DB_VOLUME:?Set the reviewed existing Docker volume name}

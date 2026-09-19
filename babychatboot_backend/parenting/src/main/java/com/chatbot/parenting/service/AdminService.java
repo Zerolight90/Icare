@@ -34,7 +34,7 @@ public class AdminService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final JwtUtil jwtUtil;
-    private final com.chatbot.parenting.config.PrivateAccessPolicy privateAccess;
+    private final com.chatbot.parenting.config.AccountPolicy accountPolicy;
 
     // ==========================================
     // 관리자 인증
@@ -42,7 +42,7 @@ public class AdminService {
 
     @Transactional
     public String login(String username, String password) {
-        username = privateAccess.requireAllowed(username);
+        username = accountPolicy.requireEmail(username);
         Admin admin = adminRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다."));
         if (!admin.isActive()) {
@@ -75,8 +75,8 @@ public class AdminService {
 
     @Transactional
     public Map<String, Object> createAdminAccount(String username, String password, String name) {
-        username = privateAccess.requireAllowed(username);
-        com.chatbot.parenting.config.PrivateAccessPolicy.requirePassword(password);
+        username = accountPolicy.requireEmail(username);
+        com.chatbot.parenting.config.AccountPolicy.requirePassword(password);
         if (adminRepository.existsByUsernameIgnoreCase(username)) {
             throw new IllegalArgumentException("이미 사용 중인 아이디입니다: " + username);
         }
