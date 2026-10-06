@@ -68,7 +68,18 @@ export async function forwardApi(request: Request, path: string[], env: Environm
     if ((!local && !docker && upstream.protocol !== 'https:') || upstream.username || upstream.password ||
         upstream.pathname !== '/' || upstream.search || upstream.hash) throw new Error();
     if (!env.ICARE_PROXY_SECRET || env.ICARE_PROXY_SECRET.length < 32) throw new Error();
-    if (!local && !docker && (!env.CF_ACCESS_CLIENT_ID || !env.CF_ACCESS_CLIENT_SECRET)) throw new Error();
+    const quickTunnel =
+        upstream.protocol === 'https:' &&
+        upstream.hostname.endsWith('.trycloudflare.com');
+
+    if (
+        !local &&
+        !docker &&
+        !quickTunnel &&
+        (!env.CF_ACCESS_CLIENT_ID || !env.CF_ACCESS_CLIENT_SECRET)
+    ) {
+      throw new Error();
+    }
     upstream.pathname = '/api/' + endpoint;
     upstream.search = incoming.search;
   } catch { return reply(503, '서버 연결 설정이 필요합니다.'); }
