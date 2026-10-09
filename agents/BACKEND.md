@@ -1,5 +1,7 @@
 # 백엔드 분석
 
+이유식·낮잠 후속: DailyLog에 solidFoodName/solidFoodAmount/napEndTime nullable 필드와 Flyway V4를 준비했다. 기존 가족 권한 검사를 유지하며 서비스에서 섭취량·시간·메모를 검증하고 CSV/관리자 조회/AI 부모 사실 요약에 전달한다. 실제 V4 적용은 별도 승인 대상으로 [일과표 작업서](DAILYLOG_ACTIVITIES_RUNBOOK.md)를 따른다.
+
 최신 로컬 실행·일반 가입·Redis·배포 준비 상태는 [현재 상태](CURRENT_STATUS.md), [Redis](REDIS_RUNBOOK.md), [배포 작업서](DEPLOYMENT_RUNBOOK.md)를 우선한다. 아래 과거 날짜의 구성과 검증 수치는 이력이다.
 
 환경설정 후속 변경은 [환경설정 작업서](ENVIRONMENT_RUNBOOK.md)를 따른다. private 프로파일은 .env 실행기를 사용하고 기존 secret 프로파일을 포함하지 않는다. CORS는 정확한 환경변수 목록으로 제한하며 서비스/JWT 인증은 유지한다.

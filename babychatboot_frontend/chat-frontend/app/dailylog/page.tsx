@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation';
 import api from '../lib/axios';
 import Header from '../components/Header';
 
-const localDateStr = (d = new Date()) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+import LogEditor from './LogEditor';
+import { activities, diaperLabels as DIAPER_LABELS, localDate as localDateStr, napMinutes, durationLabel, type DailyLog, type LogBody, type Activity } from '../lib/daily-log';
 
 interface Baby {
   id: number;
@@ -16,41 +16,6 @@ interface Baby {
   gender: string;
   birthDate: string;
 }
-
-interface DailyLog {
-  id: number;
-  recordTime: string;
-  formulaAmount: number | null;
-  breastfed: boolean | null;
-  diaperType: string | null;
-  memo: string | null;
-  writerNickname: string;
-}
-
-interface LogForm {
-  date: string;
-  time: string;
-  formulaAmount: string;
-  breastfed: boolean;
-  diaperType: string;
-  memo: string;
-}
-
-const defaultForm: LogForm = {
-  date: '',
-  time: '',
-  formulaAmount: '',
-  breastfed: false,
-  diaperType: 'NONE',
-  memo: '',
-};
-
-const DIAPER_LABELS: Record<string, string> = {
-  NONE: '-',
-  WET: '💧 소변',
-  DIRTY: '💩 대변',
-  BOTH: '💧💩 소변+대변',
-};
 
 const GENDER_ICON: Record<string, string> = { M: '👦', F: '👧', U: '👶' };
 
@@ -62,8 +27,11 @@ export default function DailyLogPage() {
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState<LogForm>(defaultForm);
+  const [editLog, setEditLog] = useState<DailyLog | null>(null);
+  const [initialActivity, setInitialActivity] = useState<Activity>('feeding');
+  const [loadError, setLoadError] = useState('');
+  const [supportsActivities, setSupportsActivities] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [formMsg, setFormMsg] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -99,15 +67,16 @@ export default function DailyLogPage() {
     const healthGeneration = healthRequest, logGeneration = logsRequest;
     const fetchBabies = async () => {
     try {
-      const res = await api.get('/api/users/profile');
+      const [res, capabilities] = await Promise.all([api.get('/api/users/profile'), api.get('/api/logs/capabilities').catch(() => null)]);
       if (!active) return;
+      setSupportsActivities(capabilities?.data?.foodAndNaps === true);
       const list: Baby[] = res.data.babies ?? [];
       setBabies(list);
       setViewDate(localDateStr()); setDlFrom(localDateStr()); setDlTo(localDateStr());
       if (list.length > 0) setSelectedBaby(list[0]);
     } catch {
       if (active) router.push('/login');
-    }
+    } finally { if (active) setProfileLoading(false); }
     };
     void fetchBabies();
     return () => { active = false; healthGeneration.current++; logGeneration.current++; };
@@ -116,12 +85,12 @@ export default function DailyLogPage() {
   const fetchLogs = useCallback(async () => {
     if (!selectedBaby || !viewDate) return;
     const request = ++logsRequest.current;
-    setIsLoading(true);
+    setIsLoading(true); setLoadError('');
     try {
       const res = await api.get(`/api/logs/${selectedBaby.id}?date=${viewDate}`);
       if (request === logsRequest.current) setLogs(res.data);
     } catch {
-      if (request === logsRequest.current) setLogs([]);
+      if (request === logsRequest.current) { setLogs([]); setLoadError('기록을 불러오지 못했습니다. 다시 시도해 주세요.'); }
     } finally {
       if (request === logsRequest.current) setIsLoading(false);
     }
@@ -133,55 +102,28 @@ export default function DailyLogPage() {
     return () => { generation.current++; };
   }, [fetchLogs]);
 
-  const openAdd = () => {
-    setEditId(null);
-    setForm({ ...defaultForm, date: viewDate, time: new Date().toTimeString().slice(0, 5) });
-    setFormMsg('');
-    setShowForm(true);
+  const openAdd = (activity: Activity = 'feeding') => {
+    setEditLog(null); setInitialActivity(activity); setFormMsg(''); setShowForm(true);
   };
-
   const openEdit = (log: DailyLog) => {
-    const dt = new Date(log.recordTime);
-    setEditId(log.id);
-    setForm({
-      date: localDateStr(dt),
-      time: dt.toTimeString().slice(0, 5),
-      formulaAmount: log.formulaAmount != null ? String(log.formulaAmount) : '',
-      breastfed: log.breastfed ?? false,
-      diaperType: log.diaperType ?? 'NONE',
-      memo: log.memo ?? '',
-    });
-    setFormMsg('');
-    setShowForm(true);
+    setEditLog(log); setFormMsg(''); setShowForm(true);
   };
-
-  const handleSave = async () => {
-    if (!selectedBaby) return;
-    setSaving(true);
-    invalidateAnalysis();
+  const handleSave = async (body: LogBody) => {
+    if (!selectedBaby || saving) return;
+    setSaving(true); invalidateAnalysis(); setFormMsg('');
     const request = logsRequest.current;
-    setFormMsg('');
     try {
-      const recordTime = `${form.date}T${form.time}:00`;
-      const body = {
-        recordTime,
-        formulaAmount: form.formulaAmount !== '' ? Number(form.formulaAmount) : null,
-        breastfed: form.breastfed,
-        diaperType: form.diaperType,
-        memo: form.memo || null,
-      };
-      if (editId != null) {
-        await api.put(`/api/logs/entry/${editId}`, body);
-      } else {
-        await api.post(`/api/logs/${selectedBaby.id}`, body);
+      if (editLog) await api.put(`/api/logs/entry/${editLog.id}`, body);
+      else await api.post(`/api/logs/${selectedBaby.id}`, body);
+      if (request === logsRequest.current) {
+        setShowForm(false);
+        if (body.recordTime.slice(0, 10) !== viewDate) changeDate(body.recordTime.slice(0, 10));
+        else void fetchLogs();
       }
-      if (request === logsRequest.current) { setShowForm(false); void fetchLogs(); }
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: string } };
-      setFormMsg(err.response?.data || '저장에 실패했습니다.');
-    } finally {
-      setSaving(false);
-    }
+    } catch (error: unknown) {
+      const data = (error as { response?: { data?: unknown } }).response?.data;
+      if (request === logsRequest.current) setFormMsg(typeof data === 'string' ? data : '저장에 실패했습니다. 입력 내용을 확인한 후 다시 시도해 주세요.');
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (logId: number) => {
@@ -267,7 +209,7 @@ export default function DailyLogPage() {
       <div className="max-w-4xl mx-auto px-4 pt-24 pb-16">
 
         {/* 제목 */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <h1 className="text-2xl font-bold text-gray-800">📋 하루 일과표</h1>
           <div className="flex gap-2">
             {selectedBaby && logs.length > 0 && (
@@ -297,11 +239,11 @@ export default function DailyLogPage() {
                 <h3 className="font-semibold text-gray-800 text-sm">AI 육아 기록 분석</h3>
                 <span className="text-xs text-gray-400">{selectedBaby?.name} · {viewDate}</span>
               </div>
-              <button onClick={() => setShowHealthPanel(false)} className="text-gray-400 hover:text-gray-600 transition">✕</button>
+              <button aria-label="AI 분석 닫기" onClick={() => setShowHealthPanel(false)} className="text-gray-400 hover:text-gray-600 transition">✕</button>
             </div>
 
             {/* 일일 요약 */}
-            <div className="grid grid-cols-4 gap-2 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
               <div className="bg-blue-50 rounded-xl p-3 text-center">
                 <p className="text-2xl font-bold text-blue-600">{logs.some(l => l.formulaAmount != null) ? totalFormula : '미기록'}</p>
                 <p className="text-xs text-blue-400 mt-0.5">기록된 분유(ml)</p>
@@ -345,13 +287,13 @@ export default function DailyLogPage() {
             <p className="text-sm font-semibold text-gray-700 mb-3">📥 기간 선택 후 다운로드</p>
             <div className="flex flex-wrap gap-3 items-end">
               <div>
-                <label className="text-xs text-gray-500 block mb-1">시작일</label>
-                <input type="date" value={dlFrom} onChange={e => setDlFrom(e.target.value)}
+                <label htmlFor="export-from" className="text-xs text-gray-500 block mb-1">시작일</label>
+                <input id="export-from" type="date" value={dlFrom} onChange={e => setDlFrom(e.target.value)}
                   className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 block mb-1">종료일</label>
-                <input type="date" value={dlTo} onChange={e => setDlTo(e.target.value)}
+                <label htmlFor="export-to" className="text-xs text-gray-500 block mb-1">종료일</label>
+                <input id="export-to" type="date" value={dlTo} onChange={e => setDlTo(e.target.value)}
                   className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-sky-400" />
               </div>
               <button onClick={handleDownload}
@@ -363,7 +305,8 @@ export default function DailyLogPage() {
         )}
 
         {/* 아기 없음 안내 */}
-        {babies.length === 0 && (
+        {profileLoading && <p role="status" className="py-10 text-center text-slate-600">아이 정보를 불러오고 있어요…</p>}
+        {!profileLoading && babies.length === 0 && (
           <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100">
             <p className="text-4xl mb-3">👶</p>
             <p className="font-semibold text-gray-700 mb-1">등록된 아이가 없어요</p>
@@ -382,8 +325,9 @@ export default function DailyLogPage() {
               {babies.map(baby => (
                 <button
                   key={baby.id}
-                  onClick={() => changeBaby(baby)}
-                  disabled={selectedBaby?.id === baby.id}
+                  onClick={() => { if (selectedBaby?.id !== baby.id) changeBaby(baby); }}
+                  aria-pressed={selectedBaby?.id === baby.id}
+                  disabled={saving}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition shadow-sm border ${
                     selectedBaby?.id === baby.id
                       ? 'bg-sky-500 text-white border-sky-500'
@@ -398,255 +342,88 @@ export default function DailyLogPage() {
 
             {/* 날짜 네비게이션 */}
             <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-100 mb-4">
-              <button onClick={() => shiftDate(-1)}
+              <button aria-label="이전 날짜" disabled={saving} onClick={() => shiftDate(-1)}
                 className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition">
                 ‹
               </button>
               <div className="flex items-center gap-3">
                 <input
                   type="date"
+                  aria-label="일과 조회 날짜" disabled={saving}
                   value={viewDate}
                   max={todayStr}
-                  onChange={e => changeDate(e.target.value)}
+                  onChange={e => { if (e.target.value) changeDate(e.target.value); }}
                   className="text-center font-semibold text-gray-800 text-sm focus:outline-none cursor-pointer"
                 />
                 {!isToday && (
-                  <button onClick={() => changeDate(todayStr)}
+                  <button disabled={saving} onClick={() => changeDate(todayStr)}
                     className="text-xs px-2 py-1 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition">
                     오늘
                   </button>
                 )}
               </div>
-              <button onClick={() => shiftDate(1)} disabled={isToday}
+              <button aria-label="다음 날짜" onClick={() => shiftDate(1)} disabled={isToday || saving}
                 className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition disabled:opacity-30">
                 ›
               </button>
             </div>
 
-            {/* 기록 추가 버튼 */}
-            <div className="flex justify-end mb-3">
-              <button onClick={openAdd}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition shadow-sm">
-                + 기록 추가
-              </button>
-            </div>
-
-            {/* 테이블 */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-16">
-                  <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : logs.length === 0 ? (
-                <div className="text-center py-16">
-                  <p className="text-3xl mb-2">📝</p>
-                  <p className="text-gray-500 text-sm">이 날의 기록이 없어요</p>
-                  <button onClick={openAdd}
-                    className="mt-4 px-4 py-2 rounded-xl bg-sky-50 text-sky-500 text-sm font-medium hover:bg-sky-100 transition">
-                    첫 기록 추가하기
-                  </button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-50 border-b border-gray-100">
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">시간</th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">분유량</th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">수유</th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">기저귀</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">메모</th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">작성자</th>
-                        <th className="px-4 py-3"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {logs.map(log => (
-                        <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">
-                            {fmtTime(log.recordTime)}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {log.formulaAmount != null ? (
-                              <span className="inline-block px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-semibold text-xs">
-                                {log.formulaAmount}ml
-                              </span>
-                            ) : (
-                              <span className="text-gray-300">-</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {log.breastfed ? (
-                              <span className="text-sky-500 font-bold">O</span>
-                            ) : (
-                              <span className="text-gray-300">-</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-center whitespace-nowrap">
-                            {log.diaperType && log.diaperType !== 'NONE'
-                              ? DIAPER_LABELS[log.diaperType]
-                              : <span className="text-gray-300">-</span>
-                            }
-                          </td>
-                          <td className="px-4 py-3 text-gray-600 max-w-[180px] truncate">
-                            {log.memo || <span className="text-gray-300">-</span>}
-                          </td>
-                          <td className="px-4 py-3 text-center text-xs text-gray-400">
-                            {log.writerNickname}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1 justify-end">
-                              <button onClick={() => openEdit(log)}
-                                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition text-xs">
-                                수정
-                              </button>
-                              <button onClick={() => handleDelete(log.id)}
-                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition text-xs">
-                                삭제
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  {/* 요약 푸터 */}
-                  <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex flex-wrap gap-4 text-xs text-gray-500">
-                    <span>총 {logs.length}건</span>
-                    <span>
-                      분유 합계:&nbsp;
-                      <strong className="text-blue-600">
-                        {logs.reduce((s, l) => s + (l.formulaAmount ?? 0), 0)}ml
-                      </strong>
-                    </span>
-                    <span>
-                      수유:&nbsp;
-                      <strong className="text-rose-500">
-                        {logs.filter(l => l.breastfed).length}회
-                      </strong>
-                    </span>
-                    <span>
-                      기저귀:&nbsp;
-                      <strong className="text-yellow-600">
-                        {logs.filter(l => l.diaperType && l.diaperType !== 'NONE').length}회
-                      </strong>
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <section aria-label="일과 빠른 기록" className="mb-5">
+              <h2 className="mb-2 text-sm font-semibold text-slate-700">무엇을 기록할까요?</h2>
+              {!supportsActivities && <p role="status" className="mb-3 text-sm text-slate-600">이유식·낮잠 기록은 아직 준비 중이에요. 이용 가능해지면 새로고침해 주세요.</p>}
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                {activities.map(activity => <button key={activity.id} onClick={() => openAdd(activity.id)} disabled={saving || !viewDate || (!supportsActivities && (activity.id === 'food' || activity.id === 'nap'))}
+                  className="disabled:opacity-50 min-h-14 rounded-xl border border-slate-300 bg-white px-3 py-3 font-semibold text-slate-800 hover:bg-sky-50 focus-visible:outline-2 focus-visible:outline-sky-700">
+                  <span aria-hidden="true">{activity.icon} </span>{activity.label} 기록
+                </button>)}
+              </div>
+            </section>
+            <section aria-label="기록 요약" className="mb-5 rounded-2xl border border-slate-200 bg-white p-4">
+              <h2 className="font-semibold text-slate-800">기록한 일과 한눈에 보기</h2>
+              <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {[
+                  ['분유', logs.some(log => log.formulaAmount != null) ? `${totalFormula}ml` : '미기록'],
+                  ['모유', breastfeedCount ? `${breastfeedCount}회` : '미기록'],
+                  ['이유식', logs.some(log => log.solidFoodName) ? `${logs.filter(log => log.solidFoodName).length}회` : '미기록'],
+                  ['낮잠', logs.some(log => log.napEndTime) ? durationLabel(logs.reduce((sum, log) => sum + (napMinutes(log) ?? 0), 0)) : '미기록'],
+                  ['소변 기저귀', diaperWet ? `${diaperWet}회` : '미기록'],
+                  ['대변 기저귀', diaperDirty ? `${diaperDirty}회` : '미기록'],
+                ].map(([name, value]) => <div key={name} className="rounded-xl bg-slate-50 p-3"><dt className="text-sm text-slate-600">{name}</dt><dd className="mt-1 text-lg font-bold text-slate-900">{isLoading || loadError ? '—' : value}</dd></div>)}
+              </dl>
+              <p className="mt-3 text-xs leading-5 text-slate-600">입력한 기록만 합산합니다. 미기록은 0회나 정상을 뜻하지 않아요. 낮잠은 시작 날짜 기준이며 하루 전체 수면시간이 아닙니다.</p>
+            </section>
+            <section aria-labelledby="timeline-heading" aria-busy={isLoading}>
+              <h2 id="timeline-heading" className="mb-3 font-semibold text-slate-800">시간순 기록</h2>
+              {isLoading ? <p role="status" className="py-10 text-center text-slate-600">기록을 불러오고 있어요…</p>
+                : loadError ? <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">{loadError}<button onClick={() => void fetchLogs()} className="ml-2 min-h-11 underline">다시 불러오기</button></div>
+                : logs.length === 0 ? <div className="rounded-2xl bg-white p-8 text-center text-slate-600"><p>이 날의 기록이 없어요</p><p className="mt-2 text-sm">위에서 기록할 일과를 선택해 주세요.</p></div>
+                : <ol className="space-y-3">{logs.map(log => <li key={log.id}>
+                  <article aria-label={`${fmtTime(log.recordTime)} 기록`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <time dateTime={log.recordTime} className="text-lg font-bold text-slate-900">{fmtTime(log.recordTime)}</time>
+                      <div className="flex gap-2">
+                        <button disabled={saving} onClick={() => openEdit(log)} aria-label={`${fmtTime(log.recordTime)} 기록 수정`} className="min-h-11 rounded-lg px-3 text-sm font-semibold text-sky-800 hover:bg-sky-50 focus-visible:outline-2">수정</button>
+                        <button disabled={saving} onClick={() => handleDelete(log.id)} aria-label={`${fmtTime(log.recordTime)} 기록 삭제`} className="min-h-11 rounded-lg px-3 text-sm text-red-800 hover:bg-red-50 focus-visible:outline-2">삭제</button>
+                      </div>
+                    </div>
+                    <ul className="mt-2 flex flex-wrap gap-2 text-sm text-slate-800">
+                      {log.formulaAmount != null && <li className="rounded-lg bg-sky-50 px-3 py-2">분유 {log.formulaAmount}ml</li>}
+                      {log.breastfed && <li className="rounded-lg bg-rose-50 px-3 py-2">모유 수유</li>}
+                      {log.solidFoodName && <li className="max-w-full break-words rounded-lg bg-orange-50 px-3 py-2">이유식 · {log.solidFoodName} · {log.solidFoodAmount != null ? `${log.solidFoodAmount}g` : '섭취량 미기록'}</li>}
+                      {log.napEndTime && <li className="rounded-lg bg-violet-50 px-3 py-2">낮잠 · {fmtTime(log.recordTime)} → {log.napEndTime.slice(0,10) !== log.recordTime.slice(0,10) ? `${log.napEndTime.slice(5,10)} ` : ''}{fmtTime(log.napEndTime)} · {durationLabel(napMinutes(log) ?? 0)}</li>}
+                      {log.diaperType && log.diaperType !== 'NONE' && <li className="rounded-lg bg-amber-50 px-3 py-2">기저귀 · {DIAPER_LABELS[log.diaperType]}</li>}
+                    </ul>
+                    {log.memo && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{log.memo}</p>}
+                    <p className="mt-3 text-xs text-slate-500">작성자 {log.writerNickname}</p>
+                  </article>
+                </li>)}</ol>}
+            </section>
           </>
         )}
 
-        {/* 기록 추가/수정 모달 */}
-        {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="font-bold text-gray-800">{editId ? '기록 수정' : '기록 추가'}</h3>
-                <button onClick={() => setShowForm(false)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">
-                  ✕
-                </button>
-              </div>
-
-              <div className="px-6 py-5 space-y-4">
-                {/* 날짜/시간 */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={labelCls}>날짜</label>
-                    <input type="date" value={form.date}
-                      onChange={e => setForm(p => ({ ...p, date: e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>시간</label>
-                    <input type="time" value={form.time}
-                      onChange={e => setForm(p => ({ ...p, time: e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                </div>
-
-                {/* 분유량 */}
-                <div>
-                  <label className={labelCls}>분유량 (ml)</label>
-                  <input type="number" min="0" max="500" step="5"
-                    placeholder="미입력 시 빈칸"
-                    value={form.formulaAmount}
-                    onChange={e => setForm(p => ({ ...p, formulaAmount: e.target.value }))}
-                    className={inputCls} />
-                </div>
-
-                {/* 수유 */}
-                <div className="flex items-center justify-between py-1">
-                  <label className="text-sm font-medium text-gray-700">모유 수유</label>
-                  <button
-                    onClick={() => setForm(p => ({ ...p, breastfed: !p.breastfed }))}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
-                      form.breastfed ? 'bg-rose-400' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                      form.breastfed ? 'translate-x-6' : 'translate-x-0'
-                    }`} />
-                  </button>
-                </div>
-
-                {/* 기저귀 */}
-                <div>
-                  <label className={labelCls}>기저귀</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(DIAPER_LABELS).map(([key, label]) => (
-                      <button
-                        key={key}
-                        onClick={() => setForm(p => ({ ...p, diaperType: key }))}
-                        className={`py-2 px-3 rounded-xl text-sm text-left border transition ${
-                          form.diaperType === key
-                            ? 'border-sky-400 bg-sky-50 text-sky-600 font-medium'
-                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 메모 */}
-                <div>
-                  <label className={labelCls}>메모</label>
-                  <textarea
-                    rows={2}
-                    placeholder="특이사항을 적어주세요"
-                    value={form.memo}
-                    onChange={e => setForm(p => ({ ...p, memo: e.target.value }))}
-                    className={inputCls + ' resize-none'}
-                  />
-                </div>
-
-                {formMsg && (
-                  <p className="text-sm text-red-500">{formMsg}</p>
-                )}
-              </div>
-
-              <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-                <button onClick={() => setShowForm(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition">
-                  취소
-                </button>
-                <button onClick={handleSave} disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition disabled:opacity-50">
-                  {saving ? '저장 중...' : (editId ? '수정 완료' : '저장')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {showForm && selectedBaby && <LogEditor log={editLog} date={viewDate} initialActivity={initialActivity}
+          babyName={selectedBaby.name} supportsActivities={supportsActivities} saving={saving} error={formMsg} onClose={() => setShowForm(false)} onSave={handleSave} />}
       </div>
     </div>
   );
 }
-
-const labelCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5';
-const inputCls = 'w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition';

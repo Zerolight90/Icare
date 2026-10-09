@@ -18,6 +18,7 @@ try {
   const send = (route, data) => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});
   await page.route(`${base}/api/**`, async route => {
     const url = new URL(route.request().url());
+    if (url.pathname === '/api/logs/capabilities') return send(route,{foodAndNaps:true});
     if (url.pathname === '/api/users/me') return send(route,{nickname:'검수'});
     if (url.pathname === '/api/users/profile') return send(route,{babies:[{id:101,name:'검수아이A',gender:'U',birthDate:'2026-07-01'},{id:102,name:'검수아이B',gender:'U',birthDate:'2026-07-02'}]});
     if (url.pathname.endsWith('/health-check')) {

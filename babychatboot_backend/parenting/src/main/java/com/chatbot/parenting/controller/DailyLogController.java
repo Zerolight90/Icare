@@ -31,6 +31,13 @@ public class DailyLogController {
     private final com.chatbot.parenting.service.FamilyAccessService familyAccess;
 
 
+    // Prevent a newer browser from sending fields an older backend would silently ignore.
+    @GetMapping("/capabilities")
+    public ResponseEntity<?> capabilities(@AuthenticationPrincipal Object principal) {
+        if (extractEmail(principal) == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.ok(java.util.Map.of("foodAndNaps", true));
+    }
+
     @GetMapping("/{babyId}")
     public ResponseEntity<?> getLogs(
             @PathVariable Long babyId,
@@ -84,21 +91,27 @@ public class DailyLogController {
         response.getOutputStream().write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
 
         PrintWriter pw = new PrintWriter(new OutputStreamWriter(response.getOutputStream(), StandardCharsets.UTF_8));
-        pw.println("날짜시간,분유량(ml),수유,기저귀,메모,작성자");
+        pw.println("날짜시간,분유량(ml),수유,기저귀,메모,작성자,이유식,이유식량(g),낮잠종료");
 
         for (DailyLogResponseDto r : rows) {
-            pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
+            pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
                     safe(r.getRecordTime()),
                     r.getFormulaAmount() != null ? r.getFormulaAmount() : "",
                     Boolean.TRUE.equals(r.getBreastfed()) ? "O" : "",
                     diaperLabel(r.getDiaperType()),
                     safe(r.getMemo()),
-                    safe(r.getWriterNickname()));
+                    safe(r.getWriterNickname()), safe(r.getSolidFoodName()),
+                    r.getSolidFoodAmount() == null ? "" : r.getSolidFoodAmount(), safe(r.getNapEndTime()));
         }
         pw.flush();
     }
 
-    private String safe(String s) { return s != null ? s.replace("\"", "\"\"") : ""; }
+    private String safe(String s) {
+        if (s == null) return "";
+        String trimmed = s.stripLeading();
+        if (!trimmed.isEmpty() && "=+-@".indexOf(trimmed.charAt(0)) >= 0 || s.startsWith("\t") || s.startsWith("\r")) s = "'" + s;
+        return s.replace("\"", "\"\"");
+    }
     private String diaperLabel(String t) {
         if (t == null) return "-";
         return switch (t) { case "WET" -> "소변"; case "DIRTY" -> "대변"; case "BOTH" -> "소변+대변"; default -> "-"; };

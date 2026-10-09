@@ -51,21 +51,21 @@ function CommunityPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const boardIdParam = searchParams.get('boardId');
   useEffect(() => {
+    let active = true;
     setIsLoggedIn(!!localStorage.getItem('accessToken'));
-    fetchBoards();
-  }, []);
-
-  const fetchBoards = async () => {
+    const fetchBoards = async () => {
     try {
       const [comRes, medRes] = await Promise.all([
         api.get('/api/community/boards?type=COMMUNITY'),
         api.get('/api/community/boards?type=MEDICAL'),
       ]);
+      if (!active) return;
       setCommunityBoards(comRes.data);
       setMedicalBoards(medRes.data);
 
-      const initId = searchParams.get('boardId');
+      const initId = boardIdParam;
       const allBoards = [...comRes.data, ...medRes.data];
       const init = initId
         ? allBoards.find((b: Board) => b.id === Number(initId))
@@ -74,7 +74,10 @@ function CommunityPageContent() {
     } catch (e) {
       console.error(e);
     }
-  };
+    };
+    void fetchBoards();
+    return () => { active = false; };
+  }, [boardIdParam]);
 
   const fetchPosts = useCallback(async () => {
     if (!selectedBoard) return;

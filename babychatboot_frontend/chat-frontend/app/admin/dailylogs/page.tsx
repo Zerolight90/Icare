@@ -8,6 +8,9 @@ interface LogItem {
   babyName: string;
   userName: string;
   recordTime: string;
+  solidFoodName?: string | null;
+  solidFoodAmount?: number | null;
+  napEndTime?: string | null;
   formulaAmount: number | null;
   breastfed: boolean | null;
   diaperType: string | null;
@@ -214,6 +217,7 @@ export default function AdminDailyLogsPage() {
                     <th className="px-4 py-3 text-center">분유(ml)</th>
                     <th className="px-4 py-3 text-center">모유</th>
                     <th className="px-4 py-3 text-center">기저귀</th>
+                    <th className="px-4 py-3 text-left">이유식 / 낮잠</th>
                     <th className="px-4 py-3 text-left">메모</th>
                     <th className="px-4 py-3 text-center">관리</th>
                   </tr>
@@ -240,6 +244,11 @@ export default function AdminDailyLogsPage() {
                               {DIAPER_LABELS[log.diaperType] ?? log.diaperType}
                             </span>
                           : <span className="text-gray-300 text-xs">-</span>}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-700">
+                        {log.solidFoodName && <p>{log.solidFoodName} · {log.solidFoodAmount == null ? '섭취량 미기록' : `${log.solidFoodAmount}g`}</p>}
+                        {log.napEndTime && <p>낮잠 종료: {fmtDateTime(log.napEndTime)}</p>}
+                        {!log.solidFoodName && !log.napEndTime && '미기록'}
                       </td>
                       <td className="px-4 py-3 max-w-xs truncate text-gray-500 text-xs">{log.memo ?? '-'}</td>
                       <td className="px-4 py-3 text-center">

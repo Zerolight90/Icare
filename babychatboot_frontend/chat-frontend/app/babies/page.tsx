@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../lib/axios';
 import Header from '../components/Header';
@@ -45,20 +45,20 @@ export default function BabiesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) { router.push('/login'); return; }
-    fetchBabies();
-  }, [router]);
-
-  const fetchBabies = async () => {
+  const fetchBabies = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await api.get('/api/babies');
       setBabies(res.data);
     } catch { router.push('/login'); }
     finally { setIsLoading(false); }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) { router.push('/login'); return; }
+    fetchBabies();
+  }, [fetchBabies, router]);
 
   const openAdd = () => {
     setEditId(null);
